@@ -2,14 +2,12 @@ import os
 import requests
 import base64
 import yfinance as yf
-import pandas as pd
 from datetime import datetime
 
-github_token = os.getenv('GITHUB_TOKEN')
+github_token = os.getenv('TOKEN')
 repo = 'awakzdev/test'
 branch = 'main'
 file_path_in_repo = 'qld_stock_data.csv'
-
 
 # Step 1: Fetch today's date in the format day/month/year
 today_date = datetime.now().strftime('%Y-%m-%d')
