@@ -5,7 +5,7 @@ import yfinance as yf
 from datetime import datetime
 
 github_token = os.getenv('TOKEN')
-repo = 'awakzdev/test'
+repo = 'awakzdev/finance'
 branch = 'main'
 file_path_in_repo = 'qld_stock_data.csv'
 
