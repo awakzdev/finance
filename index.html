@@ -16,6 +16,44 @@
             text-align: left; /* Align text to the left */
         }
 
+        /* Style the date dropdown */
+        .dropdown {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 100%;
+            padding: 12px 15px; /* Increase padding for better text positioning */
+            font-size: 16px;
+            line-height: 1.6; /* Increase line-height to center text vertically */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23999" d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Set a specific height */
+        .dropdown {
+            height: 45px; /* Set a specific height to ensure consistency */
+        }
+
+        /* Style on hover */
+        .dropdown:hover {
+            border-color: #888;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Style on focus */
+        .dropdown:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
         .header {
             display: flex;
             justify-content: flex-start;
@@ -106,6 +144,14 @@
         <!-- Left Section: Controls and Results -->
         <div class="left-section">
             <!-- Sliders and Controls -->
+
+            <div class="input-group">
+                <label for="dateRange">Select Date Range:</label>
+                <select id="dateRange" class="dropdown">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>            
+            
             <div class="input-group">
                 <label for="totalInvestment">Total Investment ($): <span id="totalInvestmentValue">100000</span></label>
                 <input type="range" id="totalInvestment" class="slider" min="50000" max="200000" value="100000" step="1000">
@@ -154,7 +200,8 @@
         const buyThresholdSlider = document.getElementById('buyThreshold');
         const sellThresholdSlider = document.getElementById('sellThreshold');
         const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
-        
+        const dateRangeDropdown = document.getElementById('dateRange');
+
         const totalInvestmentValue = document.getElementById('totalInvestmentValue');
         const splitValue = document.getElementById('splitValue');
         const buyThresholdValue = document.getElementById('buyThresholdValue');
@@ -207,7 +254,9 @@
                         if (stockData.length > 0) {
                             console.log("Stock data is valid. Setting up the chart...");
                             setupChart(); // Initialize the chart
-                            console.log("Chart setup complete. Calculating results...");
+                            console.log("Chart setup complete. Populating date dropdown...");
+                            populateDateDropdown(); // Populate the date dropdown
+                            console.log("Date dropdown populated. Calculating results...");
                             calculateResults(); // Calculate results after setting up everything
                         } else {
                             console.error("Invalid data: No valid stock data found.");
@@ -248,96 +297,80 @@
                 buyAmountPercentValue.textContent = `${buyAmountPercentSlider.value}%`;
                 calculateResults();
             });
+
+            // Add event listener to the date range dropdown
+            dateRangeDropdown.addEventListener('change', () => {
+                calculateResults(); // Recalculate results when date range changes
+            });
         };
 
+        // Populate the date dropdown with unique dates
+        function populateDateDropdown() {
+            // Get unique dates from stockData
+            const uniqueDates = [...new Set(stockData.map(data => data.date))];
 
+            // Clear existing options in the dropdown
+            dateRangeDropdown.innerHTML = '';
 
-        // Set up the Chart.js chart
-        function setupChart() {
-            console.log("Initializing Chart.js...");
-            const ctx = document.getElementById('totalPortfolioChart').getContext('2d');
-            try {
-                totalPortfolioChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: [], // Labels will be updated dynamically
-                        datasets: [
-                            {
-                                label: 'Total Portfolio Value',
-                                data: [],  // Empty initially, will be populated
-                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1,
-                                fill: true
-                            },
-                            {
-                                label: 'Active Profit',
-                                data: [],  // Empty initially, will be populated
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 1,
-                                fill: true
-                            }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: false
-                            }
-                        }
-                    }
-                });
-                console.log("Chart initialized successfully.");
-            } catch (error) {
-                console.error("Error initializing Chart.js:", error);
-            }
-        }
+            // Add unique dates to the dropdown
+            uniqueDates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                dateRangeDropdown.appendChild(option);
+            });
 
-        // Function to update the chart with new data
-        function updateChart(stockData, totalPortfolioValues, activeProfits) {
-            console.log("Updating chart data...");
-            try {
-                totalPortfolioChart.data.labels = stockData.map(data => data.date);
-                totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
-                totalPortfolioChart.data.datasets[1].data = activeProfits;
-                totalPortfolioChart.update();
-                console.log("Chart updated successfully.");
-            } catch (error) {
-                console.error("Error updating chart:", error);
-            }
+            // Set the initial value to the earliest date
+            dateRangeDropdown.value = uniqueDates[0];
         }
 
         function calculateResults() {
             console.log("Calculating portfolio results...");
-            if (!stockData.length) {
-                console.error("No stock data available for calculation.");
+
+            // Get the selected start date from the dropdown
+            const selectedDate = document.getElementById('dateRange').value;
+
+            // Convert the selected date to a Date object for comparison
+            const [day, month, year] = selectedDate.split('/');
+            const selectedDateObj = new Date(year, month - 1, day);
+
+            // Filter stock data to include only dates from the selected start date
+            const filteredStockData = stockData.filter(data => {
+                const [day, month, year] = data.date.split('/');
+                const dataDate = new Date(year, month - 1, day);
+                return dataDate >= selectedDateObj;
+            });
+
+            if (!filteredStockData.length) {
+                console.error("No stock data available for the selected date range.");
                 finalTotalValueDisplay.textContent = 'No data';
+                updateChart([], [], []);  // Clear the chart if no data
                 return;
             }
 
-            // Log the stock data being used for calculations
-            console.log("Stock data for calculations:", stockData);
+            console.log("Filtered stock data for calculations:", filteredStockData);
 
+            // Initialize values for the calculation
             let totalPortfolioValue = parseInt(totalInvestmentSlider.value);
             let cashPercent = parseInt(splitSlider.value) / 100;
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
             let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
             let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
 
-            // Split the total investment into cash and initial passive investment
-            let initialCash = totalPortfolioValue * cashPercent;  // Initial cash available for active trading
+            let initialCash = totalPortfolioValue * cashPercent; // Initial cash available for active trading
             let cash = initialCash;
             let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Initial passive portfolio value
-            let passiveShares = initialPassiveInvestment / stockData[0].price; // Equivalent passive investment shares
+            let passiveShares = initialPassiveInvestment / filteredStockData[0].price; // Equivalent passive investment shares
             let stocks = 0;
             let buyPrice = 0;
             let totalProfit = 0;
+
             const totalPortfolioValues = [];
             const activeProfits = [];
             const transactionLog = [];
 
-            stockData.forEach((data) => {
+            // Iterate over filtered stock data for calculations
+            filteredStockData.forEach((data) => {
                 let price = data.price;
                 let action = 'Hold';
                 let sharesBought = 0;
@@ -373,11 +406,8 @@
                 totalPortfolioValues.push(totalValue);
                 activeProfits.push(totalProfit + (stocks * price));
 
-                // Use both 'Date' and 'date' as potential keys
-                const logDate = data.Date || data.date || 'Unknown';
-
                 transactionLog.push({
-                    date: logDate,  // Use the appropriate key for date
+                    date: data.date, // Use the correct key ('Date' or 'date')
                     action: action,
                     sharesBought: sharesBought,
                     sharesSold: sharesSold,
@@ -395,27 +425,62 @@
             buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
             finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
             stocksLeftDisplay.textContent = stocks;
-            stocksValueDisplay.textContent = `($${(stocks * stockData[stockData.length - 1].price).toFixed(2)})`;
+            stocksValueDisplay.textContent = `($${(stocks * filteredStockData[filteredStockData.length - 1].price).toFixed(2)})`;
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
-            updateChart(stockData, totalPortfolioValues, activeProfits);
+            updateChart(filteredStockData, totalPortfolioValues, activeProfits);
             window.transactionLog = transactionLog;
 
             // Log final portfolio values
             console.log("Final portfolio values:", totalPortfolioValues);
-        }
+            }
 
-
-        // Function to update the chart with new data
-        function updateChart(stockData, totalPortfolioValues, activeProfits) {
-            totalPortfolioChart.data.labels = stockData.map(data => data.date);
+            // Ensure the chart is updated based on the filtered data
+            function updateChart(filteredStockData, totalPortfolioValues, activeProfits) {
+            totalPortfolioChart.data.labels = filteredStockData.map(data => data.date);
             totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
             totalPortfolioChart.data.datasets[1].data = activeProfits;
             totalPortfolioChart.update();
-        }
+            }
 
-        // Function to download the CSV file
-        function downloadCSV() {
+            // Function to initialize the Chart.js chart
+            function setupChart() {
+            const ctx = document.getElementById('totalPortfolioChart').getContext('2d');
+            totalPortfolioChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], // Labels will be updated dynamically
+                    datasets: [
+                        {
+                            label: 'Total Portfolio Value',
+                            data: [],  // Empty initially, will be populated
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: true
+                        },
+                        {
+                            label: 'Active Profit',
+                            data: [],  // Empty initially, will be populated
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+            }
+
+            // Function to download the CSV file
+            function downloadCSV() {
             const csvRows = [];
             const headers = ['Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Total Cash', 'Stocks Held', 'Active Profit', 'Total Value'];
             csvRows.push(headers.join(','));
@@ -442,7 +507,7 @@
             a.setAttribute('href', url);
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
-        }
+            }
 
     </script>
 </body>
