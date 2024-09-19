@@ -153,6 +153,14 @@
             </div>            
             
             <div class="input-group">
+                <label for="closingDate">Select Closing Date:</label>
+                <select id="closingDate" class="dropdown">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+
+            
+            <div class="input-group">
                 <label for="totalInvestment">Total Investment ($): <span id="totalInvestmentValue">100000</span></label>
                 <input type="range" id="totalInvestment" class="slider" min="50000" max="200000" value="100000" step="1000">
             </div>
@@ -214,6 +222,7 @@
         const stocksValueDisplay = document.getElementById('stocksValue');
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
 
+        // Automatically load the CSV file when the page loads
         // Automatically load the CSV file when the page loads
         window.onload = function() {
             console.log("Fetching CSV file...");
@@ -298,47 +307,62 @@
                 calculateResults();
             });
 
+            // Add event listener to the closing date dropdown
+            document.getElementById('closingDate').addEventListener('change', () => {
+                calculateResults(); // Recalculate results when the closing date changes
+            });
+
             // Add event listener to the date range dropdown
             dateRangeDropdown.addEventListener('change', () => {
                 calculateResults(); // Recalculate results when date range changes
             });
         };
 
-        // Populate the date dropdown with unique dates
         function populateDateDropdown() {
             // Get unique dates from stockData
             const uniqueDates = [...new Set(stockData.map(data => data.date))];
 
-            // Clear existing options in the dropdown
+            // Clear existing options in the dropdowns
             dateRangeDropdown.innerHTML = '';
+            const closingDateDropdown = document.getElementById('closingDate');
+            closingDateDropdown.innerHTML = '';
 
-            // Add unique dates to the dropdown
+            // Add unique dates to both dropdowns
             uniqueDates.forEach(date => {
-                const option = document.createElement('option');
-                option.value = date;
-                option.textContent = date;
-                dateRangeDropdown.appendChild(option);
+                const option1 = document.createElement('option');
+                option1.value = date;
+                option1.textContent = date;
+                dateRangeDropdown.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = date;
+                option2.textContent = date;
+                closingDateDropdown.appendChild(option2);
             });
 
-            // Set the initial value to the earliest date
+            // Set the initial values
             dateRangeDropdown.value = uniqueDates[0];
+            closingDateDropdown.value = uniqueDates[uniqueDates.length - 1]; // Set the initial closing date to the last date
         }
 
         function calculateResults() {
             console.log("Calculating portfolio results...");
 
-            // Get the selected start date from the dropdown
-            const selectedDate = document.getElementById('dateRange').value;
+            // Get the selected start and closing dates from the dropdowns
+            const selectedStartDate = document.getElementById('dateRange').value;
+            const selectedClosingDate = document.getElementById('closingDate').value;
 
-            // Convert the selected date to a Date object for comparison
-            const [day, month, year] = selectedDate.split('/');
-            const selectedDateObj = new Date(year, month - 1, day);
+            // Convert the selected dates to Date objects for comparison
+            const [startDay, startMonth, startYear] = selectedStartDate.split('/');
+            const startDateObj = new Date(startYear, startMonth - 1, startDay);
+            const [endDay, endMonth, endYear] = selectedClosingDate.split('/');
+            const endDateObj = new Date(endYear, endMonth - 1, endDay);
 
-            // Filter stock data to include only dates from the selected start date
+            // Filter stock data to include only dates within the selected range
             const filteredStockData = stockData.filter(data => {
                 const [day, month, year] = data.date.split('/');
                 const dataDate = new Date(year, month - 1, day);
-                return dataDate >= selectedDateObj;
+                return dataDate >= startDateObj && dataDate <= endDateObj;
             });
 
             if (!filteredStockData.length) {
@@ -433,18 +457,18 @@
 
             // Log final portfolio values
             console.log("Final portfolio values:", totalPortfolioValues);
-            }
+        }
 
-            // Ensure the chart is updated based on the filtered data
-            function updateChart(filteredStockData, totalPortfolioValues, activeProfits) {
+        // Ensure the chart is updated based on the filtered data
+        function updateChart(filteredStockData, totalPortfolioValues, activeProfits) {
             totalPortfolioChart.data.labels = filteredStockData.map(data => data.date);
             totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
             totalPortfolioChart.data.datasets[1].data = activeProfits;
             totalPortfolioChart.update();
-            }
+        }
 
-            // Function to initialize the Chart.js chart
-            function setupChart() {
+        // Function to initialize the Chart.js chart
+        function setupChart() {
             const ctx = document.getElementById('totalPortfolioChart').getContext('2d');
             totalPortfolioChart = new Chart(ctx, {
                 type: 'line',
@@ -477,10 +501,10 @@
                     }
                 }
             });
-            }
+        }
 
-            // Function to download the CSV file
-            function downloadCSV() {
+        // Function to download the CSV file
+        function downloadCSV() {
             const csvRows = [];
             const headers = ['Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Total Cash', 'Stocks Held', 'Active Profit', 'Total Value'];
             csvRows.push(headers.join(','));
@@ -507,7 +531,8 @@
             a.setAttribute('href', url);
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
-            }
+        }
+
 
     </script>
 </body>
