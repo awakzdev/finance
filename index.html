@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Strategy Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            direction: ltr; /* Ensure body content direction is LTR */
+            text-align: left; /* Align text to the left */
+        }
+
+        .header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 20px;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        button {
+            margin-left: auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50; /* Green background */
+            color: white; /* White text */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center; /* Center button text */
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        .main-content {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        .left-section {
+            flex: 1;
+            max-width: 300px;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        .right-section {
+            flex: 2;
+            padding-left: 20px;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        .slider {
+            width: 100%;
+            margin-top: 5px;
+            direction: ltr; /* Ensure sliders are LTR */
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            text-align: left; /* Ensure text aligns to the left */
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Download CSV Button -->
+    <div class="header">
+        <h1>Investment Strategy Comparison</h1>
+        <button id="downloadCSV" onclick="downloadCSV()">Download CSV</button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Left Section: Controls and Results -->
+        <div class="left-section">
+            <!-- Sliders and Controls -->
+            <div class="input-group">
+                <label for="totalInvestment">Total Investment ($): <span id="totalInvestmentValue">100000</span></label>
+                <input type="range" id="totalInvestment" class="slider" min="50000" max="200000" value="100000" step="1000">
+            </div>
+            <div class="input-group">
+                <label for="split">Investment vs. Cash Split (%): <span id="splitValue">50%</span></label>
+                <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
+            </div>
+            <div class="input-group">
+                <label for="buyThreshold">Buy Threshold (% drop): <span id="buyThresholdValue">5%</span></label>
+                <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
+            </div>
+            <div class="input-group">
+                <label for="sellThreshold">Sell Threshold (% increase): <span id="sellThresholdValue">10%</span></label>
+                <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
+            </div>
+            <div class="input-group">
+                <label for="buyAmountPercent">Buy Percentage from Cash (%): <span id="buyAmountPercentValue">10%</span></label>
+                <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
+            </div>
+
+            <!-- Results Section -->
+            <div class="results">
+                <h2>Results</h2>
+                <p><strong>Total Investment:</strong> $<span id="totalValueDisplay">100000</span></p>
+                <p><strong>Buy Amount on Each Purchase:</strong> $<span id="buyAmountDisplay">Calculating...</span></p>
+                <p><strong>Available Money for Active Investment:</strong> $<span id="availableMoneyDisplay">Calculating...</span></p>
+                <p><strong>Stocks Left:</strong> <span id="stocksLeft">Calculating...</span> <span id="stocksValue">($Calculating...)</span></p>
+                <p><strong>Final Portfolio Value (Active + Passive):</strong> $<span id="finalTotalValue">Calculating...</span></p>
+            </div>
+        </div>
+
+        <!-- Right Section: Graph -->
+        <div class="right-section">
+            <canvas id="totalPortfolioChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let stockData = [];
+        let totalPortfolioChart;  // Chart.js instance for the total portfolio
+
+        // Select elements
+        const totalInvestmentSlider = document.getElementById('totalInvestment');
+        const splitSlider = document.getElementById('split');
+        const buyThresholdSlider = document.getElementById('buyThreshold');
+        const sellThresholdSlider = document.getElementById('sellThreshold');
+        const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
+        
+        const totalInvestmentValue = document.getElementById('totalInvestmentValue');
+        const splitValue = document.getElementById('splitValue');
+        const buyThresholdValue = document.getElementById('buyThresholdValue');
+        const sellThresholdValue = document.getElementById('sellThresholdValue');
+        const buyAmountPercentValue = document.getElementById('buyAmountPercentValue');
+        const totalValueDisplay = document.getElementById('totalValueDisplay');
+        const buyAmountDisplay = document.getElementById('buyAmountDisplay');
+        const finalTotalValueDisplay = document.getElementById('finalTotalValue');
+        const stocksLeftDisplay = document.getElementById('stocksLeft');
+        const stocksValueDisplay = document.getElementById('stocksValue');
+        const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
+
+        // Automatically load the CSV file when the page loads
+        window.onload = function() {
+            console.log("Fetching CSV file...");
+            fetch('https://raw.githubusercontent.com/awakzdev/test/main/qld_stock_data.csv')
+            .then(response => {
+                console.log("CSV file fetched successfully.");
+                return response.text();
+            })
+            .then(csvText => {
+                console.log("Parsing CSV data...");
+                Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: true,
+                    complete: function(results) {
+                        console.log("CSV data parsed successfully.");
+                        
+                        // Check if the 'Date' or 'date' key exists in the parsed data
+                        const dateKey = results.data.length > 0 && ('Date' in results.data[0]) ? 'Date' : 'date';
+                        const closePriceKey = results.data.length > 0 && ('Adj Close' in results.data[0]) ? 'Adj Close' : 'Close'; // Adjust as needed
+
+                        if (!dateKey || !closePriceKey) {
+                            console.error("CSV data is missing required columns ('Date' and 'Adj Close').");
+                            finalTotalValueDisplay.textContent = 'Invalid data: Missing columns';
+                            return;
+                        }
+
+                        // Filter out invalid rows where price is NaN or undefined
+                        stockData = results.data
+                            .filter(row => row[closePriceKey] !== undefined && !isNaN(row[closePriceKey]))
+                            .map(row => ({
+                                date: row[dateKey],  // Use the correct key ('Date' or 'date')
+                                price: row[closePriceKey]
+                            }));
+
+                        console.log("Filtered and mapped stock data:", stockData);
+                        console.log("Stock data length:", stockData.length);
+
+                        if (stockData.length > 0) {
+                            console.log("Stock data is valid. Setting up the chart...");
+                            setupChart(); // Initialize the chart
+                            console.log("Chart setup complete. Calculating results...");
+                            calculateResults(); // Calculate results after setting up everything
+                        } else {
+                            console.error("Invalid data: No valid stock data found.");
+                            finalTotalValueDisplay.textContent = 'Invalid data';
+                        }
+                    },
+                    error: function(error) {
+                        console.error("Error parsing CSV data:", error);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching CSV file:", error);
+            });
+
+            // Add event listeners to sliders here
+            totalInvestmentSlider.addEventListener('input', () => {
+                totalInvestmentValue.textContent = totalInvestmentSlider.value;
+                calculateResults();
+            });
+
+            splitSlider.addEventListener('input', () => {
+                splitValue.textContent = `${splitSlider.value}%`;
+                calculateResults();
+            });
+
+            buyThresholdSlider.addEventListener('input', () => {
+                buyThresholdValue.textContent = `${buyThresholdSlider.value}%`;
+                calculateResults();
+            });
+
+            sellThresholdSlider.addEventListener('input', () => {
+                sellThresholdValue.textContent = `${sellThresholdSlider.value}%`;
+                calculateResults();
+            });
+
+            buyAmountPercentSlider.addEventListener('input', () => {
+                buyAmountPercentValue.textContent = `${buyAmountPercentSlider.value}%`;
+                calculateResults();
+            });
+        };
+
+
+
+        // Set up the Chart.js chart
+        function setupChart() {
+            console.log("Initializing Chart.js...");
+            const ctx = document.getElementById('totalPortfolioChart').getContext('2d');
+            try {
+                totalPortfolioChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [], // Labels will be updated dynamically
+                        datasets: [
+                            {
+                                label: 'Total Portfolio Value',
+                                data: [],  // Empty initially, will be populated
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                                fill: true
+                            },
+                            {
+                                label: 'Active Profit',
+                                data: [],  // Empty initially, will be populated
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+                console.log("Chart initialized successfully.");
+            } catch (error) {
+                console.error("Error initializing Chart.js:", error);
+            }
+        }
+
+        // Function to update the chart with new data
+        function updateChart(stockData, totalPortfolioValues, activeProfits) {
+            console.log("Updating chart data...");
+            try {
+                totalPortfolioChart.data.labels = stockData.map(data => data.date);
+                totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
+                totalPortfolioChart.data.datasets[1].data = activeProfits;
+                totalPortfolioChart.update();
+                console.log("Chart updated successfully.");
+            } catch (error) {
+                console.error("Error updating chart:", error);
+            }
+        }
+
+        function calculateResults() {
+            console.log("Calculating portfolio results...");
+            if (!stockData.length) {
+                console.error("No stock data available for calculation.");
+                finalTotalValueDisplay.textContent = 'No data';
+                return;
+            }
+
+            // Log the stock data being used for calculations
+            console.log("Stock data for calculations:", stockData);
+
+            let totalPortfolioValue = parseInt(totalInvestmentSlider.value);
+            let cashPercent = parseInt(splitSlider.value) / 100;
+            let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
+            let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
+            let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
+
+            // Split the total investment into cash and initial passive investment
+            let initialCash = totalPortfolioValue * cashPercent;  // Initial cash available for active trading
+            let cash = initialCash;
+            let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Initial passive portfolio value
+            let passiveShares = initialPassiveInvestment / stockData[0].price; // Equivalent passive investment shares
+            let stocks = 0;
+            let buyPrice = 0;
+            let totalProfit = 0;
+            const totalPortfolioValues = [];
+            const activeProfits = [];
+            const transactionLog = [];
+
+            stockData.forEach((data) => {
+                let price = data.price;
+                let action = 'Hold';
+                let sharesBought = 0;
+                let sharesSold = 0;
+
+                // Active trading logic: buy if price drops and enough cash is available
+                if (buyPrice === 0 || price <= buyPrice * (1 - buyThreshold)) {
+                    let buyAmount = cash * buyAmountPercent;
+                    let sharesToBuy = Math.floor(buyAmount / price);
+                    if (sharesToBuy > 0 && cash >= sharesToBuy * price) {
+                        cash -= sharesToBuy * price;
+                        stocks += sharesToBuy;
+                        buyPrice = price;
+                        action = 'Buy';
+                        sharesBought = sharesToBuy;
+                    }
+                }
+
+                // Sell if the price increases by the sell threshold from the last buy
+                if (buyPrice > 0 && price >= buyPrice * (1 + sellThreshold)) {
+                    let saleProceeds = stocks * price;
+                    totalProfit += (saleProceeds - (stocks * buyPrice));
+                    cash += saleProceeds;
+                    sharesSold = stocks;
+                    stocks = 0;
+                    buyPrice = 0;
+                    action = 'Sell';
+                }
+
+                const activeInvestmentValue = cash - initialCash + totalProfit + (stocks * price);
+                const passivePortfolioValue = passiveShares * price;
+                const totalValue = activeInvestmentValue + passivePortfolioValue;
+                totalPortfolioValues.push(totalValue);
+                activeProfits.push(totalProfit + (stocks * price));
+
+                transactionLog.push({
+                    date: data.Date,
+                    action: action,
+                    sharesBought: sharesBought,
+                    sharesSold: sharesSold,
+                    price: price,
+                    totalCash: cash.toFixed(2),
+                    stocksHeld: stocks,
+                    activeProfit: totalProfit.toFixed(2),
+                    totalValue: totalValue.toFixed(2)
+                });
+            });
+
+            console.log("Calculation complete. Final portfolio value:", totalPortfolioValues[totalPortfolioValues.length - 1]);
+
+            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1];
+            buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
+            finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
+            stocksLeftDisplay.textContent = stocks;
+            stocksValueDisplay.textContent = `($${(stocks * stockData[stockData.length - 1].price).toFixed(2)})`;
+            availableMoneyDisplay.textContent = cash.toFixed(2);
+
+            updateChart(stockData, totalPortfolioValues, activeProfits);
+            window.transactionLog = transactionLog;
+
+            // Log final portfolio values
+            console.log("Final portfolio values:", totalPortfolioValues);
+        }
+
+
+        // Function to update the chart with new data
+        function updateChart(stockData, totalPortfolioValues, activeProfits) {
+            totalPortfolioChart.data.labels = stockData.map(data => data.date);
+            totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
+            totalPortfolioChart.data.datasets[1].data = activeProfits;
+            totalPortfolioChart.update();
+        }
+
+        // Function to download the CSV file
+        function downloadCSV() {
+            const csvRows = [];
+            const headers = ['Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Total Cash', 'Stocks Held', 'Active Profit', 'Total Value'];
+            csvRows.push(headers.join(','));
+
+            window.transactionLog.forEach(log => {
+                const row = [
+                    log.date,
+                    log.action,
+                    log.sharesBought,
+                    log.sharesSold,
+                    log.price,
+                    log.totalCash,
+                    log.stocksHeld,
+                    log.activeProfit,
+                    log.totalValue
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'investment_strategy_log.csv');
+            a.click();
+        }
+
+    </script>
+</body>
+</html>
