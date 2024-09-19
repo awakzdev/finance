@@ -88,8 +88,9 @@
         }
 
         canvas {
-            width: 100%;
-            height: 400px;
+            width: auto;
+            height: auto; /* Maintain aspect ratio */
+            max-height: 800px; /* Set a maximum height */
         }
     </style>
 </head>
@@ -372,8 +373,11 @@
                 totalPortfolioValues.push(totalValue);
                 activeProfits.push(totalProfit + (stocks * price));
 
+                // Use both 'Date' and 'date' as potential keys
+                const logDate = data.Date || data.date || 'Unknown';
+
                 transactionLog.push({
-                    date: data.Date,
+                    date: logDate,  // Use the appropriate key for date
                     action: action,
                     sharesBought: sharesBought,
                     sharesSold: sharesSold,
