@@ -146,7 +146,7 @@
             <!-- Sliders and Controls -->
 
             <div class="input-group">
-                <label for="dateRange">Select Date Range:</label>
+                <label for="dateRange">Select Opening Range:</label>
                 <select id="dateRange" class="dropdown">
                     <!-- Options will be populated dynamically -->
                 </select>
@@ -223,7 +223,6 @@
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
 
         // Automatically load the CSV file when the page loads
-        // Automatically load the CSV file when the page loads
         window.onload = function() {
             console.log("Fetching CSV file...");
             fetch('https://raw.githubusercontent.com/awakzdev/test/main/qld_stock_data.csv')
@@ -242,9 +241,10 @@
                         // Check if the 'Date' or 'date' key exists in the parsed data
                         const dateKey = results.data.length > 0 && ('Date' in results.data[0]) ? 'Date' : 'date';
                         const closePriceKey = results.data.length > 0 && ('Adj Close' in results.data[0]) ? 'Adj Close' : 'Close'; // Adjust as needed
+                        const openPriceKey = 'Open'; // Assuming Open price is available
 
-                        if (!dateKey || !closePriceKey) {
-                            console.error("CSV data is missing required columns ('Date' and 'Adj Close').");
+                        if (!dateKey || !closePriceKey || !openPriceKey) {
+                            console.error("CSV data is missing required columns ('Date', 'Adj Close', or 'Open').");
                             finalTotalValueDisplay.textContent = 'Invalid data: Missing columns';
                             return;
                         }
@@ -254,7 +254,8 @@
                             .filter(row => row[closePriceKey] !== undefined && !isNaN(row[closePriceKey]))
                             .map(row => ({
                                 date: row[dateKey],  // Use the correct key ('Date' or 'date')
-                                price: row[closePriceKey]
+                                price: row[closePriceKey],
+                                openPrice: row[openPriceKey]  // Include Open price
                             }));
 
                         console.log("Filtered and mapped stock data:", stockData);
@@ -384,10 +385,13 @@
             let initialCash = totalPortfolioValue * cashPercent; // Initial cash available for active trading
             let cash = initialCash;
             let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Initial passive portfolio value
-            let passiveShares = initialPassiveInvestment / filteredStockData[0].price; // Equivalent passive investment shares
+            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice; // Equivalent passive investment shares based on Open price
+            let passiveInvestmentPrice = filteredStockData[0].openPrice; // Store the price at which passive stocks were purchased
             let stocks = 0;
             let buyPrice = 0;
             let totalProfit = 0;
+            let highestPeak = filteredStockData[0].price; // Track the highest peak price
+            let activeCashInvested = 0; // Total cash invested in active investments
 
             const totalPortfolioValues = [];
             const activeProfits = [];
@@ -402,7 +406,8 @@
 
                 // Active trading logic: buy if price drops and enough cash is available
                 if (buyPrice === 0 || price <= buyPrice * (1 - buyThreshold)) {
-                    let buyAmount = cash * buyAmountPercent;
+                    // Modify this line to use the initial cash for each purchase calculation
+                    let buyAmount = initialCash * buyAmountPercent;
                     let sharesToBuy = Math.floor(buyAmount / price);
                     if (sharesToBuy > 0 && cash >= sharesToBuy * price) {
                         cash -= sharesToBuy * price;
@@ -410,6 +415,7 @@
                         buyPrice = price;
                         action = 'Buy';
                         sharesBought = sharesToBuy;
+                        activeCashInvested += sharesToBuy * price; // Add to the active cash invested
                     }
                 }
 
@@ -424,11 +430,21 @@
                     action = 'Sell';
                 }
 
+                // Update the highest peak and the down percentage
+                if (price > highestPeak) {
+                    highestPeak = price;
+                }
+                const downPercentageFromPeak = ((highestPeak - price) / highestPeak) * 100;
+
+                // Calculate values for active and passive portfolios
                 const activeInvestmentValue = cash - initialCash + totalProfit + (stocks * price);
                 const passivePortfolioValue = passiveShares * price;
                 const totalValue = activeInvestmentValue + passivePortfolioValue;
+                const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
+                const activeProfit = totalProfit + (stocks * price);
+
                 totalPortfolioValues.push(totalValue);
-                activeProfits.push(totalProfit + (stocks * price));
+                activeProfits.push(activeProfit);
 
                 transactionLog.push({
                     date: data.date, // Use the correct key ('Date' or 'date')
@@ -436,10 +452,20 @@
                     sharesBought: sharesBought,
                     sharesSold: sharesSold,
                     price: price,
+                    openPrice: data.openPrice, // Add Open price to the log
                     totalCash: cash.toFixed(2),
                     stocksHeld: stocks,
-                    activeProfit: totalProfit.toFixed(2),
-                    totalValue: totalValue.toFixed(2)
+                    passiveShares: passiveShares, // Add passive shares to the log
+                    totalShares: stocks + passiveShares, // Add total shares to the log
+                    highestPeak: highestPeak, // Add the highest peak to the log
+                    downPercentageFromPeak: downPercentageFromPeak.toFixed(2), // Add down percentage from peak to the log
+                    passiveInvestmentPrice: passiveInvestmentPrice, // Add the price passive stocks were purchased
+                    passiveProfit: passiveProfit.toFixed(2), // Add passive investment profit
+                    activeProfit: activeProfit.toFixed(2), // Add active investment profit
+                    activeCashInvested: activeCashInvested.toFixed(2), // Add active cash invested
+                    totalValue: totalValue.toFixed(2),
+                    totalAmount: (cash + passivePortfolioValue).toFixed(2), // Add total amount of money (active + passive)
+                    valuePassive: (passiveShares * price).toFixed(2) // Value passive based on open price and current price
                 });
             });
 
@@ -506,7 +532,12 @@
         // Function to download the CSV file
         function downloadCSV() {
             const csvRows = [];
-            const headers = ['Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Total Cash', 'Stocks Held', 'Active Profit', 'Total Value'];
+            const headers = [
+                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Open Price', 
+                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak', 
+                'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit', 
+                'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
+            ];
             csvRows.push(headers.join(','));
 
             window.transactionLog.forEach(log => {
@@ -516,10 +547,20 @@
                     log.sharesBought,
                     log.sharesSold,
                     log.price,
+                    log.openPrice,
                     log.totalCash,
                     log.stocksHeld,
+                    log.passiveShares,
+                    log.totalShares,
+                    log.highestPeak,
+                    log.downPercentageFromPeak,
+                    log.passiveInvestmentPrice,
+                    log.passiveProfit,
                     log.activeProfit,
-                    log.totalValue
+                    log.activeCashInvested,
+                    log.totalValue,
+                    log.totalAmount,
+                    log.valuePassive
                 ];
                 csvRows.push(row.join(','));
             });
@@ -532,6 +573,7 @@
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
         }
+
 
 
     </script>
