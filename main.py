@@ -3,7 +3,10 @@ import requests
 import base64
 import yfinance as yf
 from datetime import datetime
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 github_token = os.getenv('TOKEN')
 repo = 'awakzdev/finance'
 branch = 'main'
@@ -13,7 +16,7 @@ file_path_in_repo = 'qld_stock_data.csv'
 today_date = datetime.now().strftime('%Y-%m-%d')
 
 # Step 2: Fetch historical data for QLD (NASDAQ x2)
-data = yf.download('QLD', start='2019-07-26', end=today_date)
+data = yf.download('QQQ', start='2019-07-26', end=today_date)
 
 # Convert the index (dates) to the desired format (day/month/year)
 data.index = data.index.strftime('%d/%m/%Y')
