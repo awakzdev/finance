@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investment Strategy Comparison</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <!-- Include Moment.js -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+    <!-- Include Chart.js Moment.js adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+    <!-- Include Papa Parse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+
     <style>
+        /* [Your existing CSS styles remain unchanged] */
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
@@ -22,36 +31,14 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             width: 100%;
-            padding: 12px 15px; /* Increase padding for better text positioning */
+            padding: 12px 15px;
             font-size: 16px;
-            line-height: 1.6; /* Increase line-height to center text vertically */
+            line-height: 1.6;
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: #f9f9f9;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23999" d="M7 10l5 5 5-5z"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 12px;
             cursor: pointer;
             transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        /* Set a specific height */
-        .dropdown {
-            height: 45px; /* Set a specific height to ensure consistency */
-        }
-
-        /* Style on hover */
-        .dropdown:hover {
-            border-color: #888;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Style on focus */
-        .dropdown:focus {
-            border-color: #4CAF50;
-            outline: none;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
         }
 
         .header {
@@ -59,62 +46,58 @@
             justify-content: flex-start;
             align-items: center;
             margin-bottom: 20px;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         button {
             margin-left: auto;
             padding: 10px 20px;
             font-size: 16px;
-            background-color: #4CAF50; /* Green background */
-            color: white; /* White text */
+            background-color: #4CAF50;
+            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
-            text-align: center; /* Center button text */
-        }
-
-        button:hover {
-            background-color: #45a049; /* Darker green on hover */
+            text-align: center;
         }
 
         .main-content {
             display: flex;
             justify-content: space-between;
             flex-direction: row;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         .left-section {
             flex: 1;
             max-width: 300px;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         .right-section {
             flex: 2;
             padding-left: 20px;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         .input-group {
             margin-bottom: 20px;
             display: flex;
             flex-direction: column;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         .input-group label {
             margin-bottom: 5px;
             font-weight: bold;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         .slider {
             width: 100%;
             margin-top: 5px;
-            direction: ltr; /* Ensure sliders are LTR */
+            direction: ltr;
         }
 
         .results {
@@ -122,13 +105,13 @@
             padding: 20px;
             background-color: #f4f4f4;
             border-radius: 5px;
-            text-align: left; /* Ensure text aligns to the left */
+            text-align: left;
         }
 
         canvas {
             width: auto;
-            height: auto; /* Maintain aspect ratio */
-            max-height: 800px; /* Set a maximum height */
+            height: auto;
+            max-height: 800px;
         }
     </style>
 </head>
@@ -144,14 +127,13 @@
         <!-- Left Section: Controls and Results -->
         <div class="left-section">
             <!-- Sliders and Controls -->
-
             <div class="input-group">
                 <label for="dateRange">Select Opening Range:</label>
                 <select id="dateRange" class="dropdown">
                     <!-- Options will be populated dynamically -->
                 </select>
             </div>            
-            
+
             <div class="input-group">
                 <label for="closingDate">Select Closing Date:</label>
                 <select id="closingDate" class="dropdown">
@@ -159,7 +141,6 @@
                 </select>
             </div>
 
-            
             <div class="input-group">
                 <label for="totalInvestment">Total Investment ($): <span id="totalInvestmentValue">100000</span></label>
                 <input type="range" id="totalInvestment" class="slider" min="50000" max="200000" value="100000" step="1000">
@@ -199,8 +180,11 @@
     </div>
 
     <script>
+        // JavaScript code
         let stockData = [];
-        let totalPortfolioChart;  // Chart.js instance for the total portfolio
+        let ndxStockData = [];
+        let totalPortfolioChart;
+        let datasetsLoaded = 0;
 
         // Select elements
         const totalInvestmentSlider = document.getElementById('totalInvestment');
@@ -222,64 +206,28 @@
         const stocksValueDisplay = document.getElementById('stocksValue');
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
 
-        // Automatically load the CSV file when the page loads
+        // Automatically load the CSV files when the page loads
         window.onload = function() {
-            console.log("Fetching CSV file...");
+            console.log("Fetching CSV files...");
+
+            // Fetch QLD data
             fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
-            .then(response => {
-                console.log("CSV file fetched successfully.");
-                return response.text();
-            })
+            .then(response => response.text())
             .then(csvText => {
-                console.log("Parsing CSV data...");
-                Papa.parse(csvText, {
-                    header: true,
-                    dynamicTyping: true,
-                    complete: function(results) {
-                        console.log("CSV data parsed successfully.");
-                        
-                        // Check if the 'Date' or 'date' key exists in the parsed data
-                        const dateKey = results.data.length > 0 && ('Date' in results.data[0]) ? 'Date' : 'date';
-                        const closePriceKey = 'Close'; // Use 'Close' field directly
-                        const openPriceKey = 'Open'; // Assuming Open price is available
-
-                        if (!dateKey || !closePriceKey || !openPriceKey) {
-                            console.error("CSV data is missing required columns ('Date', 'Adj Close', or 'Open').");
-                            finalTotalValueDisplay.textContent = 'Invalid data: Missing columns';
-                            return;
-                        }
-
-                        // Filter out invalid rows where price is NaN or undefined
-                        stockData = results.data
-                            .filter(row => row[closePriceKey] !== undefined && !isNaN(row[closePriceKey]))
-                            .map(row => ({
-                                date: row[dateKey],  // Use the correct key ('Date' or 'date')
-                                price: row[closePriceKey],
-                                openPrice: row[openPriceKey]  // Include Open price
-                            }));
-
-                        console.log("Filtered and mapped stock data:", stockData);
-                        console.log("Stock data length:", stockData.length);
-
-                        if (stockData.length > 0) {
-                            console.log("Stock data is valid. Setting up the chart...");
-                            setupChart(); // Initialize the chart
-                            console.log("Chart setup complete. Populating date dropdown...");
-                            populateDateDropdown(); // Populate the date dropdown
-                            console.log("Date dropdown populated. Calculating results...");
-                            calculateResults(); // Calculate results after setting up everything
-                        } else {
-                            console.error("Invalid data: No valid stock data found.");
-                            finalTotalValueDisplay.textContent = 'Invalid data';
-                        }
-                    },
-                    error: function(error) {
-                        console.error("Error parsing CSV data:", error);
-                    }
-                });
+                parseCSVData(csvText, 'QLD');
             })
             .catch(error => {
-                console.error("Error fetching CSV file:", error);
+                console.error("Error fetching QLD CSV file:", error);
+            });
+
+            // Fetch NDX data
+            fetch('https://raw.githubusercontent.com/awakzdev/finance/main/^ndx_stock_data.csv')
+            .then(response => response.text())
+            .then(csvText => {
+                parseCSVData(csvText, 'NDX');
+            })
+            .catch(error => {
+                console.error("Error fetching NDX CSV file:", error);
             });
 
             // Add event listeners to sliders here
@@ -319,9 +267,85 @@
             });
         };
 
+        function parseCSVData(csvText, type) {
+            Papa.parse(csvText, {
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    console.log(`CSV data parsed successfully for ${type}.`);
+
+                    const dateKey = results.data.length > 0 && ('Date' in results.data[0]) ? 'Date' : 'date';
+                    const closePriceKey = 'Close';
+                    const openPriceKey = 'Open';
+
+                    if (!dateKey || !closePriceKey || !openPriceKey) {
+                        console.error(`CSV data for ${type} is missing required columns ('Date', 'Close', or 'Open').`);
+                        finalTotalValueDisplay.textContent = 'Invalid data: Missing columns';
+                        return;
+                    }
+
+                    const parsedData = results.data
+                        .filter(row => {
+                            const dateStr = row[dateKey];
+                            const price = row[closePriceKey];
+                            const openPrice = row[openPriceKey];
+
+                            if (!dateStr || isNaN(price) || isNaN(openPrice)) {
+                                console.warn(`Skipping invalid row in ${type} data:`, row);
+                                return false;
+                            }
+                            return true;
+                        })
+                        .map(row => {
+                            const dateStr = row[dateKey].trim();
+                            const [dayStr, monthStr, yearStr] = dateStr.split('/');
+                            const day = parseInt(dayStr);
+                            const month = parseInt(monthStr);
+                            const year = parseInt(yearStr);
+
+                            return {
+                                date: dateStr,
+                                price: row[closePriceKey],
+                                openPrice: row[openPriceKey],
+                                dateObj: new Date(year, month - 1, day) // Store date object for easier comparison
+                            };
+                        });
+
+                    if (parsedData.length > 0) {
+                        if (type === 'QLD') {
+                            stockData = parsedData;
+                            console.log("QLD stock data loaded. Total entries:", stockData.length);
+                        } else if (type === 'NDX') {
+                            ndxStockData = parsedData;
+                            console.log("NDX stock data loaded. Total entries:", ndxStockData.length);
+                        }
+
+                        datasetsLoaded++;
+                        if (datasetsLoaded === 2) {
+                            // Both datasets are loaded, proceed to setup
+                            populateDateDropdown();
+                            setupChart();
+                            calculateResults();
+                        }
+                    } else {
+                        console.error(`Invalid data: No valid stock data found for ${type}.`);
+                        finalTotalValueDisplay.textContent = 'Invalid data';
+                    }
+                },
+                error: function(error) {
+                    console.error(`Error parsing CSV data for ${type}:`, error);
+                }
+            });
+        }
+
         function populateDateDropdown() {
-            // Get unique dates from stockData
-            const uniqueDates = [...new Set(stockData.map(data => data.date))];
+            // Combine dates from both datasets
+            const combinedDates = [...stockData, ...ndxStockData].map(data => data.dateObj.getTime());
+            const uniqueDatesSet = new Set(combinedDates);
+            const uniqueDates = Array.from(uniqueDatesSet).map(time => new Date(time));
+
+            // Sort the dates in ascending order
+            uniqueDates.sort((a, b) => a - b);
 
             // Clear existing options in the dropdowns
             dateRangeDropdown.innerHTML = '';
@@ -329,21 +353,23 @@
             closingDateDropdown.innerHTML = '';
 
             // Add unique dates to both dropdowns
-            uniqueDates.forEach(date => {
+            uniqueDates.forEach(dateObj => {
+                const dateStr = formatDate(dateObj);
+
                 const option1 = document.createElement('option');
-                option1.value = date;
-                option1.textContent = date;
+                option1.value = dateStr;
+                option1.textContent = dateStr;
                 dateRangeDropdown.appendChild(option1);
 
                 const option2 = document.createElement('option');
-                option2.value = date;
-                option2.textContent = date;
+                option2.value = dateStr;
+                option2.textContent = dateStr;
                 closingDateDropdown.appendChild(option2);
             });
 
             // Set the initial values
-            dateRangeDropdown.value = uniqueDates[0];
-            closingDateDropdown.value = uniqueDates[uniqueDates.length - 1]; // Set the initial closing date to the last date
+            dateRangeDropdown.value = formatDate(uniqueDates[0]);
+            closingDateDropdown.value = formatDate(uniqueDates[uniqueDates.length - 1]); // Set the initial closing date to the last date
         }
 
         function calculateResults() {
@@ -354,46 +380,51 @@
             const selectedClosingDate = document.getElementById('closingDate').value;
 
             // Convert the selected dates to Date objects for comparison
-            const [startDay, startMonth, startYear] = selectedStartDate.split('/');
-            const startDateObj = new Date(startYear, startMonth - 1, startDay);
-            const [endDay, endMonth, endYear] = selectedClosingDate.split('/');
-            const endDateObj = new Date(endYear, endMonth - 1, endDay);
+            const startDateObj = parseDate(selectedStartDate);
+            const endDateObj = parseDate(selectedClosingDate);
+
+            console.log("Selected start date:", startDateObj);
+            console.log("Selected end date:", endDateObj);
 
             // Filter stock data to include only dates within the selected range
             const filteredStockData = stockData.filter(data => {
-                const [day, month, year] = data.date.split('/');
-                const dataDate = new Date(year, month - 1, day);
-                return dataDate >= startDateObj && dataDate <= endDateObj;
+                const isInDateRange = data.dateObj >= startDateObj && data.dateObj <= endDateObj;
+                return isInDateRange;
             });
 
-            if (!filteredStockData.length) {
+            const filteredNDXStockData = ndxStockData.filter(data => {
+                const isInDateRange = data.dateObj >= startDateObj && data.dateObj <= endDateObj;
+                return isInDateRange;
+            });
+
+            console.log("Filtered QLD data dates:", filteredStockData.map(d => d.date));
+            console.log("Filtered NDX data dates:", filteredNDXStockData.map(d => d.date));
+
+            if (!filteredStockData.length || !filteredNDXStockData.length) {
                 console.error("No stock data available for the selected date range.");
                 finalTotalValueDisplay.textContent = 'No data';
-                updateChart([], [], []);  // Clear the chart if no data
+                updateChart([], [], []);
                 return;
             }
 
-            console.log("Filtered stock data for calculations:", filteredStockData);
-
-            // Initialize values for the calculation
+            // Initialize variables
             let totalPortfolioValue = parseInt(totalInvestmentSlider.value);
             let cashPercent = parseInt(splitSlider.value) / 100;
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
             let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
             let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
 
-            // Initialize values for the calculation
-            let initialCash = totalPortfolioValue * cashPercent; // Initial cash available for active trading
+            let initialCash = totalPortfolioValue * cashPercent; // Cash allocated for active trading
             let cash = initialCash;
-            let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Initial passive portfolio value
-            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice; // Equivalent passive investment shares based on Open price
-            let passiveInvestmentPrice = filteredStockData[0].openPrice; // Store the price at which passive stocks were purchased
-            let activeInvestments = []; // Array to track each active investment separately
+            let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Passive investment
+            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+            let passiveInvestmentPrice = filteredStockData[0].openPrice;
+            let activeInvestments = [];
             let totalProfit = 0;
-            let highestPeak = filteredStockData[0].price; // Initialize the highest peak as the closing price of the first day
-            let currentPeak = highestPeak; // Track current peak after the first purchase
-            let bought = false; // Track if an initial buy has occurred
-            let activeCashInvested = 0; // Total cash invested in active investments
+            let highestPeak = filteredStockData[0].price;
+            let currentPeak = highestPeak;
+            let bought = false;
+            let activeCashInvested = 0;
 
             const totalPortfolioValues = [];
             const activeProfits = [];
@@ -401,29 +432,26 @@
 
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
-                let price = data.price; // This is the closing price
+                const dataDate = data.dateObj;
+
+                let price = data.price; // Closing price
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
 
-                // Debugging logs
-                console.log(`Date: ${data.date}, Price: ${price}, Current Peak: ${currentPeak}`);
-
-                // Update the highest peak using the closing price for the first buy only
+                // Update the highest peak
                 if (!bought && price > highestPeak) {
                     highestPeak = price;
-                    currentPeak = price; // Set current peak as the new highest
-                    console.log(`New Highest Peak: ${highestPeak}`);
+                    currentPeak = price;
                 }
 
-                // Calculate the percentage drop from the current peak
+                // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
 
-                // Active trading logic: avoid buying on the first day
-                if (index !== 0) { // Skip buying on the first day
+                // Active trading logic
+                if (index !== 0) { // Skip first day
                     // Buy logic
                     if (!bought) { // Initial buy
-                        // Buy if the price has dropped 5% from the highest peak
                         if (price <= highestPeak * (1 - buyThreshold)) {
                             // Perform the buy
                             let buyAmount = cash * buyAmountPercent;
@@ -436,22 +464,18 @@
                                 sharesBought = sharesToBuy;
                                 activeCashInvested += sharesToBuy * price;
 
-                                // Set the flag to indicate the initial buy has occurred
                                 bought = true;
-
-                                // Update currentPeak to the price of the initial buy
                                 currentPeak = price;
                             }
                         }
                     } else { // Subsequent buys
-                        // Update the current peak if the price has increased
+                        // Update current peak
                         if (price > currentPeak) {
                             currentPeak = price;
                         }
 
-                        // Buy if the price drops 5% from the current peak
-                        if (dropFromCurrentPeak >= (buyThreshold * 100)) { // Adjust threshold check
-                            // Perform the buy
+                        // Buy if price drops by buyThreshold
+                        if (dropFromCurrentPeak >= (buyThreshold * 100)) {
                             let buyAmount = cash * buyAmountPercent;
                             let sharesToBuy = Math.floor(buyAmount / price);
 
@@ -462,39 +486,37 @@
                                 sharesBought = sharesToBuy;
                                 activeCashInvested += sharesToBuy * price;
 
-                                // After the buy, reset currentPeak to the price of this purchase
                                 currentPeak = price;
                             }
                         }
                     }
 
-                    // Sell logic: check each batch of shares for sell condition (10% increase)
+                    // Sell logic
                     activeInvestments = activeInvestments.map(investment => {
-                        // Check if the price has increased by 10% from the batch's buy price
                         if (price >= investment.buyPrice * (1 + sellThreshold)) {
-                            // Sell only the shares from this specific batch
+                            // Sell the shares
                             let saleProceeds = investment.shares * price;
                             totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
                             cash += saleProceeds;
-                            sharesSold = investment.shares; // Track the shares sold in this transaction
+                            sharesSold = investment.shares;
                             action = 'Sell';
-                            
-                            // Mark these shares as sold by setting the shares to 0 for this batch
+
+                            // Mark shares as sold
                             return { ...investment, shares: 0 };
                         }
                         return investment;
-                    }).filter(investment => investment.shares > 0); // Keep only investments with shares > 0
+                    }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
                 }
 
-                // Calculate values for active and passive portfolios
+                // Calculate portfolio values
                 const activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 const passivePortfolioValue = passiveShares * price;
                 const totalValue = activeInvestmentValue + passivePortfolioValue;
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
-                totalPortfolioValues.push(totalValue);
-                activeProfits.push(activeProfit);
+                totalPortfolioValues.push({ x: dataDate, y: totalValue });
+                activeProfits.push({ x: dataDate, y: activeProfit });
 
                 transactionLog.push({
                     date: data.date,
@@ -519,62 +541,127 @@
                 });
             });
 
-
             console.log("Calculation complete. Final portfolio value:", totalPortfolioValues[totalPortfolioValues.length - 1]);
 
-            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1];
+            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
             buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
             finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0);
             stocksValueDisplay.textContent = `($${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)})`;
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
-            updateChart(filteredStockData, totalPortfolioValues, activeProfits);
-            window.transactionLog = transactionLog;
+            // Calculate NDX passive investment
+            let ndxInitialInvestment = 100000; // Assuming the same initial investment
+            let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
+            let ndxPortfolioValues = filteredNDXStockData.map(data => {
+                return {
+                    x: data.dateObj,
+                    y: ndxPassiveShares * data.price
+                };
+            });
 
-            // Log final portfolio values
-            console.log("Final portfolio values:", totalPortfolioValues);
+            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues);
+            window.transactionLog = transactionLog;
         }
 
 
-        // Ensure the chart is updated based on the filtered data
-        function updateChart(filteredStockData, totalPortfolioValues, activeProfits) {
-            totalPortfolioChart.data.labels = filteredStockData.map(data => data.date);
+        function parseDate(dateStr) {
+            const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
+            const day = parseInt(dayStr);
+            const month = parseInt(monthStr);
+            const year = parseInt(yearStr);
+
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                console.error(`Invalid date format: ${dateStr}`);
+                return null;
+            }
+
+            return new Date(year, month - 1, day);
+        }
+
+        function formatDate(dateObj) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues) {
             totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
             totalPortfolioChart.data.datasets[1].data = activeProfits;
+            totalPortfolioChart.data.datasets[2].data = ndxPortfolioValues;
             totalPortfolioChart.update();
         }
 
-        // Function to initialize the Chart.js chart
         function setupChart() {
             const ctx = document.getElementById('totalPortfolioChart').getContext('2d');
             totalPortfolioChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [], // Labels will be updated dynamically
                     datasets: [
                         {
                             label: 'Total Portfolio Value',
-                            data: [],  // Empty initially, will be populated
+                            data: [],
                             backgroundColor: 'rgba(75, 192, 192, 0.2)',
                             borderColor: 'rgba(75, 192, 192, 1)',
                             borderWidth: 1,
-                            fill: true
+                            fill: true,
+                            parsing: {
+                                xAxisKey: 'x',
+                                yAxisKey: 'y'
+                            }
                         },
                         {
                             label: 'Active Profit',
-                            data: [],  // Empty initially, will be populated
+                            data: [],
                             backgroundColor: 'rgba(255, 99, 132, 0.2)',
                             borderColor: 'rgba(255, 99, 132, 1)',
                             borderWidth: 1,
-                            fill: true
+                            fill: true,
+                            parsing: {
+                                xAxisKey: 'x',
+                                yAxisKey: 'y'
+                            }
+                        },
+                        {
+                            label: 'NDX Passive Investment',
+                            data: [],
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            fill: true,
+                            parsing: {
+                                xAxisKey: 'x',
+                                yAxisKey: 'y'
+                            }
                         }
                     ]
                 },
                 options: {
                     scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'DD/MM/YYYY',
+                                tooltipFormat: 'DD/MM/YYYY',
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'DD/MM/YYYY',
+                                    month: 'MMM YYYY',
+                                    year: 'YYYY'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
                         y: {
-                            beginAtZero: false
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Value ($)'
+                            }
                         }
                     }
                 }
@@ -625,9 +712,6 @@
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
         }
-
-
-
     </script>
 </body>
 </html>
