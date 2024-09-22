@@ -225,7 +225,7 @@
         // Automatically load the CSV file when the page loads
         window.onload = function() {
             console.log("Fetching CSV file...");
-            fetch('https://raw.githubusercontent.com/awakzdev/test/main/qld_stock_data.csv')
+            fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
             .then(response => {
                 console.log("CSV file fetched successfully.");
                 return response.text();
