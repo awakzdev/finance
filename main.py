@@ -15,7 +15,7 @@ branch = 'main'
 today_date = datetime.now().strftime('%Y-%m-%d')
 
 # Symbols to process
-symbols = ['QLD', 'NDX']
+symbols = ['QLD', '^NDX']
 
 for symbol in symbols:
     # Step 2: Fetch historical data for the symbol
