@@ -383,187 +383,175 @@
             const startDateObj = parseDate(selectedStartDate);
             const endDateObj = parseDate(selectedClosingDate);
 
-            console.log("Selected start date:", startDateObj);
-            console.log("Selected end date:", endDateObj);
-
             // Filter stock data to include only dates within the selected range
-            const filteredStockData = stockData.filter(data => {
-                const isInDateRange = data.dateObj >= startDateObj && data.dateObj <= endDateObj;
-                return isInDateRange;
-            });
-
-            const filteredNDXStockData = ndxStockData.filter(data => {
-                const isInDateRange = data.dateObj >= startDateObj && data.dateObj <= endDateObj;
-                return isInDateRange;
-            });
-
-            console.log("Filtered QLD data dates:", filteredStockData.map(d => d.date));
-            console.log("Filtered NDX data dates:", filteredNDXStockData.map(d => d.date));
-
-            if (!filteredStockData.length || !filteredNDXStockData.length) {
-                console.error("No stock data available for the selected date range.");
-                finalTotalValueDisplay.textContent = 'No data';
-                updateChart([], [], []);
-                return;
-            }
+            const filteredStockData = stockData.filter(data => data.dateObj >= startDateObj && data.dateObj <= endDateObj);
 
             // Initialize variables
             let totalPortfolioValue = parseInt(totalInvestmentSlider.value);
             let cashPercent = parseInt(splitSlider.value) / 100;
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
-            let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
-            let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
+            let buyThreshold = parseFloat(buyThresholdSlider.value); // e.g., 5 for 5%
+            let sellThreshold = parseFloat(sellThresholdSlider.value); // e.g., 10 for 10%
 
+            // Set the initial cash and initial active cash (fixed for the entire calculation)
             let initialCash = totalPortfolioValue * cashPercent; // Cash allocated for active trading
+            let initialActiveCash = initialCash; // Track initial cash for calculation
             let cash = initialCash;
             let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Passive investment
-            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-            let passiveInvestmentPrice = filteredStockData[0].openPrice;
+            let passiveShares = initialPassiveInvestment / filteredStockData[0].price;
+            let passiveInvestmentPrice = filteredStockData[0].price;
+
             let activeInvestments = [];
             let totalProfit = 0;
-            let highestPeak = filteredStockData[0].price;
-            let currentPeak = highestPeak;
-            let bought = false;
+            let currentPeak = filteredStockData[0].price;
+            let lastBuyLevel = 0;
             let activeCashInvested = 0;
+            let lastRecoveryLevel = 0; // Tracks the level after the recovery to ensure another drop is required
+            let lowestPointAfterRecovery = null; // Tracks the lowest point after recovery
 
             const totalPortfolioValues = [];
             const activeProfits = [];
             const transactionLog = [];
 
-            // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
                 const dataDate = data.dateObj;
-
                 let price = data.price; // Closing price
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
 
-                // Update the highest peak
-                if (!bought && price > highestPeak) {
-                    highestPeak = price;
+                // Update the highest peak if the current price is higher
+                if (price > currentPeak) {
                     currentPeak = price;
+                    lastBuyLevel = 0;
                 }
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
+                let currentDropLevel = Math.floor(dropFromCurrentPeak / buyThreshold);
 
-                // Active trading logic
-                if (index !== 0) { // Skip first day
-                    // Buy logic
-                    if (!bought) { // Initial buy
-                        if (price <= highestPeak * (1 - buyThreshold)) {
-                            // Perform the buy
-                            let buyAmount = cash * buyAmountPercent;
-                            let sharesToBuy = Math.floor(buyAmount / price);
+                if (index !== 0) {
+                    // Buy logic (based on initial active cash, not remaining cash)
+                    if (currentDropLevel > lastBuyLevel) {
+                        let intendedBuyAmount = initialActiveCash * buyAmountPercent; // Fixed buy amount from initial active cash
 
-                            if (sharesToBuy > 0 && cash >= sharesToBuy * price) {
-                                cash -= sharesToBuy * price;
-                                activeInvestments.push({ buyPrice: price, shares: sharesToBuy });
-                                action = 'Buy';
-                                sharesBought = sharesToBuy;
-                                activeCashInvested += sharesToBuy * price;
+                        // Calculate maximum number of shares that can be bought
+                        let sharesToBuy = Math.floor(intendedBuyAmount / price);
+                        let amountSpent = sharesToBuy * price;
 
-                                bought = true;
-                                currentPeak = price;
-                            }
-                        }
-                    } else { // Subsequent buys
-                        // Update current peak
-                        if (price > currentPeak) {
-                            currentPeak = price;
-                        }
+                        if (sharesToBuy > 0 && cash >= amountSpent) {
+                            cash -= amountSpent;
+                            activeInvestments.push({ buyPrice: price, shares: sharesToBuy });
+                            action = 'Buy';
+                            sharesBought = sharesToBuy;
+                            activeCashInvested += amountSpent;
 
-                        // Buy if price drops by buyThreshold
-                        if (dropFromCurrentPeak >= (buyThreshold * 100)) {
-                            let buyAmount = cash * buyAmountPercent;
-                            let sharesToBuy = Math.floor(buyAmount / price);
+                            lastBuyLevel = currentDropLevel; // Update last buy level
 
-                            if (sharesToBuy > 0 && cash >= sharesToBuy * price) {
-                                cash -= sharesToBuy * price;
-                                activeInvestments.push({ buyPrice: price, shares: sharesToBuy });
-                                action = 'Buy';
-                                sharesBought = sharesToBuy;
-                                activeCashInvested += sharesToBuy * price;
-
-                                currentPeak = price;
-                            }
+                            transactionLog.push({
+                                date: data.date,
+                                action: action,
+                                sharesBought: sharesBought,
+                                sharesSold: sharesSold,
+                                price: price.toFixed(2),
+                                intendedBuyAmount: intendedBuyAmount.toFixed(2),
+                                actualAmountSpent: amountSpent.toFixed(2),
+                                totalCash: cash.toFixed(2),
+                                stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
+                                passiveShares: passiveShares.toFixed(2),
+                                totalShares: (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares).toFixed(2),
+                                highestPeak: currentPeak.toFixed(2),
+                                downPercentageFromPeak: dropFromCurrentPeak.toFixed(2),
+                                gainFromBuyPrice: '0.00'
+                            });
                         }
                     }
 
-                    // Sell logic
-                    activeInvestments = activeInvestments.map(investment => {
-                        if (price >= investment.buyPrice * (1 + sellThreshold)) {
-                            // Sell the shares
+                    // Sell logic (remains unchanged)
+                    let investmentsToKeep = [];
+                    activeInvestments.forEach(investment => {
+                        const individualGainFromBuyPrice = ((price - investment.buyPrice) / investment.buyPrice) * 100;
+                        if (individualGainFromBuyPrice >= sellThreshold) {
                             let saleProceeds = investment.shares * price;
                             totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
                             cash += saleProceeds;
-                            sharesSold = investment.shares;
+                            sharesSold += investment.shares;
                             action = 'Sell';
 
-                            // Mark shares as sold
-                            return { ...investment, shares: 0 };
+                            activeCashInvested -= investment.shares * investment.buyPrice;
+
+                            transactionLog.push({
+                                date: data.date,
+                                action: 'Sell',
+                                sharesBought: 0,
+                                sharesSold: investment.shares,
+                                price: price.toFixed(2),
+                                saleProceeds: saleProceeds.toFixed(2),
+                                totalCash: cash.toFixed(2),
+                                stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) - investment.shares,
+                                passiveShares: passiveShares.toFixed(2),
+                                totalShares: (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares - investment.shares).toFixed(2),
+                                highestPeak: currentPeak.toFixed(2),
+                                downPercentageFromPeak: dropFromCurrentPeak.toFixed(2),
+                                gainFromBuyPrice: individualGainFromBuyPrice.toFixed(2),
+                                passiveProfit: (passiveShares * (price - passiveInvestmentPrice)).toFixed(2),
+                                activeProfit: (totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0)).toFixed(2),
+                                activeCashInvested: activeCashInvested.toFixed(2),
+                                totalValue: (cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0) + passiveShares * price + totalProfit).toFixed(2),
+                                totalAmount: (cash + passiveShares * price).toFixed(2)
+                            });
+                        } else {
+                            investmentsToKeep.push(investment);
                         }
-                        return investment;
-                    }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
+                    });
+                    activeInvestments = investmentsToKeep;
+                }
+
+                // Log hold days
+                if (action === 'Hold') {
+                    transactionLog.push({
+                        date: data.date,
+                        action: action,
+                        sharesBought: sharesBought,
+                        sharesSold: sharesSold,
+                        price: price.toFixed(2),
+                        totalCash: cash.toFixed(2),
+                        stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
+                        passiveShares: passiveShares.toFixed(2),
+                        totalShares: (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares).toFixed(2),
+                        highestPeak: currentPeak.toFixed(2),
+                        downPercentageFromPeak: dropFromCurrentPeak.toFixed(2),
+                        gainFromBuyPrice: '0.00'
+                    });
                 }
 
                 // Calculate portfolio values
-                const activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                const activeInvestmentValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 const passivePortfolioValue = passiveShares * price;
-                const totalValue = activeInvestmentValue + passivePortfolioValue;
-                const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
-                const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                const totalValue = cash + activeInvestmentValue + passivePortfolioValue + totalProfit;
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
-                activeProfits.push({ x: dataDate, y: activeProfit });
-
-                transactionLog.push({
-                    date: data.date,
-                    action: action,
-                    sharesBought: sharesBought,
-                    sharesSold: sharesSold,
-                    price: price,
-                    openPrice: data.openPrice,
-                    totalCash: cash.toFixed(2),
-                    stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
-                    passiveShares: passiveShares,
-                    totalShares: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares,
-                    highestPeak: highestPeak,
-                    downPercentageFromPeak: dropFromCurrentPeak.toFixed(2),
-                    passiveInvestmentPrice: passiveInvestmentPrice,
-                    passiveProfit: passiveProfit.toFixed(2),
-                    activeProfit: activeProfit.toFixed(2),
-                    activeCashInvested: activeCashInvested.toFixed(2),
-                    totalValue: totalValue.toFixed(2),
-                    totalAmount: (cash + passivePortfolioValue).toFixed(2),
-                    valuePassive: (passiveShares * price).toFixed(2)
-                });
+                activeProfits.push({ x: dataDate, y: totalProfit + activeInvestmentValue });
             });
 
             console.log("Calculation complete. Final portfolio value:", totalPortfolioValues[totalPortfolioValues.length - 1]);
 
             const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
-            buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
-            finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
+
+            // Update the results display
+            const buyAmount = (initialActiveCash * buyAmountPercent).toFixed(2); // Calculate the fixed buy amount
+            buyAmountDisplay.textContent = `${buyAmount}`; // Display the fixed buy amount
+
+            const totalStockValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0);
-            stocksValueDisplay.textContent = `($${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)})`;
+            stocksValueDisplay.textContent = `($${totalStockValue.toFixed(2)})`; // Display the total value of stocks left
             availableMoneyDisplay.textContent = cash.toFixed(2);
+            finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
 
-            // Calculate NDX passive investment
-            let ndxInitialInvestment = 100000; // Assuming the same initial investment
-            let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
-            let ndxPortfolioValues = filteredNDXStockData.map(data => {
-                return {
-                    x: data.dateObj,
-                    y: ndxPassiveShares * data.price
-                };
-            });
-
-            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues);
+            // Update the chart and other displays
+            updateChart(totalPortfolioValues, activeProfits);
             window.transactionLog = transactionLog;
         }
-
 
         function parseDate(dateStr) {
             const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
@@ -624,7 +612,7 @@
                             }
                         },
                         {
-                            label: 'NDX Passive Investment',
+                            label: 'Nasdaq 100 Passive Investment',
                             data: [],
                             backgroundColor: 'rgba(54, 162, 235, 0.2)',
                             borderColor: 'rgba(54, 162, 235, 1)',
@@ -672,9 +660,10 @@
         function downloadCSV() {
             const csvRows = [];
             const headers = [
-                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Open Price', 
-                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak', 
-                'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit', 
+                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Total Cash', 'Stocks Held',
+                'Passive Shares', 'Total Shares', 'Highest Peak', 'Down Percentage from Peak',
+                'Gain from Buy Price', // New header
+                'Passive Investment Price', 'Passive Profit',
                 'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
             ];
             csvRows.push(headers.join(','));
@@ -686,13 +675,13 @@
                     log.sharesBought,
                     log.sharesSold,
                     log.price,
-                    log.openPrice,
                     log.totalCash,
                     log.stocksHeld,
                     log.passiveShares,
                     log.totalShares,
                     log.highestPeak,
                     log.downPercentageFromPeak,
+                    log.gainFromBuyPrice, // New field
                     log.passiveInvestmentPrice,
                     log.passiveProfit,
                     log.activeProfit,
@@ -712,6 +701,7 @@
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
         }
+
     </script>
 </body>
 </html>
