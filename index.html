@@ -442,21 +442,30 @@
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
                 if (data.highPrice > highestPeak) {
-                    highestPeak = price;
+                    highestPeak = data.highPrice;
                 }
                 let buy_price = null
                 console.log(dataDate,"currentPeak:",currentPeak,"currentprice",price,"highestPeak:",highestPeak,1-price/currentPeak)
-                        // make sure current pich is either highest pick if no active buy
-                        //or current pick is the last active buy at open price
-                        currentPeak = activeInvestments.length > 0
-                                    ? activeInvestments.reduce((min, investment) => {
-                                        return investment.buyPrice < min ? investment.buyPrice : min;
-                                    }, activeInvestments[0].buyPrice)
-                                    : null;
-                        if(currentPeak == null)
-                        {
-                            currentPeak = highestPeak
-                        }
+
+
+                        // old method to calculate currentPeak:
+                        // make sure current peak is either highest pick if no active buy
+                        // or current pick is the last active buy at open price
+                        // currentPeak = activeInvestments.length > 0
+                        //             ? activeInvestments.reduce((min, investment) => {
+                        //                 return investment.buyPrice < min ? investment.buyPrice : min;
+                        //             }, activeInvestments[0].buyPrice)
+                        //             : null;
+                        // if(currentPeak == null)
+                        // {
+                        //     currentPeak = highestPeak
+                        // }
+
+
+                // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
+                // for example 2 active stocks, Threshold of 0.05 so highestPeak * 0.95 ^2
+                currentPeak = highestPeak * (Math.pow (1 - buyThreshold, activeInvestments.length))
+                console.log(activeInvestments.length)
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
