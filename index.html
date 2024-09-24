@@ -266,6 +266,8 @@
                     const dateKey = results.data.length > 0 && ('Date' in results.data[0]) ? 'Date' : 'date';
                     const closePriceKey = 'Close';
                     const openPriceKey = 'Open';
+                    const highPriceKey = 'High';
+                    const lowPriceKey = 'Low';
 
                     if (!dateKey || !closePriceKey || !openPriceKey) {
                         console.error(`CSV data for ${type} is missing required columns ('Date', 'Close', or 'Open').`);
@@ -278,7 +280,9 @@
                             const dateStr = row[dateKey];
                             const price = row[closePriceKey];
                             const openPrice = row[openPriceKey];
-
+                            const highPrice = row[highPriceKey];
+                            const lowPrice = row[lowPriceKey];
+                            
                             if (!dateStr || isNaN(price) || isNaN(openPrice)) {
                                 console.warn(`Skipping invalid row in ${type} data:`, row);
                                 return false;
@@ -286,6 +290,7 @@
                             return true;
                         })
                         .map(row => {
+                            
                             const dateStr = row[dateKey].trim();
                             const [dayStr, monthStr, yearStr] = dateStr.split('/');
                             const day = parseInt(dayStr);
@@ -296,6 +301,8 @@
                                 date: dateStr,
                                 price: row[closePriceKey],
                                 openPrice: row[openPriceKey],
+                                highPrice: row[highPriceKey],
+                                lowPrice: row[lowPriceKey],
                                 dateObj: new Date(year, month - 1, day) // Store date object for easier comparison
                             };
                         });
@@ -515,13 +522,16 @@
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
                 activeProfits.push({ x: dataDate, y: activeProfit });
 
+                // Modify the transaction log to store the new price fields
                 transactionLog.push({
                     date: data.date,
                     action: action,
                     sharesBought: sharesBought,
                     sharesSold: sharesSold,
-                    price: price,
                     openPrice: data.openPrice,
+                    highPrice: data.highPrice,
+                    lowPrice: data.lowPrice,
+                    closePrice: data.price,
                     totalCash: cash.toFixed(2),
                     stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
                     passiveShares: passiveShares,
@@ -560,7 +570,6 @@
             updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints);
             window.transactionLog = transactionLog;
         }
-
 
         function parseDate(dateStr) {
             const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
