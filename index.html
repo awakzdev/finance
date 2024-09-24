@@ -128,7 +128,7 @@
                 <label for="dateRange">Select Opening Range:</label>
                 <select id="dateRange" class="dropdown">
                 </select>
-            </div>            
+            </div>
 
             <div class="input-group">
                 <label for="closingDate">Select Closing Date:</label>
@@ -267,6 +267,7 @@
                     const closePriceKey = 'Close';
                     const openPriceKey = 'Open';
                     const highPriceKey = 'High';
+                    const lastBuyKey = 'Buy';
                     const lowPriceKey = 'Low';
 
                     if (!dateKey || !closePriceKey || !openPriceKey) {
@@ -282,7 +283,7 @@
                             const openPrice = row[openPriceKey];
                             const highPrice = row[highPriceKey];
                             const lowPrice = row[lowPriceKey];
-                            
+
                             if (!dateStr || isNaN(price) || isNaN(openPrice)) {
                                 console.warn(`Skipping invalid row in ${type} data:`, row);
                                 return false;
@@ -290,7 +291,7 @@
                             return true;
                         })
                         .map(row => {
-                            
+
                             const dateStr = row[dateKey].trim();
                             const [dayStr, monthStr, yearStr] = dateStr.split('/');
                             const day = parseInt(dayStr);
@@ -302,6 +303,7 @@
                                 price: row[closePriceKey],
                                 openPrice: row[openPriceKey],
                                 highPrice: row[highPriceKey],
+                                lastBuy: row[lastBuyKey],
                                 lowPrice: row[lowPriceKey],
                                 dateObj: new Date(year, month - 1, day) // Store date object for easier comparison
                             };
@@ -420,8 +422,8 @@
             let passiveInvestmentPrice = filteredStockData[0].openPrice;
             let activeInvestments = [];
             let totalProfit = 0;
-            let highestPeak = filteredStockData[0].price;
-            let lastBuyPrice = filteredStockData[0].price; // Tracks the last buy price for tracking subsequent drops
+            let highestPeak = filteredStockData[0].highPrice;
+            let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
             let currentPeak = highestPeak;
             let bought = false;
             let activeCashInvested = 0;
@@ -433,63 +435,74 @@
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
                 const dataDate = data.dateObj;
-                let price = data.price; // Closing price
+                let price = data.lowPrice; // Closing price
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
-                if (price > highestPeak) {
+                if (data.highPrice > highestPeak) {
                     highestPeak = price;
-                    currentPeak = price; // Update the current peak to the new highest
                 }
+                let buy_price = null
+                console.log(dataDate,"currentPeak:",currentPeak,"currentprice",price,"highestPeak:",highestPeak,1-price/currentPeak)
+                        // make sure current pich is either highest pick if no active buy
+                        //or current pick is the last active buy at open price
+                        currentPeak = activeInvestments.length > 0
+                                    ? activeInvestments.reduce((min, investment) => {
+                                        return investment.buyPrice < min ? investment.buyPrice : min;
+                                    }, activeInvestments[0].buyPrice)
+                                    : null;
+                        if(currentPeak == null)
+                        {
+                            currentPeak = highestPeak
+                        }
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
 
                 // Buy logic (before the first purchase)
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
-                    let sharesToBuy = initialBuyAmount / price; // Use initialBuyAmount instead of available cash
-                    if (sharesToBuy > 0 && cash >= sharesToBuy * price) {
-                        cash -= sharesToBuy * price;
-                        activeInvestments.push({ buyPrice: price, shares: sharesToBuy });
+                    // buying at 5% percent less of currentPeak
+                    buy_price = currentPeak*(1-buyThreshold)
+                    let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount instead of available cash
+                    if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
+                        cash -= sharesToBuy * buy_price;
+                        activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
                         action = 'Buy';
                         sharesBought = sharesToBuy;
-                        activeCashInvested += sharesToBuy * price;
+                        activeCashInvested += sharesToBuy * buy_price;
                         bought = true;
-                        lastBuyPrice = price;
-                        currentPeak = price; // Reset the peak to the new buy point
+                        lastBuyPrice = buy_price;
+                        currentPeak = buy_price; // Reset the peak to the new buy point
 
                         // Align Buy points with active portfolio value
                         let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                         buyPoints.push({ x: dataDate, y: activeInvestmentValue });
                     }
-                } else { 
-                    // Update current peak
-                    if (price > currentPeak) {
-                        currentPeak = price;
-                    }
-
+                } else {
                     const dropFromLastBuy = ((lastBuyPrice - price) / lastBuyPrice) * 100;
 
                     // Buy if price drops by the threshold from the last buy
                     if (dropFromLastBuy >= buyThreshold * 100) {
-                        let sharesToBuy = initialBuyAmount / price; // Use fixed initialBuyAmount
-                        if (sharesToBuy > 0 && cash >= sharesToBuy * price) {
-                            cash -= sharesToBuy * price;
-                            activeInvestments.push({ buyPrice: price, shares: sharesToBuy });
+                        // buying at 5% percent less of currentPeak
+                        buy_price = currentPeak*(1-buyThreshold)
+                        let sharesToBuy = initialBuyAmount / buy_price; // Use fixed initialBuyAmount
+                        if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
+                            cash -= sharesToBuy * buy_price;
+                            activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
                             action = 'Buy';
                             sharesBought = sharesToBuy;
-                            activeCashInvested += sharesToBuy * price;
-                            lastBuyPrice = price;
-                            currentPeak = price; // Reset the peak to the new buy point
+                            activeCashInvested += sharesToBuy * buy_price;
+                            lastBuyPrice = buy_price;
+                            currentPeak = buy_price; // Reset the peak to the new buy point
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                             buyPoints.push({ x: dataDate, y: activeInvestmentValue });
                         }
                     }
-                    
+
 
                     // Sell logic
                     activeInvestments = activeInvestments.map(investment => {
@@ -529,6 +542,7 @@
                     sharesBought: sharesBought,
                     sharesSold: sharesSold,
                     openPrice: data.openPrice,
+                    lastBuy: buy_price,
                     highPrice: data.highPrice,
                     lowPrice: data.lowPrice,
                     closePrice: data.price,
@@ -696,9 +710,9 @@
         function downloadCSV() {
             const csvRows = [];
             const headers = [
-                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Open Price', 'High Price', 'Low Price', 'Close Price',
-                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak', 
-                'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit', 
+                'Date', 'Action', 'Shares Bought', 'Shares Sold','Buy Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
+                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
+                'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit',
                 'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
             ];
             csvRows.push(headers.join(','));
@@ -709,6 +723,7 @@
                     log.action,
                     log.sharesBought,
                     log.sharesSold,
+                    log.lastBuy,
                     log.openPrice,
                     log.highPrice, // Add High Price
                     log.lowPrice,  // Add Low Price
