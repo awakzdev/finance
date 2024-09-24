@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investment Strategy Comparison</title>
-<<<<<<< Updated upstream
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-=======
     <!-- Include Chart.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Include Moment.js -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
->>>>>>> Stashed changes
     <!-- Include Papa Parse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
 
     <style>
         body {
@@ -21,10 +18,11 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            direction: ltr;
-            text-align: left;
+            direction: ltr; /* Ensure body content direction is LTR */
+            text-align: left; /* Align text to the left */
         }
 
+        /* Style the date dropdown */
         .dropdown {
             appearance: none;
             -webkit-appearance: none;
@@ -58,6 +56,7 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            text-align: center;
         }
 
         .main-content {
@@ -89,6 +88,7 @@
         .input-group label {
             margin-bottom: 5px;
             font-weight: bold;
+            text-align: left;
         }
 
         .slider {
@@ -105,38 +105,35 @@
             text-align: left;
         }
 
-        #portfolioChart {
-            width: 100%;
-            height: 600px;
+        canvas {
+            width: auto;
+            height: auto;
+            max-height: 800px;
         }
     </style>
 </head>
 <body>
+    <!-- Header with Download CSV Button -->
     <div class="header">
         <h1>Investment Strategy Comparison</h1>
         <button id="downloadCSV" onclick="downloadCSV()">Download CSV</button>
     </div>
 
+    <!-- Main Content Area -->
     <div class="main-content">
+        <!-- Left Section: Controls and Results -->
         <div class="left-section">
+            <!-- Sliders and Controls -->
             <div class="input-group">
                 <label for="dateRange">Select Opening Range:</label>
-<<<<<<< Updated upstream
-                <select id="dateRange" class="dropdown"></select>
-=======
                 <select id="dateRange" class="dropdown">
                 </select>
->>>>>>> Stashed changes
             </div>            
 
             <div class="input-group">
                 <label for="closingDate">Select Closing Date:</label>
-<<<<<<< Updated upstream
-                <select id="closingDate" class="dropdown"></select>
-=======
                 <select id="closingDate" class="dropdown">
                 </select>
->>>>>>> Stashed changes
             </div>
 
             <div class="input-group">
@@ -160,6 +157,7 @@
                 <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
             </div>
 
+            <!-- Results Section -->
             <div class="results">
                 <h2>Results</h2>
                 <p><strong>Total Investment:</strong> $<span id="totalValueDisplay">100000</span></p>
@@ -170,25 +168,20 @@
             </div>
         </div>
 
+        <!-- Right Section: Graph -->
         <div class="right-section">
-<<<<<<< Updated upstream
-            <div id="portfolioChart"></div>
-=======
             <div id="totalPortfolioChart"></div>
->>>>>>> Stashed changes
         </div>
     </div>
 
     <script>
+        // JavaScript code
         let stockData = [];
-        let buyPoints = [];
-        let sellPoints = [];
         let ndxStockData = [];
-        let activePortfolioValues = [];
-        let totalPortfolioValues = [];
-        let ndxPortfolioValues = [];
+        let totalPortfolioChart;
         let datasetsLoaded = 0;
 
+        // Select elements
         const totalInvestmentSlider = document.getElementById('totalInvestment');
         const splitSlider = document.getElementById('split');
         const buyThresholdSlider = document.getElementById('buyThreshold');
@@ -209,214 +202,8 @@
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
 
         window.onload = function() {
-            fetchData();
-            setupEventListeners();
-        };
+            console.log("Fetching CSV files...");
 
-<<<<<<< Updated upstream
-        function fetchData() {
-            fetchCSV('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv', 'QLD');
-            fetchCSV('https://raw.githubusercontent.com/awakzdev/finance/main/^ndx_stock_data.csv', 'NDX');
-        }
-
-        function fetchCSV(url, type) {
-            fetch(url)
-                .then(response => response.text())
-                .then(csvText => parseCSVData(csvText, type))
-                .catch(error => console.error(`Error fetching ${type} CSV file:`, error));
-        }
-
-        function parseCSVData(csvText, type) {
-            Papa.parse(csvText, {
-                header: true,
-                dynamicTyping: true,
-                complete: function(results) {
-                    const parsedData = results.data.filter(row => row.Date && row.Close && row.Open)
-                        .map(row => ({
-                            date: row.Date.trim(),
-                            price: row.Close,
-                            openPrice: row.Open,
-                            dateObj: new Date(row.Date.trim().split('/').reverse().join('-'))
-                        }));
-
-                    if (type === 'QLD') {
-                        stockData = parsedData;
-                    } else if (type === 'NDX') {
-                        ndxStockData = parsedData;
-                    }
-
-                    datasetsLoaded++;
-                    if (datasetsLoaded === 2) {
-                        populateDateDropdown();
-                        calculateResults();
-                    }
-                }
-            });
-        }
-
-        function populateDateDropdown() {
-            const combinedDates = [...stockData, ...ndxStockData].map(data => data.dateObj.getTime());
-            const uniqueDates = [...new Set(combinedDates)].sort((a, b) => a - b).map(time => new Date(time));
-
-            dateRangeDropdown.innerHTML = '';
-            const closingDateDropdown = document.getElementById('closingDate');
-            closingDateDropdown.innerHTML = '';
-
-            uniqueDates.forEach(date => {
-                const dateStr = formatDate(date);
-                const option1 = document.createElement('option');
-                option1.value = dateStr;
-                option1.textContent = dateStr;
-                dateRangeDropdown.appendChild(option1);
-
-                const option2 = document.createElement('option');
-                option2.value = dateStr;
-                option2.textContent = dateStr;
-                closingDateDropdown.appendChild(option2);
-            });
-
-            dateRangeDropdown.value = formatDate(uniqueDates[0]);
-            closingDateDropdown.value = formatDate(uniqueDates[uniqueDates.length - 1]);
-        }
-
-        function calculateResults() {
-            const selectedStartDate = parseDate(document.getElementById('dateRange').value);
-            const selectedClosingDate = parseDate(document.getElementById('closingDate').value);
-
-            const filteredStockData = stockData.filter(data => data.dateObj >= selectedStartDate && data.dateObj <= selectedClosingDate);
-            const filteredNDXStockData = ndxStockData.filter(data => data.dateObj >= selectedStartDate && data.dateObj <= selectedClosingDate);
-
-            if (!filteredStockData.length || !filteredNDXStockData.length) {
-                finalTotalValueDisplay.textContent = 'No data';
-                updatePlotly([], [], [], []);
-                return;
-            }
-
-            let totalPortfolioValue = parseInt(totalInvestmentSlider.value);
-            let cashPercent = parseInt(splitSlider.value) / 100;
-            let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
-            let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
-            let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
-
-            let initialCash = totalPortfolioValue * cashPercent;
-            let cash = initialCash;
-            let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent);
-            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-            let passiveInvestmentPrice = filteredStockData[0].openPrice;
-            let activeInvestments = [];
-            let totalProfit = 0;
-
-            activePortfolioValues = [];
-            totalPortfolioValues = [];
-            buyPoints = [];
-            sellPoints = [];
-
-            filteredStockData.forEach((data, index) => {
-                const price = data.price;
-                const date = data.dateObj;
-
-                if (index !== 0) {
-                    let currentPeak = Math.max(...filteredStockData.map(d => d.price));
-                    const dropFromPeak = ((currentPeak - price) / currentPeak) * 100;
-
-                    if (dropFromPeak >= buyThreshold * 100) {
-                        let buyAmount = initialCash * buyAmountPercent;
-                        let sharesToBuy = Math.floor(buyAmount / price);
-                        let amountSpent = sharesToBuy * price;
-
-                        if (sharesToBuy > 0 && cash >= amountSpent) {
-                            cash -= amountSpent;
-                            activeInvestments.push({ buyPrice: price, shares: sharesToBuy });
-                            buyPoints.push({ date, price });
-                        }
-                    }
-
-                    activeInvestments = activeInvestments.filter(investment => {
-                        const gainFromBuyPrice = ((price - investment.buyPrice) / investment.buyPrice) * 100;
-                        if (gainFromBuyPrice >= sellThreshold * 100) {
-                            let saleProceeds = investment.shares * price;
-                            totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
-                            cash += saleProceeds;
-                            sellPoints.push({ date, price });
-                            return false;
-                        }
-                        return true;
-                    });
-                }
-
-                const activeInvestmentValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                const passivePortfolioValue = passiveShares * price;
-                const totalValue = cash + activeInvestmentValue + passivePortfolioValue + totalProfit;
-
-                activePortfolioValues.push({ x: date, y: totalProfit + activeInvestmentValue });
-                totalPortfolioValues.push({ x: date, y: totalValue });
-            });
-
-            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
-            buyAmountDisplay.textContent = (initialCash * buyAmountPercent).toFixed(2);
-            finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
-            stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0);
-            stocksValueDisplay.textContent = `$${activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0).toFixed(2)}`;
-            availableMoneyDisplay.textContent = cash.toFixed(2);
-
-            let ndxPassiveShares = 100000 / filteredNDXStockData[0].openPrice;
-            ndxPortfolioValues = filteredNDXStockData.map(data => ({
-                x: data.dateObj,
-                y: ndxPassiveShares * data.price
-            }));
-
-            updatePlotly(totalPortfolioValues, activePortfolioValues, buyPoints, sellPoints, ndxPortfolioValues);
-        }
-
-        function updatePlotly(totalPortfolioValues, activePortfolioValues, buyPoints, sellPoints, ndxPortfolioValues) {
-            const totalValuesTrace = {
-                x: totalPortfolioValues.map(v => v.x),
-                y: totalPortfolioValues.map(v => v.y),
-                mode: 'lines',
-                name: 'Total Portfolio Value'
-            };
-
-            const activeTrace = {
-                x: activePortfolioValues.map(v => v.x),
-                y: activePortfolioValues.map(v => v.y),
-                mode: 'lines',
-                name: 'Active Portfolio'
-            };
-
-            const buyTrace = {
-                x: buyPoints.map(p => p.date),
-                y: buyPoints.map(p => p.price),
-                mode: 'markers',
-                name: 'Buy Points',
-                marker: { color: 'green', size: 8 }
-            };
-
-            const sellTrace = {
-                x: sellPoints.map(p => p.date),
-                y: sellPoints.map(p => p.price),
-                mode: 'markers',
-                name: 'Sell Points',
-                marker: { color: 'red', size: 8 }
-            };
-
-            const ndxTrace = {
-                x: ndxPortfolioValues.map(v => v.x),
-                y: ndxPortfolioValues.map(v => v.y),
-                mode: 'lines',
-                name: 'NDX Passive Investment'
-            };
-
-            const layout = {
-                title: 'Portfolio Performance',
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Value ($)' }
-            };
-
-            Plotly.newPlot('portfolioChart', [totalValuesTrace, activeTrace, buyTrace, sellTrace, ndxTrace], layout);
-        }
-
-        function setupEventListeners() {
-=======
             fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
             .then(response => response.text())
             .then(csvText => {
@@ -435,7 +222,6 @@
                 console.error("Error fetching NDX CSV file:", error);
             });
 
->>>>>>> Stashed changes
             totalInvestmentSlider.addEventListener('input', () => {
                 totalInvestmentValue.textContent = totalInvestmentSlider.value;
                 calculateResults();
@@ -461,12 +247,6 @@
                 calculateResults();
             });
 
-<<<<<<< Updated upstream
-            document.getElementById('closingDate').addEventListener('change', calculateResults);
-            dateRangeDropdown.addEventListener('change', calculateResults);
-        }
-
-=======
             document.getElementById('closingDate').addEventListener('change', () => {
                 calculateResults(); // Recalculate results when the closing date changes
             });
@@ -782,10 +562,18 @@
         }
 
 
->>>>>>> Stashed changes
         function parseDate(dateStr) {
             const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
-            return new Date(`${yearStr}-${monthStr}-${dayStr}`);
+            const day = parseInt(dayStr);
+            const month = parseInt(monthStr);
+            const year = parseInt(yearStr);
+
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                console.error(`Invalid date format: ${dateStr}`);
+                return null;
+            }
+
+            return new Date(year, month - 1, day);
         }
 
         function formatDate(dateObj) {
@@ -795,13 +583,6 @@
             return `${day}/${month}/${year}`;
         }
 
-<<<<<<< Updated upstream
-        function downloadCSV() {
-            const csvRows = [];
-            const headers = [
-                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Price', 'Total Cash', 'Stocks Held', 'Passive Shares',
-                'Total Shares', 'Passive Investment Price', 'Passive Profit', 'Active Profit', 'Total Value'
-=======
         function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues) {
             totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
             totalPortfolioChart.data.datasets[1].data = activeProfits;
@@ -910,7 +691,6 @@
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak', 
                 'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit', 
                 'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
->>>>>>> Stashed changes
             ];
             csvRows.push(headers.join(','));
 
@@ -920,22 +700,23 @@
                     log.action,
                     log.sharesBought,
                     log.sharesSold,
-<<<<<<< Updated upstream
-                    log.price,
-=======
                     log.openPrice,
                     log.highPrice, // Add High Price
                     log.lowPrice,  // Add Low Price
                     log.closePrice, // Add Close Price (instead of price)
->>>>>>> Stashed changes
                     log.totalCash,
                     log.stocksHeld,
                     log.passiveShares,
                     log.totalShares,
+                    log.highestPeak,
+                    log.downPercentageFromPeak,
                     log.passiveInvestmentPrice,
                     log.passiveProfit,
                     log.activeProfit,
-                    log.totalValue
+                    log.activeCashInvested,
+                    log.totalValue,
+                    log.totalAmount,
+                    log.valuePassive
                 ];
                 csvRows.push(row.join(','));
             });
