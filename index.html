@@ -487,9 +487,10 @@
                             // Append the buy price to the log string
                             if (buyPricesLog === '') {
                                 buyPricesLog = buy_price.toFixed(4);
-                            } else {
-                                buyPricesLog += `; ${buy_price.toFixed(4)}`;
                             }
+                            // else {
+                            //     buyPricesLog += `; ${buy_price.toFixed(4)}`;
+                            // }
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
