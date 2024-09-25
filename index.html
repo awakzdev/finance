@@ -493,7 +493,7 @@
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                            buyPoints.push({ x: dataDate, y: activeInvestmentValue });
+                            // buyPoints.push({ x: dataDate, y: activeInvestmentValue });
 
                             // Update last buy price and current peak for subsequent buys
                             lastBuyPrice = buy_price;
