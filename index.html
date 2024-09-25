@@ -451,6 +451,8 @@
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
+                let didBuy = false
+                let didSell = false
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
                 if (data.highPrice > highestPeak) {
@@ -491,10 +493,10 @@
                             // else {
                             //     buyPricesLog += `; ${buy_price.toFixed(4)}`;
                             // }
-
+                            didBuy= true
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                            // buyPoints.push({ x: dataDate, y: activeInvestmentValue });
+                            // buyPoints.push({ x: dataDate, y: 0 });
 
                             // Update last buy price and current peak for subsequent buys
                             lastBuyPrice = buy_price;
@@ -524,12 +526,12 @@
                         cash += saleProceeds;
                         sharesSold = investment.shares;
                         action = 'Sell';
-
+                        didSell=true
                         sellPrice = targetSellPrice; // Record the target sell price as the sell price
 
                         // Align Sell points with active portfolio value
                         let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                        // sellPoints.push({ x: dataDate, y: activeInvestmentValue });
+                        // sellPoints.push({ x: dataDate, y: 0 });
 
                         // Mark shares as sold
                         return { ...investment, shares: 0 };
@@ -545,8 +547,14 @@
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
-                activeProfits.push({ x: dataDate, y: activeProfit });
 
+                activeProfits.push({ x: dataDate, y: activeProfit });
+                if(didSell){
+                    sellPoints.push({ x: dataDate, y: activeProfit });
+                }
+                if(didBuy){
+                     buyPoints.push({ x: dataDate, y: activeProfit });
+                }
                 // Modify the transaction log to store the new price fields
                 transactionLog.push({
                     date: data.date,
@@ -710,6 +718,7 @@
             ];
 
             Plotly.react('totalPortfolioChart', updatedData);
+
         }
 
         // Update the CSV download logic
