@@ -479,7 +479,10 @@
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // buying at 5% percent less of currentPeak
                     buy_price = currentPeak*(1-buyThreshold)
+
                     let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount instead of available cash
+
+                    // Check if there is enough cash to buy the shares
                     if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
                         cash -= sharesToBuy * buy_price;
                         activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
@@ -517,17 +520,21 @@
                         }
                     }
 
-                    // Sell logic
+                    // Sell logic with high price check
                     activeInvestments = activeInvestments.map(investment => {
-                        if (price >= investment.buyPrice * (1 + sellThreshold)) {
-                            // Sell the shares
-                            let saleProceeds = investment.shares * price;
+                        // Calculate the exact target sell price (10% increase from buy price)
+                        const targetSellPrice = investment.buyPrice * (1 + sellThreshold);
+                        
+                        // Check if the high price of the day exceeds or equals the target sell price
+                        if (data.highPrice >= targetSellPrice) {
+                            // Sell the shares at the target sell price
+                            let saleProceeds = investment.shares * targetSellPrice; // Use targetSellPrice for sale
                             totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
                             cash += saleProceeds;
                             sharesSold = investment.shares;
                             action = 'Sell';
 
-                            sellPrice = price; // Record sell price
+                            sellPrice = targetSellPrice; // Record the target sell price as the sell price
 
                             // Align Sell points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
