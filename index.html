@@ -28,14 +28,20 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             width: 100%;
-            padding: 12px 15px;
+            padding: 10px 15px; /* Adjusted padding */
             font-size: 16px;
-            line-height: 1.6;
+            line-height: 1.6; /* Ensures the text height is consistent */
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: #f9f9f9;
             cursor: pointer;
             transition: border-color 0.3s, box-shadow 0.3s;
+            white-space: nowrap; /* Prevents text wrapping */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: auto; /* Ensures the dropdown adjusts to the text size */
+            display: block; /* Ensure block layout for full width and height */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
         }
 
         .header {
@@ -495,7 +501,7 @@
 
                         // Align Buy points with active portfolio value
                         let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                        buyPoints.push({ x: dataDate, y: activeInvestmentValue });
+                        // buyPoints.push({ x: dataDate, y: activeInvestmentValue });
                     }
                 } else {
                     const dropFromLastBuy = ((lastBuyPrice - price) / lastBuyPrice) * 100;
@@ -516,7 +522,6 @@
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                            buyPoints.push({ x: dataDate, y: activeInvestmentValue });
                         }
                     }
 
@@ -538,7 +543,7 @@
 
                             // Align Sell points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                            sellPoints.push({ x: dataDate, y: activeInvestmentValue });
+                            // sellPoints.push({ x: dataDate, y: activeInvestmentValue });
 
                             // Mark shares as sold
                             return { ...investment, shares: 0 };
