@@ -455,9 +455,14 @@
                 let didSell = false
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
-                if (data.highPrice > highestPeak) {
-                    highestPeak = data.highPrice;
+                if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
+                    highestPeak = data.price;
                 }
+                
+                // Compare highest peak to high price of the day
+                // if (data.price > highestPeak) { 
+                //     highestPeak = data.highPrice;
+                // }
 
                 let buy_price = null;
                 let sellPrice = null;
@@ -490,10 +495,13 @@
                             if (buyPricesLog === '') {
                                 buyPricesLog = buy_price.toFixed(4);
                             }
+
                             // else {
                             //     buyPricesLog += `; ${buy_price.toFixed(4)}`;
                             // }
                             didBuy= true
+
+
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                             // buyPoints.push({ x: dataDate, y: 0 });
