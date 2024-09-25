@@ -447,7 +447,7 @@
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
                 const dataDate = data.dateObj;
-                let price = data.lowPrice; // Closing price
+                let price = data.lowPrice;
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
@@ -456,63 +456,85 @@
                 if (data.highPrice > highestPeak) {
                     highestPeak = data.highPrice;
                 }
-                let buy_price = null
-                let sellPrice = null
+
+                let buy_price = null;
+                let sellPrice = null;
+                let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
 
                 // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
-                // for example 2 active stocks, Threshold of 0.05 so highestPeak * 0.95 ^2
-                currentPeak = highestPeak * (Math.pow (1 - buyThreshold, activeInvestments.length))
+                currentPeak = highestPeak * Math.pow(1 - buyThreshold, activeInvestments.length);
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
 
                 // Buy logic (before the first purchase)
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
-                    // buying at 5% percent less of currentPeak
-                    buy_price = currentPeak*(1-buyThreshold)
+                    // Loop to check for multiple purchases on the same day
+                    while (dropFromCurrentPeak >= buyThreshold * 100) {
+                        // Calculate the new buy price
+                        buy_price = currentPeak * (1 - buyThreshold);
 
-                    let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount instead of available cash
+                        let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
-                    // Check if there is enough cash to buy the shares
-                    if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
-                        cash -= sharesToBuy * buy_price;
-                        activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
-                        action = 'Buy';
-                        sharesBought = sharesToBuy;
-                        activeCashInvested += sharesToBuy * buy_price;
-                        bought = true;
+                        // Check if there is enough cash to buy the shares
+                        if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
+                            cash -= sharesToBuy * buy_price;
+                            activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
+                            action = 'Buy';
+                            sharesBought += sharesToBuy; // Increment if multiple buys are made
+                            activeCashInvested += sharesToBuy * buy_price;
 
-                        // Align Buy points with active portfolio value
-                        let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                        // buyPoints.push({ x: dataDate, y: activeInvestmentValue });
+                            // Append the buy price to the log string
+                            if (buyPricesLog === '') {
+                                buyPricesLog = buy_price.toFixed(4);
+                            } else {
+                                buyPricesLog += `; ${buy_price.toFixed(4)}`;
+                            }
+
+                            // Align Buy points with active portfolio value
+                            let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                            buyPoints.push({ x: dataDate, y: activeInvestmentValue });
+
+                            // Update last buy price and current peak for subsequent buys
+                            lastBuyPrice = buy_price;
+                            currentPeak = buy_price;
+                        } else {
+                            break; // Break the loop if no more cash is available
+                        }
+
+                        // Recalculate drop from current peak after the purchase
+                        const newDropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
+                        if (newDropFromCurrentPeak < buyThreshold * 100) {
+                            break; // Break the loop if no further purchases can be made
+                        }
                     }
                 }
-                    // Sell logic with high price check
-                    activeInvestments = activeInvestments.map(investment => {
-                        // Calculate the exact target sell price (10% increase from buy price)
-                        const targetSellPrice = investment.buyPrice * (1 + sellThreshold);
-                        
-                        // Check if the high price of the day exceeds or equals the target sell price
-                        if (data.highPrice >= targetSellPrice) {
-                            // Sell the shares at the target sell price
-                            let saleProceeds = investment.shares * targetSellPrice; // Use targetSellPrice for sale
-                            totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
-                            cash += saleProceeds;
-                            sharesSold = investment.shares;
-                            action = 'Sell';
 
-                            sellPrice = targetSellPrice; // Record the target sell price as the sell price
+                // Sell logic with high price check
+                activeInvestments = activeInvestments.map(investment => {
+                    // Calculate the exact target sell price (10% increase from buy price)
+                    const targetSellPrice = investment.buyPrice * (1 + sellThreshold);
+                    
+                    // Check if the high price of the day exceeds or equals the target sell price
+                    if (data.highPrice >= targetSellPrice) {
+                        // Sell the shares at the target sell price
+                        let saleProceeds = investment.shares * targetSellPrice; // Use targetSellPrice for sale
+                        totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
+                        cash += saleProceeds;
+                        sharesSold = investment.shares;
+                        action = 'Sell';
 
-                            // Align Sell points with active portfolio value
-                            let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                            // sellPoints.push({ x: dataDate, y: activeInvestmentValue });
+                        sellPrice = targetSellPrice; // Record the target sell price as the sell price
 
-                            // Mark shares as sold
-                            return { ...investment, shares: 0 };
-                        }
-                        return investment;
-                    }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
+                        // Align Sell points with active portfolio value
+                        let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                        // sellPoints.push({ x: dataDate, y: activeInvestmentValue });
 
+                        // Mark shares as sold
+                        return { ...investment, shares: 0 };
+                    }
+                    return investment;
+                }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
 
                 // Calculate portfolio values
                 const activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
@@ -531,7 +553,7 @@
                     sharesBought: sharesBought,
                     sharesSold: sharesSold,
                     openPrice: data.openPrice,
-                    lastBuy: buy_price,
+                    lastBuy: buyPricesLog, // Log multiple buy prices
                     sellPrice: sellPrice,
                     highPrice: data.highPrice,
                     lowPrice: data.lowPrice,
