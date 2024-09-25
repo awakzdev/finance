@@ -459,27 +459,9 @@
                 let buy_price = null
                 let sellPrice = null
 
-                // console.log(dataDate,"currentPeak:",currentPeak,"currentprice",price,"highestPeak:",highestPeak,1-price/currentPeak)
-
-
-                        // old method to calculate currentPeak:
-                        // make sure current peak is either highest pick if no active buy
-                        // or current pick is the last active buy at open price
-                        // currentPeak = activeInvestments.length > 0
-                        //             ? activeInvestments.reduce((min, investment) => {
-                        //                 return investment.buyPrice < min ? investment.buyPrice : min;
-                        //             }, activeInvestments[0].buyPrice)
-                        //             : null;
-                        // if(currentPeak == null)
-                        // {
-                        //     currentPeak = highestPeak
-                        // }
-
-
                 // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
                 // for example 2 active stocks, Threshold of 0.05 so highestPeak * 0.95 ^2
                 currentPeak = highestPeak * (Math.pow (1 - buyThreshold, activeInvestments.length))
-                // console.log(activeInvestments.length)
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
@@ -499,35 +481,12 @@
                         sharesBought = sharesToBuy;
                         activeCashInvested += sharesToBuy * buy_price;
                         bought = true;
-                        lastBuyPrice = buy_price;
-                        currentPeak = buy_price; // Reset the peak to the new buy point
 
                         // Align Buy points with active portfolio value
                         let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                         // buyPoints.push({ x: dataDate, y: activeInvestmentValue });
                     }
-                } else {
-                    const dropFromLastBuy = ((lastBuyPrice - price) / lastBuyPrice) * 100;
-
-                    // Buy if price drops by the threshold from the last buy
-                    if (dropFromLastBuy >= buyThreshold * 100) {
-                        // buying at 5% percent less of currentPeak
-                        buy_price = currentPeak*(1-buyThreshold)
-                        let sharesToBuy = initialBuyAmount / buy_price; // Use fixed initialBuyAmount
-                        if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
-                            cash -= sharesToBuy * buy_price;
-                            activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
-                            action = 'Buy';
-                            sharesBought = sharesToBuy;
-                            activeCashInvested += sharesToBuy * buy_price;
-                            lastBuyPrice = buy_price;
-                            currentPeak = buy_price; // Reset the peak to the new buy point
-
-                            // Align Buy points with active portfolio value
-                            let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                        }
-                    }
-
+                }
                     // Sell logic with high price check
                     activeInvestments = activeInvestments.map(investment => {
                         // Calculate the exact target sell price (10% increase from buy price)
@@ -553,7 +512,7 @@
                         }
                         return investment;
                     }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
-                }
+
 
                 // Calculate portfolio values
                 const activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
