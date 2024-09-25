@@ -629,13 +629,6 @@
             return `${day}/${month}/${year}`;
         }
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues) {
-            totalPortfolioChart.data.datasets[0].data = totalPortfolioValues;
-            totalPortfolioChart.data.datasets[1].data = activeProfits;
-            totalPortfolioChart.data.datasets[2].data = ndxPortfolioValues;
-            totalPortfolioChart.update();
-        }
-
         function setupChart() {
             const totalPortfolioValues = [];
             const activeProfits = [];
