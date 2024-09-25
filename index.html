@@ -268,6 +268,7 @@
                     const openPriceKey = 'Open';
                     const highPriceKey = 'High';
                     const lastBuyKey = 'Buy';
+                    const sellPriceKey = 'Sell'
                     const lowPriceKey = 'Low';
 
                     if (!dateKey || !closePriceKey || !openPriceKey) {
@@ -304,6 +305,7 @@
                                 openPrice: row[openPriceKey],
                                 highPrice: row[highPriceKey],
                                 lastBuy: row[lastBuyKey],
+                                sellPrice: row[sellPriceKey],
                                 lowPrice: row[lowPriceKey],
                                 dateObj: new Date(year, month - 1, day) // Store date object for easier comparison
                             };
@@ -425,6 +427,7 @@
             let highestPeak = filteredStockData[0].highPrice;
             let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
             let currentPeak = highestPeak;
+            let purchaseCount = 0; // Track the number of purchases made
             let bought = false;
             let activeCashInvested = 0;
 
@@ -445,7 +448,9 @@
                     highestPeak = data.highPrice;
                 }
                 let buy_price = null
-                console.log(dataDate,"currentPeak:",currentPeak,"currentprice",price,"highestPeak:",highestPeak,1-price/currentPeak)
+                let sellPrice = null
+
+                // console.log(dataDate,"currentPeak:",currentPeak,"currentprice",price,"highestPeak:",highestPeak,1-price/currentPeak)
 
 
                         // old method to calculate currentPeak:
@@ -465,7 +470,7 @@
                 // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
                 // for example 2 active stocks, Threshold of 0.05 so highestPeak * 0.95 ^2
                 currentPeak = highestPeak * (Math.pow (1 - buyThreshold, activeInvestments.length))
-                console.log(activeInvestments.length)
+                // console.log(activeInvestments.length)
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
@@ -512,7 +517,6 @@
                         }
                     }
 
-
                     // Sell logic
                     activeInvestments = activeInvestments.map(investment => {
                         if (price >= investment.buyPrice * (1 + sellThreshold)) {
@@ -522,6 +526,8 @@
                             cash += saleProceeds;
                             sharesSold = investment.shares;
                             action = 'Sell';
+
+                            sellPrice = price; // Record sell price
 
                             // Align Sell points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
@@ -552,6 +558,7 @@
                     sharesSold: sharesSold,
                     openPrice: data.openPrice,
                     lastBuy: buy_price,
+                    sellPrice: sellPrice,
                     highPrice: data.highPrice,
                     lowPrice: data.lowPrice,
                     closePrice: data.price,
@@ -576,7 +583,7 @@
             const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
             buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
             finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
-            stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0);
+            stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
             stocksValueDisplay.textContent = `($${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)})`;
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
@@ -719,7 +726,7 @@
         function downloadCSV() {
             const csvRows = [];
             const headers = [
-                'Date', 'Action', 'Shares Bought', 'Shares Sold','Buy Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
+                'Date', 'Action', 'Shares Bought', 'Shares Sold','Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
                 'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit',
                 'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
@@ -733,6 +740,7 @@
                     log.sharesBought,
                     log.sharesSold,
                     log.lastBuy,
+                    log.sellPrice,
                     log.openPrice,
                     log.highPrice, // Add High Price
                     log.lowPrice,  // Add Low Price
@@ -752,6 +760,7 @@
                     log.valuePassive
                 ];
                 csvRows.push(row.join(','));
+
             });
 
             const csvContent = csvRows.join('\n');
