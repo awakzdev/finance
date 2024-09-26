@@ -727,8 +727,8 @@
             const headers = [
                 'Date', 'Action', 'Shares Bought', 'Shares Sold','Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
-                'Passive Profit', //'Down Percentage from Peak', 'Passive Investment Price',
-                'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
+                'Passive Profit', //'Down Percentage from Peak', 'Passive Investment Price', 'Total Amount',
+                'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive'
             ];
             csvRows.push(headers.join(','));
 
@@ -755,7 +755,7 @@
                     log.activeProfit,
                     log.activeCashInvested,
                     log.totalValue,
-                    log.totalAmount,
+                    // log.totalAmount,
                     log.valuePassive
                 ];
                 csvRows.push(row.join(','));
