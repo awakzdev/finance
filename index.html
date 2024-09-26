@@ -455,14 +455,14 @@
                 let didSell = false
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
-                if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
-                    highestPeak = data.price;
-                }
+                // if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
+                //     highestPeak = data.price;
+                // }
                 
                 // Compare highest peak to high price of the day
-                // if (data.price > highestPeak) { 
-                //     highestPeak = data.highPrice;
-                // }
+                if (data.price > highestPeak) { 
+                    highestPeak = data.highPrice;
+                }
 
                 let buy_price = null;
                 let sellPrice = null;
@@ -495,16 +495,15 @@
                             if (buyPricesLog === '') {
                                 buyPricesLog = buy_price.toFixed(4);
                             }
-
-                            // else {
-                            //     buyPricesLog += `; ${buy_price.toFixed(4)}`;
-                            // }
+                            // This line logs multiple prices to our CSV if more than one purchases were made
+                            else {
+                                buyPricesLog += `; ${buy_price.toFixed(4)}`;
+                            }
                             didBuy= true
 
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                            // buyPoints.push({ x: dataDate, y: 0 });
 
                             // Update last buy price and current peak for subsequent buys
                             lastBuyPrice = buy_price;
@@ -539,7 +538,6 @@
 
                         // Align Sell points with active portfolio value
                         let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                        // sellPoints.push({ x: dataDate, y: 0 });
 
                         // Mark shares as sold
                         return { ...investment, shares: 0 };
@@ -548,7 +546,7 @@
                 }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
 
                 // Calculate portfolio values
-                const activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                const activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 const passivePortfolioValue = passiveShares * price;
                 const totalValue = activeInvestmentValue + passivePortfolioValue;
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
@@ -556,12 +554,13 @@
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
 
-                activeProfits.push({ x: dataDate, y: activeProfit });
+                // activeProfits.push({ x: dataDate, y: activeProfit });
+                // Log buy and sell points on the graph
                 if(didSell){
-                    sellPoints.push({ x: dataDate, y: activeProfit });
+                    sellPoints.push({ x: dataDate.getTime(), y: totalValue  });
                 }
                 if(didBuy){
-                     buyPoints.push({ x: dataDate, y: activeProfit });
+                     buyPoints.push({ x: dataDate.getTime(), y: totalValue  });
                 }
                 // Modify the transaction log to store the new price fields
                 transactionLog.push({
@@ -688,12 +687,6 @@
                     mode: 'lines',
                 },
                 {
-                    x: activeProfits.map(data => data.x),
-                    y: activeProfits.map(data => data.y),
-                    name: 'Active Profit',
-                    mode: 'lines',
-                },
-                {
                     x: ndxPortfolioValues.map(data => data.x),
                     y: ndxPortfolioValues.map(data => data.y),
                     name: 'NDX Passive Investment',
@@ -707,7 +700,7 @@
                     name: 'Buy Points',
                     marker: {
                         color: 'green',
-                        size: 10,
+                        size: 7,
                         symbol: 'triangle-up',
                     },
                 },
@@ -719,14 +712,13 @@
                     name: 'Sell Points',
                     marker: {
                         color: 'red',
-                        size: 10,
+                        size: 7,
                         symbol: 'triangle-down',
                     },
                 }
             ];
 
             Plotly.react('totalPortfolioChart', updatedData);
-
         }
 
         // Update the CSV download logic
@@ -735,7 +727,7 @@
             const headers = [
                 'Date', 'Action', 'Shares Bought', 'Shares Sold','Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
-                'Down Percentage from Peak', 'Passive Investment Price', 'Passive Profit',
+                'Passive Profit', //'Down Percentage from Peak', 'Passive Investment Price',
                 'Active Profit', 'Active Cash Invested', 'Total Value', 'Total Amount', 'Value Passive'
             ];
             csvRows.push(headers.join(','));
@@ -757,8 +749,8 @@
                     log.passiveShares,
                     log.totalShares,
                     log.highestPeak,
-                    log.downPercentageFromPeak,
-                    log.passiveInvestmentPrice,
+                    // log.downPercentageFromPeak,
+                    // log.passiveInvestmentPrice,
                     log.passiveProfit,
                     log.activeProfit,
                     log.activeCashInvested,
