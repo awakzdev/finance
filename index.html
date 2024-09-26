@@ -433,7 +433,7 @@
             let passiveInvestmentPrice = filteredStockData[0].openPrice;
             let activeInvestments = [];
             let totalProfit = 0;
-            let highestPeak = filteredStockData[0].highPrice;
+            let highestPeak = filteredStockData[0].price;
             let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
             let currentPeak = highestPeak;
             let purchaseCount = 0; // Track the number of purchases made
@@ -455,14 +455,14 @@
                 let didSell = false
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
-                // if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
-                //     highestPeak = data.price;
-                // }
+                if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
+                    highestPeak = data.price;
+                }
                 
                 // Compare highest peak to high price of the day
-                if (data.price > highestPeak) { 
-                    highestPeak = data.highPrice;
-                }
+                // if (data.price > highestPeak) { 
+                //     highestPeak = data.highPrice;
+                // }
 
                 let buy_price = null;
                 let sellPrice = null;
