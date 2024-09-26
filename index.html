@@ -114,6 +114,18 @@
             box-sizing: border-box;
         }
 
+        .modebar {
+        position: absolute !important; /* Override Plotly's default position */
+        top: 0; /* Position it at the top of the container */
+        left: 0; /* Align it to the left */
+        width: 100%; /* Take full width */
+        z-index: 1; /* Make sure it's on top */
+        }
+        #totalPortfolioChart {
+            position: relative; /* Required for absolute positioning of mode bar */
+            height: 600px; /* Adjust height as needed */
+        }
+
         canvas {
             width: auto;
             height: auto;
@@ -439,6 +451,8 @@
             let purchaseCount = 0; // Track the number of purchases made
             let bought = false;
             let activeCashInvested = 0;
+            let firstPurchasePeak = null; // Peak at the time of the first purchase
+            let fullySold = true; // Flag to indicate if all stocks are sold
 
             const totalPortfolioValues = [];
             const activeProfits = [];
@@ -458,18 +472,26 @@
                 if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
                     highestPeak = data.price;
                 }
-                
+
                 // Compare highest peak to high price of the day
                 // if (data.price > highestPeak) { 
                 //     highestPeak = data.highPrice;
                 // }
 
+                // If fully sold, reset the first purchase peak and purchase count
+                if (fullySold) {
+                    firstPurchasePeak = highestPeak;
+                    purchaseCount = 0; // Reset purchase count
+                }
+                
                 let buy_price = null;
                 let sellPrice = null;
                 let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
 
+                let peakToUse = fullySold ? highestPeak : firstPurchasePeak;
+
                 // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
-                currentPeak = highestPeak * Math.pow(1 - buyThreshold, activeInvestments.length);
+                currentPeak = peakToUse * Math.pow(1 - buyThreshold, activeInvestments.length);
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
@@ -478,6 +500,10 @@
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // Loop to check for multiple purchases on the same day
                     while (dropFromCurrentPeak >= buyThreshold * 100) {
+                        // Calculate the drop percentage for the current purchase
+                        currentPurchaseCount = activeInvestments.length + 1; // Increment based on the number of purchases made
+                        dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
+
                         // Calculate the new buy price
                         buy_price = currentPeak * (1 - buyThreshold);
 
@@ -499,8 +525,8 @@
                             else {
                                 buyPricesLog += `; ${buy_price.toFixed(4)}`;
                             }
-                            didBuy= true
 
+                            didBuy = true
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
@@ -536,6 +562,8 @@
                         didSell=true
                         sellPrice = targetSellPrice; // Record the target sell price as the sell price
 
+                        gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
+
                         // Align Sell points with active portfolio value
                         let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
@@ -557,11 +585,38 @@
                 // activeProfits.push({ x: dataDate, y: activeProfit });
                 // Log buy and sell points on the graph
                 if(didSell){
-                    sellPoints.push({ x: dataDate.getTime(), y: totalValue  });
+                    // Determine marker properties based on the threshold
+                    
+                    let markerProperties = getMarkerProperties('sell', gainPercentage);
+
+                    // Log the sell point with marker properties
+                    sellPoints.push({
+                        x: dataDate, // Keep as date object
+                        y: totalValue,
+                        marker: {
+                            color: markerProperties.color,
+                            symbol: markerProperties.shape,
+                            size: 8
+                        },
+                        hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%`                    });
                 }
                 if(didBuy){
-                     buyPoints.push({ x: dataDate.getTime(), y: totalValue  });
+                    // Determine marker properties based on the threshold
+                    let markerProperties = getMarkerProperties('buy', dropPercentage);
+
+                    // Log the buy point with marker properties
+                    buyPoints.push({
+                        x: dataDate, // Keep as date object
+                        y: totalValue,
+                        marker: {
+                            color: markerProperties.color,
+                            symbol: markerProperties.shape,
+                            size: 8
+                        },
+                        hovertext: `Buy: ${data.date}, Drop: ${dropPercentage.toFixed(2)}%` // Use data.date directly for hovertext
+                    });
                 }
+
                 // Modify the transaction log to store the new price fields
                 transactionLog.push({
                     date: data.date,
@@ -633,6 +688,38 @@
             const year = dateObj.getFullYear();
             return `${day}/${month}/${year}`;
         }
+        
+        function getMarkerProperties(action, threshold) {
+            // Define shapes and colors for different percentages
+            const markerShapes = {
+                'buy': {
+                    '5%': { color: 'green', shape: 'circle' },
+                    '10%': { color: 'cyan', shape: 'diamond-open' },
+                    '15%': { color: 'purple', shape: 'hexagon' },
+                    '20%': { color: 'orange', shape: 'triangle-up' },
+                },
+                'sell': {
+                    '5%': { color: 'red', shape: 'cross' },
+                    '10%': { color: 'pink', shape: 'star' },
+                    '15%': { color: 'brown', shape: 'x' },
+                    '20%': { color: 'yellow', shape: 'triangle-down' },
+                }
+            };
+
+            // Convert threshold to a string key (e.g., '10%')
+            const key = `${Math.round(threshold)}%`;
+
+            // Return the appropriate marker properties or a fallback for undefined thresholds
+            if (markerShapes[action][key]) {
+                return markerShapes[action][key];
+            } else {
+                // Fallback for any other threshold
+                return {
+                    color: action === 'buy' ? 'blue' : 'red', // Differentiate by action
+                    shape: action === 'buy' ? 'triangle-right' : 'triangle-left' // Differentiate by action
+                };
+            }
+        }
 
         function setupChart() {
             const totalPortfolioValues = [];
@@ -648,6 +735,19 @@
                 yaxis: {
                     title: 'Value ($)',
                 },
+                margin: {
+                    l: 50, // left margin
+                    r: 50, // right margin
+                    t: 20, // top margin - reduce this to make more space
+                    b: 50, // bottom margin
+                }
+            };
+
+            const config = {
+                modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'], // Optional: customize the mode bar buttons
+                displaylogo: false, // Remove the Plotly logo
+                displayModeBar: true, // Always show the mode bar
+                modeBarButtonsToAdd: [],
             };
 
             Plotly.newPlot('totalPortfolioChart', [
@@ -675,7 +775,7 @@
                     line: { color: 'rgba(54, 162, 235, 1)' },
                     fill: 'tozeroy',
                 }
-            ], layout);
+            ], layout, config);
         }
 
         function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints) {
@@ -692,33 +792,48 @@
                     name: 'NDX Passive Investment',
                     mode: 'lines',
                 },
-                // Add Buy Points markers
+                // Buy Points
                 {
                     x: buyPoints.map(point => point.x),
                     y: buyPoints.map(point => point.y),
                     mode: 'markers',
                     name: 'Buy Points',
                     marker: {
-                        color: 'green',
-                        size: 7,
-                        symbol: 'triangle-up',
+                        color: buyPoints.map(point => point.marker.color),
+                        symbol: buyPoints.map(point => point.marker.symbol),
+                        size: 8,
                     },
+                    hoverinfo: 'text',
+                    text: buyPoints.map(point => point.hovertext),
                 },
-                // Add Sell Points markers
+                // Sell Points
                 {
                     x: sellPoints.map(point => point.x),
                     y: sellPoints.map(point => point.y),
                     mode: 'markers',
                     name: 'Sell Points',
                     marker: {
-                        color: 'red',
-                        size: 7,
-                        symbol: 'triangle-down',
+                        color: sellPoints.map(point => point.marker.color),
+                        symbol: sellPoints.map(point => point.marker.symbol),
+                        size: 8,
                     },
+                    hoverinfo: 'text',
+                    text: sellPoints.map(point => point.hovertext),
                 }
             ];
 
-            Plotly.react('totalPortfolioChart', updatedData);
+            const layout = {
+                title: 'Portfolio Values Over Time',
+                xaxis: {
+                    title: 'Date',
+                    type: 'date',
+                },
+                yaxis: {
+                    title: 'Value ($)',
+                },
+            };
+
+            Plotly.react('totalPortfolioChart', updatedData, layout);
         }
 
         // Update the CSV download logic
