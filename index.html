@@ -779,6 +779,17 @@
         }
 
         function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints) {
+            const allXValues = [
+                ...totalPortfolioValues.map(data => data.x),
+                ...ndxPortfolioValues.map(data => data.x),
+                ...buyPoints.map(point => point.x),
+                ...sellPoints.map(point => point.x)
+            ];
+
+            // Calculate the min and max dates for the x-axis range
+            const minXValue = Math.min(...allXValues);
+            const maxXValue = Math.max(...allXValues);
+
             const updatedData = [
                 {
                     x: totalPortfolioValues.map(data => data.x),
@@ -827,6 +838,7 @@
                 xaxis: {
                     title: 'Date',
                     type: 'date',
+                    range: [minXValue, maxXValue],
                 },
                 yaxis: {
                     title: 'Value ($)',
