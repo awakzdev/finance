@@ -843,6 +843,19 @@
                 yaxis: {
                     title: 'Value ($)',
                 },
+                legend: {
+                    orientation: 'h', // Horizontal orientation
+                    x: 0.5, // Center the legend horizontally
+                    y: 1.0, // Move the legend higher above the chart
+                    xanchor: 'center', // Center the legend's x position
+                    yanchor: 'bottom', // Align the legend's y position to the bottom
+                                },
+                margin: {
+                    l: 50, // Left margin
+                    r: 50, // Right margin
+                    t: 70, // Increase top margin to fit the legend
+                    b: 50, // Bottom margin
+                },
             };
 
             Plotly.react('totalPortfolioChart', updatedData, layout);
