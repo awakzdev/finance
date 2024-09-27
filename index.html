@@ -491,8 +491,8 @@
                 let peakToUse = fullySold ? highestPeak : firstPurchasePeak;
 
                 // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
-                currentPeak = peakToUse * Math.pow(1 - buyThreshold, activeInvestments.length);
-
+                // currentPeak = peakToUse * Math.pow(1 - buyThreshold, activeInvestments.length);
+                currentPeak = peakToUse - peakToUse * buyThreshold * activeInvestments.length
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
 
