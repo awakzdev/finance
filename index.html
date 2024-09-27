@@ -505,7 +505,7 @@
                         dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
 
                         // Calculate the new buy price
-                        buy_price = currentPeak * (1 - buyThreshold);
+                        buy_price = highestPeak - (highestPeak * buyThreshold * currentPurchaseCount)
 
                         let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
