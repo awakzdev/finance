@@ -19,7 +19,8 @@ symbols = ['QLD', '^NDX']
 
 for symbol in symbols:
     # Step 2: Fetch historical data for the symbol
-    data = yf.download(symbol, start='2019-07-26', end=today_date)
+    data = yf.download(symbol, start='2006-06-21', end=today_date)
+    # Was previously - 2019-07-26
 
     # Convert the index (dates) to the desired format (day/month/year)
     data.index = data.index.strftime('%d/%m/%Y')
