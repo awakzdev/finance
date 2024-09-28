@@ -596,7 +596,8 @@
                 currentPeak = peakToUse - peakToUse * buyThreshold * activeInvestments.length
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
-                
+                const dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+
                 // Buy logic (before the first purchase)
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // Loop to check for multiple purchases on the same day
@@ -682,7 +683,7 @@
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
-                totalCashValues.push({ x: dataDate, y: cash }); // Store the cash value for this date
+                totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2) });
 
                 // activeProfits.push({ x: dataDate, y: activeProfit });
                 // Log buy and sell points on the graph
@@ -736,7 +737,7 @@
                     passiveShares: passiveShares,
                     totalShares: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares,
                     highestPeak: highestPeak,
-                    downPercentageFromPeak: dropFromCurrentPeak.toFixed(2),
+                    downPercentageFromPeak: dropFromHighestPeak.toFixed(2),
                     passiveInvestmentPrice: passiveInvestmentPrice,
                     passiveProfit: passiveProfit.toFixed(2),
                     activeProfit: activeProfit.toFixed(2),
@@ -988,10 +989,9 @@
         function downloadCSV() {
             const csvRows = [];
             const headers = [
-                'Date', 'Action', 'Shares Bought', 'Shares Sold','Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
+                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
-                'Passive Profit', //'Down Percentage from Peak', 'Passive Investment Price', 'Total Amount',
-                'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive'
+                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak' // Add column here
             ];
             csvRows.push(headers.join(','));
 
@@ -1004,27 +1004,23 @@
                     log.lastBuy,
                     log.sellPrice,
                     log.openPrice,
-                    log.highPrice, // Add High Price
-                    log.lowPrice,  // Add Low Price
-                    log.closePrice, // Add Close Price (instead of price)
+                    log.highPrice,
+                    log.lowPrice,
+                    log.closePrice,
                     log.totalCash,
                     log.stocksHeld,
                     log.passiveShares,
                     log.totalShares,
                     log.highestPeak,
-                    // log.downPercentageFromPeak,
-                    // log.passiveInvestmentPrice,
                     log.passiveProfit,
                     log.activeProfit,
                     log.activeCashInvested,
                     log.totalValue,
-                    // log.totalAmount,
-                    log.valuePassive
+                    log.valuePassive,
+                    log.downPercentageFromPeak // Include the drop percentage value
                 ];
                 csvRows.push(row.join(','));
-
             });
-
             const csvContent = csvRows.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
@@ -1033,6 +1029,8 @@
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
         }
+
+
     </script>
 </body>
 </html>
