@@ -224,16 +224,27 @@
             </div>
             
             <div class="input-group">
-                <label for="allowNegativeBalance">
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="allowNegativeBalance">
-                        <span class="toggle-slider"></span>
+                <label for="allowNegativeBalance" style="font-size: 14px; font-weight: bold; display: flex; align-items: center;">
+                    <div class="toggle-switch" style="margin-right: 10px;">
+                        <input type="checkbox" id="allowNegativeBalance" style="width: 40px; height: 20px;">
+                        <span class="toggle-slider" style="width: 40px; height: 20px;"></span>
                     </div>
                     Allow Negative Balance
                 </label>
             </div>
             
-            
+            <div class="input-group">
+                <label style="font-size: 14px; font-weight: bold;">Select Drop Model:</label>
+                <div style="display: flex; align-items: center; margin-top: 5px;">
+                    <input type="radio" id="modelA" name="dropModel" value="modelA" style="margin-right: 5px;">
+                    <label for="modelA" style="font-size: 12px; margin-right: 15px;">Model A (5% drop from last purchase)</label>
+                </div>
+                <div style="display: flex; align-items: center; margin-top: 5px;">
+                    <input type="radio" id="modelB" name="dropModel" value="modelB" checked style="margin-right: 5px;">
+                    <label for="modelB" style="font-size: 12px;">Model B (Drop from highest peak)</label>
+                </div>
+            </div>
+
             <div class="input-group">
                 <label for="split">Investment vs. Cash Split (%): <span id="splitValue">50%</span></label>
                 <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
@@ -274,7 +285,9 @@
         let ndxStockData = [];
         let totalPortfolioChart;
         let datasetsLoaded = 0;
-        let allowNegativeBalance = false; // Declare globally
+        let allowNegativeBalance = false;
+        let selectedModel = 'modelB';
+        let dropFromCurrentPeak = 0;
 
         // Select elements
         const totalInvestmentSlider = document.getElementById('totalInvestment');
@@ -359,6 +372,15 @@
 
             dateRangeDropdown.addEventListener('change', () => {
                 calculateResults(); // Recalculate results when date range changes
+            });
+            
+            const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
+            dropModelRadios.forEach(radio => {
+                radio.addEventListener('change', (event) => {
+                    selectedModel = event.target.value; // Update the selected model based on the user's choice
+                    console.log('Selected drop model:', selectedModel);
+                    calculateResults(); // Recalculate results based on the selected model
+                });
             });
         };
 
@@ -566,48 +588,62 @@
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
-                let didBuy = false
-                let didSell = false
-                fullySold = (activeInvestments.length === 0)
+                let didBuy = false;
+                let didSell = false;
+
+                fullySold = (activeInvestments.length === 0);
+
                 // Update the highest peak (always check if price exceeds the highestPeak)
-                if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
+                if (data.price > highestPeak) {
                     highestPeak = data.price;
                 }
-
-                // Compare highest peak to high price of the day
-                // if (data.price > highestPeak) { 
-                //     highestPeak = data.highPrice;
-                // }
 
                 // If fully sold, reset the first purchase peak and purchase count
                 if (fullySold) {
                     firstPurchasePeak = highestPeak;
                     purchaseCount = 0; // Reset purchase count
                 }
-                
+
                 let buy_price = null;
                 let sellPrice = null;
                 let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
 
                 let peakToUse = fullySold ? highestPeak : firstPurchasePeak;
 
-                // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
-                // currentPeak = peakToUse * Math.pow(1 - buyThreshold, activeInvestments.length);
-                currentPeak = peakToUse - peakToUse * buyThreshold * activeInvestments.length
+                // Adjust `currentPeak` based on the selected model
+                if (selectedModel === 'modelA') {
+                    if (fullySold) {
+                        // If fully sold, reset to the highest peak for the next potential buy
+                        currentPeak = highestPeak;
+                    }
+                    // No need to set currentPeak otherwise, as it should always use `lastBuyPrice` after the first purchase
+                } else if (selectedModel === 'modelB') {
+                    // Model B: Drop from the highest peak
+                    currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
+                }
+
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
                 const dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
 
-                // Buy logic (before the first purchase)
+                // Debugging logs for drop and price information
+                console.log(`Date: ${data.date}, Model: ${selectedModel}, Current Peak: ${currentPeak}, Price: ${price}, Drop from Current Peak: ${dropFromCurrentPeak}`);
+
+                // Buy logic
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // Loop to check for multiple purchases on the same day
                     while (dropFromCurrentPeak >= buyThreshold * 100) {
-                        // Calculate the drop percentage for the current purchase
                         currentPurchaseCount = activeInvestments.length + 1; // Increment based on the number of purchases made
                         dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
 
-                        // Calculate the new buy price
-                        buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount)
+                        // Calculate the new buy price based on the selected model
+                        if (selectedModel === 'modelA') {
+                            // Model A: Buy price based on a drop from the last purchase
+                            buy_price = fullySold ? currentPeak * (1 - buyThreshold) : lastBuyPrice * (1 - buyThreshold);
+                        } else if (selectedModel === 'modelB') {
+                            // Model B: Buy price based on the highest peak
+                            buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount);
+                        }
 
                         let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
@@ -620,23 +656,26 @@
                             activeCashInvested += sharesToBuy * buy_price;
 
                             // Append the buy price to the log string
-                            if (buyPricesLog === '') {
-                                buyPricesLog = buy_price.toFixed(4);
-                            }
-                            // This line logs multiple prices to our CSV if more than one purchases were made
-                            else {
-                                buyPricesLog += `; ${buy_price.toFixed(4)}`;
-                            }
+                            buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
 
-                            didBuy = true
+                            didBuy = true;
+
+                            // Update last buy price for Model A
+                            if (selectedModel === 'modelA') {
+                                lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
+                            }
 
                             // Align Buy points with active portfolio value
                             let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
-                            // Update last buy price and current peak for subsequent buys
-                            lastBuyPrice = buy_price;
+                            // Update current peak for subsequent buys
                             currentPeak = buy_price;
+
+                            // Debugging log for successful purchase
+                            console.log(`Bought shares on ${data.date} at price: ${buy_price}, Cash remaining: ${cash}`);
                         } else {
+                            // Debugging log for insufficient funds
+                            console.log(`Insufficient cash to buy on ${data.date}, Required: ${sharesToBuy * buy_price}, Available: ${cash}`);
                             break; // Break the loop if no more cash is available
                         }
 
