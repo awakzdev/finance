@@ -467,7 +467,7 @@
                 let sharesSold = 0;
                 let didBuy = false
                 let didSell = false
-
+                fullySold = (activeInvestments.length === 0)
                 // Update the highest peak (always check if price exceeds the highestPeak)
                 if (data.price > highestPeak) {  // 'price' here refers to the closePrice as defined earlier
                     highestPeak = data.price;
@@ -492,7 +492,7 @@
 
                 // currentPeak = highestPeak * (1-Threshold) ^ (numbers of active stock)
                 // currentPeak = peakToUse * Math.pow(1 - buyThreshold, activeInvestments.length);
-                currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length
+                currentPeak = peakToUse - peakToUse * buyThreshold * activeInvestments.length
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
 
@@ -505,7 +505,7 @@
                         dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
 
                         // Calculate the new buy price
-                        buy_price = highestPeak - (highestPeak * buyThreshold * currentPurchaseCount)
+                        buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount)
 
                         let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
