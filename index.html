@@ -171,6 +171,12 @@
             </div>
             
             <div class="input-group">
+                <label for="allowNegativeBalance">
+                    <input type="checkbox" id="allowNegativeBalance"> Allow Negative Balance
+                </label>
+            </div>
+            
+            <div class="input-group">
                 <label for="split">Investment vs. Cash Split (%): <span id="splitValue">50%</span></label>
                 <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
             </div>
@@ -210,6 +216,7 @@
         let ndxStockData = [];
         let totalPortfolioChart;
         let datasetsLoaded = 0;
+        let allowNegativeBalance = false; // Declare globally
 
         // Select elements
         const totalInvestmentSlider = document.getElementById('totalInvestment');
@@ -251,6 +258,14 @@
             })
             .catch(error => {
                 console.error("Error fetching NDX CSV file:", error);
+            });
+
+            // Set up the event listener for negative balance checkbox
+            const checkbox = document.getElementById('allowNegativeBalance');
+            checkbox.addEventListener('change', function() {
+                allowNegativeBalance = this.checked; // Update the variable
+                console.log('Checkbox state:', allowNegativeBalance); // Log the current state
+                calculateResults(); // Recalculate results when the checkbox state changes
             });
 
             // Event listener for the new dropdown
@@ -508,7 +523,7 @@
                 currentPeak = peakToUse - peakToUse * buyThreshold * activeInvestments.length
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
-
+                
                 // Buy logic (before the first purchase)
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // Loop to check for multiple purchases on the same day
@@ -523,7 +538,7 @@
                         let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
                         // Check if there is enough cash to buy the shares
-                        if (sharesToBuy > 0 && cash >= sharesToBuy * buy_price) {
+                        if (sharesToBuy > 0 && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
                             cash -= sharesToBuy * buy_price;
                             activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
                             action = 'Buy';
