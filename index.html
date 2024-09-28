@@ -158,9 +158,18 @@
             </div>
 
             <div class="input-group">
-                <label for="totalInvestment">Total Investment ($): <span id="totalInvestmentValue">100000</span></label>
-                <input type="range" id="totalInvestment" class="slider" min="50000" max="10000000" value="100000" step="1000">
+                <label for="totalInvestment">Total Investment ($):</label>
+                <select id="totalInvestment" class="dropdown">
+                    <option value="50000">50,000</option>
+                    <option value="100000">100,000</option>
+                    <option value="200000">200,000</option>
+                    <option value="500000">500,000</option>
+                    <option value="1000000">1,000,000</option>
+                    <option value="5000000">5,000,000</option>
+                    <option value="10000000">10,000,000</option>
+                </select>
             </div>
+            
             <div class="input-group">
                 <label for="split">Investment vs. Cash Split (%): <span id="splitValue">50%</span></label>
                 <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
@@ -209,6 +218,7 @@
         const sellThresholdSlider = document.getElementById('sellThreshold');
         const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
         const dateRangeDropdown = document.getElementById('dateRange');
+        const totalInvestmentDropdown = document.getElementById('totalInvestment');
 
         const totalInvestmentValue = document.getElementById('totalInvestmentValue');
         const splitValue = document.getElementById('splitValue');
@@ -243,8 +253,10 @@
                 console.error("Error fetching NDX CSV file:", error);
             });
 
-            totalInvestmentSlider.addEventListener('input', () => {
-                totalInvestmentValue.textContent = totalInvestmentSlider.value;
+            // Event listener for the new dropdown
+            totalInvestmentDropdown.addEventListener('change', () => {
+                totalValueDisplay.textContent = totalInvestmentDropdown.value;
+
                 calculateResults();
             });
 
@@ -276,6 +288,7 @@
                 calculateResults(); // Recalculate results when date range changes
             });
         };
+
 
         function parseCSVData(csvText, type) {
             Papa.parse(csvText, {
@@ -431,7 +444,7 @@
             }
 
             // Initialize variables
-            let totalPortfolioValue = parseInt(totalInvestmentSlider.value);
+            let totalPortfolioValue = parseInt(totalInvestmentDropdown.value);
             let cashPercent = parseInt(splitSlider.value) / 100;
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
             let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
