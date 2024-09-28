@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investment Strategy Comparison</title>
-    <!-- Include Chart.js -->
+    <!-- Chart.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <!-- Include Moment.js -->
+    <!-- Moment.js -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
-    <!-- Include Papa Parse for CSV parsing -->
+    <!-- Papa Parse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
 
@@ -18,8 +18,8 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            direction: ltr; /* Ensure body content direction is LTR */
-            text-align: left; /* Align text to the left */
+            direction: ltr;
+            text-align: left;
         }
 
         /* Style the date dropdown */
@@ -28,19 +28,19 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             width: 100%;
-            padding: 10px 15px; /* Adjusted padding */
+            padding: 10px 15px;
             font-size: 16px;
-            line-height: 1.6; /* Ensures the text height is consistent */
+            line-height: 1.6;
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: #f9f9f9;
             cursor: pointer;
             transition: border-color 0.3s, box-shadow 0.3s;
-            white-space: nowrap; /* Prevents text wrapping */
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            height: auto; /* Ensures the dropdown adjusts to the text size */
-            display: block; /* Ensure block layout for full width and height */
+            height: auto;
+            display: block;
             box-sizing: border-box;
         }
 
@@ -70,18 +70,18 @@
             justify-content: space-between;
             flex-direction: row;
             text-align: left;
-            flex-wrap: nowrap; /* Prevents sections from wrapping when resizing */
+            flex-wrap: nowrap;
         }
 
         .left-section {
-            flex: 0 1 300px; /* Fixed width of 300px, won't shrink below this */
-            min-width: 300px; /* Ensures the section doesn't shrink smaller than 300px */
-            margin-right: 20px; /* Adds space between left and right sections */
+            flex: 0 1 300px;
+            min-width: 300px;
+            margin-right: 20px;
             text-align: left;
         }
 
         .right-section {
-            flex: 1; /* Takes up the remaining space */
+            flex: 1;
             padding-left: 20px;
             text-align: left;
         }
@@ -115,15 +115,15 @@
         }
 
         .modebar {
-        position: absolute !important; /* Override Plotly's default position */
-        top: 0; /* Position it at the top of the container */
-        left: 0; /* Align it to the left */
-        width: 100%; /* Take full width */
-        z-index: 1; /* Make sure it's on top */
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1;
         }
         #totalPortfolioChart {
-            position: relative; /* Required for absolute positioning of mode bar */
-            height: 600px; /* Adjust height as needed */
+            position: relative; 
+            height: 600px;
         }
 
         canvas {
@@ -157,7 +157,7 @@
             bottom: 0;
             background-color: #ccc;
             transition: 0.4s;
-            border-radius: 20px;
+            border-radius: 20px; 
         }
 
         .toggle-slider:before {
@@ -184,7 +184,8 @@
             display: flex;
             align-items: center;
             font-weight: bold;
-            gap: 10px;
+            gap: 10px; 
+            white-space: nowrap; 
         }
 
         .input-group {
@@ -220,7 +221,7 @@
                 <label for="totalInvestment">Total Investment ($):</label>
                 <select id="totalInvestment" class="dropdown">
                     <option value="50000">50,000</option>
-                    <option value="100000">100,000</option>
+                    <option value="100000" selected>100,000</option> <!-- Set as default -->
                     <option value="200000">200,000</option>
                     <option value="500000">500,000</option>
                     <option value="1000000">1,000,000</option>
@@ -479,10 +480,24 @@
                 closingDateDropdown.appendChild(option2);
             });
 
-            // Set the initial values
-            dateRangeDropdown.value = formatDate(uniqueDates[0]);
-            closingDateDropdown.value = formatDate(uniqueDates[uniqueDates.length - 1]); // Set the initial closing date to the last date
+            // Set the opening date to '26/07/2019' if it exists
+            const defaultDate = '26/07/2019';
+            const defaultDateExists = Array.from(dateRangeDropdown.options).some(option => option.value === defaultDate);
+
+            if (defaultDateExists) {
+                dateRangeDropdown.value = defaultDate;
+            } else {
+                // Fallback to the first date if the default date isn't found
+                dateRangeDropdown.value = formatDate(uniqueDates[0]);
+            }
+
+            // Always set the closing date to the last date in the dataset
+            closingDateDropdown.value = formatDate(uniqueDates[uniqueDates.length - 1]);
+
+            // Trigger the initial calculation
+            calculateResults();
         }
+
 
         function calculateResults() {
             console.log("Calculating portfolio results...");
