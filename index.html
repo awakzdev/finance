@@ -110,52 +110,62 @@
         .results {
             margin-top: 30px;
             padding: 20px;
-            background: linear-gradient(145deg, #f0f4f8, #ffffff); /* Light gradient for subtle shading */
+            background: linear-gradient(145deg, #f0f4f8, #ffffff);
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05); /* Outer and inner shadows */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
             text-align: left;
             box-sizing: border-box;
-            border: 1px solid #e0e0e0; /* Light border for contrast */
+            border: 1px solid #e0e0e0;
         }
 
         .results h2 {
             font-size: 1.8em;
             margin-bottom: 20px;
-            color: #2c3e50; /* Darker text color for better contrast */
+            color: #2c3e50;
         }
 
         .result-item {
             display: flex;
             justify-content: space-between;
             margin-bottom: 15px;
-            padding: 10px 0; /* Removed background for individual items */
-            border-bottom: 1px solid #e0e4e8; /* Divider between items */
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e4e8;
+            line-height: 1.2;
+
         }
 
         .result-item:last-child {
-            border-bottom: none; /* Remove the last item's border */
+            border-bottom: none;
         }
 
         .result-label {
             font-weight: bold;
-            color: #34495e; /* Darker color for label */
+            color: #34495e;
         }
 
         .result-value {
             font-size: 1.2em;
-            color: #000; /* Black color for values */
+            color: #000;
         }
 
         .results-icon {
             margin-right: 10px;
-            color: #4CAF50; /* Icon color */
+            color: #4CAF50;
         }
 
-        /* .results, .result-item {
+         .results, .result-item {
             font-size: 1.6rem !important;
             margin-bottom: 10px !important;
-        } */
+            display: block;
+        }
 
+        /* Adjust font size for larger screens (or localhost) */
+        @media (min-width: 1200px) {
+            .results, .result-item {
+                font-size: 1.0rem important;
+            }
+        }
+        
         .modebar {
         position: absolute !important;
         top: 0;
