@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
     <!-- Papa Parse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- Font Awesome Icons-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 
     <style>
@@ -108,10 +110,45 @@
         .results {
             margin-top: 30px;
             padding: 20px;
-            background-color: #f4f4f4;
-            border-radius: 5px;
+            background: linear-gradient(145deg, #f0f4f8, #ffffff); /* Light gradient for subtle shading */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05); /* Outer and inner shadows */
             text-align: left;
             box-sizing: border-box;
+            border: 1px solid #e0e0e0; /* Light border for contrast */
+        }
+
+        .results h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #2c3e50; /* Darker text color for better contrast */
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0; /* Removed background for individual items */
+            border-bottom: 1px solid #e0e4e8; /* Divider between items */
+        }
+
+        .result-item:last-child {
+            border-bottom: none; /* Remove the last item's border */
+        }
+
+        .result-label {
+            font-weight: bold;
+            color: #34495e; /* Darker color for label */
+        }
+
+        .result-value {
+            font-size: 1.2em;
+            color: #000; /* Black color for values */
+        }
+
+        .results-icon {
+            margin-right: 10px;
+            color: #4CAF50; /* Icon color */
         }
 
         .modebar {
@@ -264,13 +301,39 @@
 
             <!-- Results Section -->
             <div class="results">
-                <h2>Results</h2>
-                <p><strong>Total Investment:</strong> $<span id="totalValueDisplay">100000</span></p>
-                <p><strong>Buy Amount on Each Purchase:</strong> $<span id="buyAmountDisplay">Calculating...</span></p>
-                <p><strong>Available Money for Active Investment:</strong> $<span id="availableMoneyDisplay">Calculating...</span></p>
-                <p><strong>Stocks Left:</strong> <span id="stocksLeft">Calculating...</span> <span id="stocksValue">($Calculating...)</span></p>
-                <p><strong>Final Portfolio Value (Active + Passive):</strong> $<span id="finalTotalValue">Calculating...</span></p>
+                <h2><i class="fas fa-chart-pie results-icon"></i> Results</h2>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-coins results-icon"></i> Total Investment:</span>
+                    <span class="result-value">$<span id="totalValueDisplay">100000</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-shopping-cart results-icon"></i> Buy Amount on Each Purchase:</span>
+                    <span class="result-value">$<span id="buyAmountDisplay">Calculating...</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-wallet results-icon"></i> Available Money for Active Investment:</span>
+                    <span class="result-value">$<span id="availableMoneyDisplay">Calculating...</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-chart-line results-icon"></i> Stocks Left:</span>
+                    <span class="result-value"><span id="stocksLeft">Calculating...</span> ($<span id="stocksValue">Calculating...</span>)</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
+                    <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> QLD Yield (%):</span>
+                    <span class="result-value"><span id="qldYield">Calculating...</span>%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> NDX Yield (%):</span>
+                    <span class="result-value"><span id="ndxYield">Calculating...</span>%</span>
+                </div>
+
+
             </div>
+            
         </div>
 
         <!-- Right Section: Graph -->
@@ -288,6 +351,8 @@
         let allowNegativeBalance = false;
         let selectedModel = 'modelB';
         let dropFromCurrentPeak = 0;
+        let qldCumulativeYields = [];
+        let ndxCumulativeYields = [];
 
         // Select elements
         const totalInvestmentSlider = document.getElementById('totalInvestment');
@@ -805,8 +870,32 @@
                     y: ndxPassiveShares * data.price
                 };
             });
+            const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
+            // Calculate yields
+            const qldYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
+            const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
 
-            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues); // Pass totalCashValues to updateChart
+            // Display yields in results
+            document.getElementById('qldYield').textContent = qldYield.toFixed(2) + '%';
+            document.getElementById('ndxYield').textContent = ndxYield.toFixed(2) + '%';
+
+            
+            // Daily cumulative yield calculation for both QLD and NDX
+            const qldCumulativeYields = totalPortfolioValues.map(data => {
+                return {
+                    x: data.x,
+                    y: ((data.y / totalPortfolioValue) - 1) * 100
+                };
+            });
+
+            const ndxCumulativeYields = ndxPortfolioValues.map(data => {
+                return {
+                    x: data.x,
+                    y: ((data.y / ndxInitialInvestment) - 1) * 100
+                };
+            });
+
+            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues, qldCumulativeYields, ndxCumulativeYields);
             window.transactionLog = transactionLog;
         }
 
@@ -932,13 +1021,18 @@
             ], layout, config);
         }
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues) {
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues, qldCumulativeYields, ndxCumulativeYields) {
+            qldCumulativeYields = qldCumulativeYields || [];
+            ndxCumulativeYields = ndxCumulativeYields || [];
+
             const allXValues = [
                 ...totalPortfolioValues.map(data => data.x),
                 ...ndxPortfolioValues.map(data => data.x),
                 ...buyPoints.map(point => point.x),
                 ...sellPoints.map(point => point.x),
-                ...totalCashValues.map(data => data.x) // Include total cash dates
+                ...totalCashValues.map(data => data.x), // Include total cash dates
+                ...qldCumulativeYields.map(data => data.x),
+                ...ndxCumulativeYields.map(data => data.x)
             ];
 
             // Calculate the min and max dates for the x-axis range
@@ -959,7 +1053,21 @@
                     mode: 'lines',
                 },
                 {
-                    x: totalCashValues.map(data => data.x), // Add total cash to the chart
+                    x: qldCumulativeYields.map(data => data.x),
+                    y: qldCumulativeYields.map(data => data.y),
+                    name: 'QLD Cumulative Yield (%)',
+                    mode: 'lines',
+                    line: { dash: 'dot', color: 'rgba(0, 128, 0, 1)' } // Green dashed line
+                },
+                {
+                    x: ndxCumulativeYields.map(data => data.x),
+                    y: ndxCumulativeYields.map(data => data.y),
+                    name: 'NDX Cumulative Yield (%)',
+                    mode: 'lines',
+                    line: { dash: 'dot', color: 'rgba(0, 0, 255, 1)' } // Blue dashed line
+                },
+                {
+                    x: totalCashValues.map(data => data.x),
                     y: totalCashValues.map(data => data.y),
                     name: 'Total Cash',
                     mode: 'lines',
@@ -1003,21 +1111,21 @@
                     range: [minXValue, maxXValue],
                 },
                 yaxis: {
-                    title: 'Value ($)',
+                    title: 'Value ($) / Yield (%)',
                 },
-                hovermode: 'closest', // Enable 'closest' hover mode by default
+                hovermode: 'closest',
                 legend: {
-                    orientation: 'h', // Horizontal orientation
-                    x: 0.5, // Center the legend horizontally
-                    y: 1.0, // Move the legend higher above the chart
-                    xanchor: 'center', // Center the legend's x position
-                    yanchor: 'bottom', // Align the legend's y position to the bottom
-                                },
+                    orientation: 'h',
+                    x: 0.5,
+                    y: 1.0,
+                    xanchor: 'center',
+                    yanchor: 'bottom',
+                },
                 margin: {
-                    l: 50, // Left margin
-                    r: 50, // Right margin
-                    t: 70, // Increase top margin to fit the legend
-                    b: 50, // Bottom margin
+                    l: 50,
+                    r: 50,
+                    t: 70,
+                    b: 50,
                 },
             };
 
