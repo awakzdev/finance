@@ -1081,6 +1081,7 @@
                     y: qldCumulativeYields.map(data => data.y),
                     name: 'QLD Cumulative Yield (%)',
                     mode: 'lines',
+                    hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
                     line: { dash: 'dot', color: 'rgba(0, 128, 0, 1)' } // Green dashed line
                 },
                 {
@@ -1088,6 +1089,7 @@
                     y: ndxCumulativeYields.map(data => data.y),
                     name: 'NDX Cumulative Yield (%)',
                     mode: 'lines',
+                    hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
                     line: { dash: 'dot', color: 'rgba(0, 0, 255, 1)' } // Blue dashed line
                 },
                 {
