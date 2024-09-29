@@ -713,7 +713,14 @@
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
-                const dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+                
+                if (selectedModel === 'modelA') {
+                    // For Model A, calculate the drop from the highest peak instead of last purchase
+                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+                } else if (selectedModel === 'modelB') {
+                    // Model B: The logic remains unchanged
+                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+                }
 
                 // Debugging logs for drop and price information
                 console.log(`Date: ${data.date}, Model: ${selectedModel}, Current Peak: ${currentPeak}, Price: ${price}, Drop from Current Peak: ${dropFromCurrentPeak}`);
@@ -736,36 +743,43 @@
 
                         let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
-                        // Check if there is enough cash to buy the shares
-                        if (sharesToBuy > 0 && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
-                            cash -= sharesToBuy * buy_price;
-                            activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
-                            action = 'Buy';
-                            sharesBought += sharesToBuy; // Increment if multiple buys are made
-                            activeCashInvested += sharesToBuy * buy_price;
+                        // **Additional check: Ensure the low price of the day is below or equal to the buy price**
+                        if (data.lowPrice < buy_price) {
+                            // Check if there is enough cash to buy the shares
+                            if (sharesToBuy > 0 && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
+                                cash -= sharesToBuy * buy_price;
+                                activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
+                                action = 'Buy';
+                                sharesBought += sharesToBuy; // Increment if multiple buys are made
+                                activeCashInvested += sharesToBuy * buy_price;
 
-                            // Append the buy price to the log string
-                            buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
+                                // Append the buy price to the log string
+                                buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
 
-                            didBuy = true;
+                                didBuy = true;
 
-                            // Update last buy price for Model A
-                            if (selectedModel === 'modelA') {
-                                lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
+                                // Update last buy price for Model A
+                                if (selectedModel === 'modelA') {
+                                    lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
+                                }
+
+                                // Align Buy points with active portfolio value
+                                let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+
+                                // Update current peak for subsequent buys
+                                currentPeak = buy_price;
+
+                                // Debugging log for successful purchase
+                                console.log(`Bought shares on ${data.date} at price: ${buy_price}, Cash remaining: ${cash}`);
+                            } else {
+                                // Debugging log for insufficient funds
+                                console.log(`Insufficient cash to buy on ${data.date}, Required: ${sharesToBuy * buy_price}, Available: ${cash}`);
+                                break; // Break the loop if no more cash is available
                             }
-
-                            // Align Buy points with active portfolio value
-                            let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-
-                            // Update current peak for subsequent buys
-                            currentPeak = buy_price;
-
-                            // Debugging log for successful purchase
-                            console.log(`Bought shares on ${data.date} at price: ${buy_price}, Cash remaining: ${cash}`);
                         } else {
-                            // Debugging log for insufficient funds
-                            console.log(`Insufficient cash to buy on ${data.date}, Required: ${sharesToBuy * buy_price}, Available: ${cash}`);
-                            break; // Break the loop if no more cash is available
+                            // Debugging log if the low price doesn't meet the buy condition
+                            console.log(`Low price on ${data.date} (${data.lowPrice}) is not lower than the target buy price (${buy_price}).`);
+                            break; // Break the loop if the low price is not suitable for a buy
                         }
 
                         // Recalculate drop from current peak after the purchase
@@ -829,7 +843,7 @@
                             symbol: markerProperties.shape,
                             size: 8
                         },
-                        hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%`});
+                        hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}`});
                 }
                 if(didBuy){
                     // Determine marker properties based on the threshold
@@ -841,10 +855,13 @@
                         y: totalValue,
                         marker: {
                             color: markerProperties.color,
-                            symbol: markerProperties.shape,
-                            size: 8
+                            symbol: 'circle',
+                            size: 8,
+                            line: {
+                                width: 1
+                            }
                         },
-                        hovertext: `Buy: ${data.date}, Drop: ${dropPercentage.toFixed(2)}%` // Use data.date directly for hovertext
+                        hovertext: `Buy: ${data.date}, Drop: ${dropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}` // Use data.date directly for hovertext
                     });
                 }
 
@@ -886,7 +903,7 @@
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
             // Calculate NDX passive investment
-            let ndxInitialInvestment = 100000; // Assuming the same initial investment
+            let ndxInitialInvestment = parseInt(totalInvestmentDropdown.value);
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
             let ndxPortfolioValues = filteredNDXStockData.map(data => {
                 return {
@@ -894,8 +911,8 @@
                     y: ndxPassiveShares * data.price
                 };
             });
-            const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
             // Calculate yields
+            const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
             const qldYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
             const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
 
@@ -903,7 +920,6 @@
             document.getElementById('qldYield').textContent = qldYield.toFixed(2);
             document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
 
-            
             // Daily cumulative yield calculation for both QLD and NDX
             const qldCumulativeYields = totalPortfolioValues.map(data => {
                 return {
@@ -919,7 +935,7 @@
                 };
             });
 
-            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues, qldCumulativeYields, ndxCumulativeYields);
+            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues); // qldCumulativeYields, ndxCumulativeYields);
             window.transactionLog = transactionLog;
         }
 
@@ -1045,7 +1061,7 @@
             ], layout, config);
         }
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues, qldCumulativeYields, ndxCumulativeYields) {
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues) {
             qldCumulativeYields = qldCumulativeYields || [];
             ndxCumulativeYields = ndxCumulativeYields || [];
 
@@ -1076,22 +1092,22 @@
                     name: 'NDX Passive Investment',
                     mode: 'lines',
                 },
-                {
-                    x: qldCumulativeYields.map(data => data.x),
-                    y: qldCumulativeYields.map(data => data.y),
-                    name: 'QLD Cumulative Yield (%)',
-                    mode: 'lines',
-                    hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
-                    line: { dash: 'dot', color: 'rgba(0, 128, 0, 1)' } // Green dashed line
-                },
-                {
-                    x: ndxCumulativeYields.map(data => data.x),
-                    y: ndxCumulativeYields.map(data => data.y),
-                    name: 'NDX Cumulative Yield (%)',
-                    mode: 'lines',
-                    hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
-                    line: { dash: 'dot', color: 'rgba(0, 0, 255, 1)' } // Blue dashed line
-                },
+                // {
+                //     x: qldCumulativeYields.map(data => data.x),
+                //     y: qldCumulativeYields.map(data => data.y),
+                //     name: 'QLD Cumulative Yield (%)',
+                //     mode: 'lines',
+                //     hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
+                //     line: { dash: 'dot', color: 'rgba(0, 128, 0, 1)' } // Green dashed line
+                // },
+                // {
+                //     x: ndxCumulativeYields.map(data => data.x),
+                //     y: ndxCumulativeYields.map(data => data.y),
+                //     name: 'NDX Cumulative Yield (%)',
+                //     mode: 'lines',
+                //     hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
+                //     line: { dash: 'dot', color: 'rgba(0, 0, 255, 1)' } // Blue dashed line
+                // },
                 {
                     x: totalCashValues.map(data => data.x),
                     y: totalCashValues.map(data => data.y),
@@ -1190,7 +1206,7 @@
                     log.activeCashInvested,
                     log.totalValue,
                     log.valuePassive,
-                    log.downPercentageFromPeak // Include the drop percentage value
+                    log.downPercentageFromPeak
                 ];
                 csvRows.push(row.join(','));
             });
