@@ -151,10 +151,10 @@
             color: #4CAF50; /* Icon color */
         }
 
-        .results, .result-item {
+        /* .results, .result-item {
             font-size: 1.6rem !important;
             margin-bottom: 10px !important;
-        }
+        } */
 
         .modebar {
         position: absolute !important;
@@ -401,6 +401,11 @@
                 console.error("Error fetching NDX CSV file:", error);
             });
 
+            // Set up the resize event listener
+            window.addEventListener('resize', () => {
+                Plotly.Plots.resize('totalPortfolioChart'); // Adjusts the chart size
+            });
+            
             // Set up the event listener for negative balance checkbox
             const checkbox = document.getElementById('allowNegativeBalance');
             checkbox.addEventListener('change', function() {
