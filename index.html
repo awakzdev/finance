@@ -151,6 +151,11 @@
             color: #4CAF50; /* Icon color */
         }
 
+        .results, .result-item {
+            font-size: 1.6rem !important;
+            margin-bottom: 10px !important;
+        }
+
         .modebar {
         position: absolute !important;
         top: 0;
@@ -311,16 +316,12 @@
                     <span class="result-value">$<span id="buyAmountDisplay">Calculating...</span></span>
                 </div>
                 <div class="result-item">
-                    <span class="result-label"><i class="fas fa-wallet results-icon"></i> Available Money for Active Investment:</span>
+                    <span class="result-label"><i class="fas fa-wallet results-icon"></i> Available Investment Cash:</span>
                     <span class="result-value">$<span id="availableMoneyDisplay">Calculating...</span></span>
                 </div>
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-chart-line results-icon"></i> Stocks Left:</span>
                     <span class="result-value"><span id="stocksLeft">Calculating...</span> ($<span id="stocksValue">Calculating...</span>)</span>
-                </div>
-                <div class="result-item">
-                    <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
-                    <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
                 </div>
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-percentage results-icon"></i> QLD Yield (%):</span>
@@ -329,6 +330,10 @@
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-percentage results-icon"></i> NDX Yield (%):</span>
                     <span class="result-value"><span id="ndxYield">Calculating...</span>%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
+                    <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
                 </div>
 
 
@@ -805,7 +810,7 @@
                             symbol: markerProperties.shape,
                             size: 8
                         },
-                        hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%`                    });
+                        hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%`});
                 }
                 if(didBuy){
                     // Determine marker properties based on the threshold
@@ -858,7 +863,7 @@
             buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
             finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
-            stocksValueDisplay.textContent = `($${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)})`;
+            stocksValueDisplay.textContent = `${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)}`;
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
             // Calculate NDX passive investment
@@ -876,8 +881,8 @@
             const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
 
             // Display yields in results
-            document.getElementById('qldYield').textContent = qldYield.toFixed(2) + '%';
-            document.getElementById('ndxYield').textContent = ndxYield.toFixed(2) + '%';
+            document.getElementById('qldYield').textContent = qldYield.toFixed(2);
+            document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
 
             
             // Daily cumulative yield calculation for both QLD and NDX
