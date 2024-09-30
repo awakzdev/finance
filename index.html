@@ -13,7 +13,6 @@
     <!-- Font Awesome Icons-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -362,7 +361,6 @@
     </div>
 
     <script>
-        // JavaScript code
         let stockData = [];
         let ndxStockData = [];
         let totalPortfolioChart;
@@ -373,7 +371,6 @@
         let qldCumulativeYields = [];
         let ndxCumulativeYields = [];
 
-        // Select elements
         const totalInvestmentSlider = document.getElementById('totalInvestment');
         const splitSlider = document.getElementById('split');
         const buyThresholdSlider = document.getElementById('buyThreshold');
@@ -415,17 +412,16 @@
                 console.error("Error fetching NDX CSV file:", error);
             });
 
-            // Set up the resize event listener
             window.addEventListener('resize', () => {
-                Plotly.Plots.resize('totalPortfolioChart'); // Adjusts the chart size
+                Plotly.Plots.resize('totalPortfolioChart');
             });
             
             // Set up the event listener for negative balance checkbox
             const checkbox = document.getElementById('allowNegativeBalance');
             checkbox.addEventListener('change', function() {
-                allowNegativeBalance = this.checked; // Update the variable
+                allowNegativeBalance = this.checked;
                 console.log('Checkbox state:', allowNegativeBalance); // Log the current state
-                calculateResults(); // Recalculate results when the checkbox state changes
+                calculateResults();
             });
 
             // Event listener for the new dropdown
@@ -456,11 +452,11 @@
             });
 
             document.getElementById('closingDate').addEventListener('change', () => {
-                calculateResults(); // Recalculate results when the closing date changes
+                calculateResults();
             });
 
             dateRangeDropdown.addEventListener('change', () => {
-                calculateResults(); // Recalculate results when date range changes
+                calculateResults();
             });
             
             const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
@@ -648,7 +644,6 @@
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
             let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
             let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
-
             let initialCash = totalPortfolioValue * cashPercent; // Cash allocated for active trading
             let initialBuyAmount = initialCash * buyAmountPercent; // Fix the initial buy amount per purchase
             let cash = initialCash;
@@ -656,15 +651,11 @@
             let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
             let passiveInvestmentPrice = filteredStockData[0].openPrice;
             let activeInvestments = [];
-            let totalProfit = 0;
             let highestPeak = filteredStockData[0].price;
             let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
             let currentPeak = highestPeak;
             let purchaseCount = 0; // Track the number of purchases made
-            let bought = false;
             let activeCashInvested = 0;
-            let firstPurchasePeak = null; // Peak at the time of the first purchase
-            let fullySold = true; // Flag to indicate if all stocks are sold
             let activeInvestmentValue = 0;
             let passivePortfolioValue = 0;
             let totalValue = 0;
@@ -675,13 +666,14 @@
             let cumulativeDropPercentage = 0;
             let sharesToBuy = 0;
             let purchaseOnDayCount = 0;
+            let totalProfit = 0;
+            let firstPurchasePeak = null; // Peak at the time of the first purchase
+            let fullySold = true; // Flag to indicate if all stocks are sold
+            let bought = false;
 
             const totalPortfolioValues = [];
             const activeProfits = [];
             const transactionLog = [];
-
-            // Offset by fractional days (e.g., divide the day into 10 parts)
-            // Is used to create a seperation on days where multiple stocks were purchased/sold
 
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
@@ -867,8 +859,6 @@
                     return investment;
                 }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
 
-                // **No need to log sell points here since it's done inside the map function**
-
                 // Calculate portfolio values after buy/sell logic
                 activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 passivePortfolioValue = passiveShares * data.price;
@@ -1010,7 +1000,7 @@
             // Return the marker properties with matching colors for buy and sell
             return {
                 color: color,
-                shape: 'circle' // Default shape since shapes are not important
+                shape: 'circle'
             };
         }
 
@@ -1018,7 +1008,7 @@
             const totalPortfolioValues = [];
             const activeProfits = [];
             const ndxPortfolioValues = [];
-            const totalCashValues = []; // Include this to avoid errors during initial setup
+            const totalCashValues = [];
 
             const layout = {
                 title: 'Portfolio Values Over Time',
@@ -1081,7 +1071,7 @@
                 ...ndxPortfolioValues.map(data => data.x),
                 ...buyPoints.map(point => point.x),
                 ...sellPoints.map(point => point.x),
-                ...totalCashValues.map(data => data.x), // Include total cash dates
+                ...totalCashValues.map(data => data.x),
                 ...qldCumulativeYields.map(data => data.x),
                 ...ndxCumulativeYields.map(data => data.x)
             ];
