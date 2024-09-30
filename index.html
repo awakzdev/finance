@@ -824,7 +824,8 @@
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 const ndxData = filteredNDXStockData.find(ndx => ndx.date === data.date);
-                
+                const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A'; // Yield calculation for downloadCSV function
+
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
                 totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2) });
 
@@ -892,7 +893,8 @@
                     totalAmount: (cash + passivePortfolioValue).toFixed(2),
                     valuePassive: (passiveShares * price).toFixed(2),
                     ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
-                    ndxClosePrice: ndxData ? ndxData.price : 'N/A'
+                    ndxClosePrice: ndxData ? ndxData.price : 'N/A',
+                    ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A'
                 });
             });
 
@@ -914,7 +916,7 @@
                     y: ndxPassiveShares * data.price
                 };
             });
-            // Calculate yields
+            // Calculate yields for result tab
             const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
             const qldYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
             const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
@@ -1183,7 +1185,8 @@
             const headers = [
                 'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
-                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close'
+                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
+                'NDX Yield'
             ];
             csvRows.push(headers.join(','));
 
@@ -1211,7 +1214,9 @@
                     log.valuePassive,
                     log.downPercentageFromPeak,
                     log.ndxOpen,
-                    log.ndxClosePrice
+                    log.ndxClosePrice,
+                    log.ndxYield,
+
                 ];
                 csvRows.push(row.join(','));
             });
@@ -1223,8 +1228,6 @@
             a.setAttribute('download', 'investment_strategy_log.csv');
             a.click();
         }
-
-
     </script>
 </body>
 </html>
