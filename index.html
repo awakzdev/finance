@@ -7,9 +7,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Moment.js -->
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
     <!-- Papa Parse for CSV parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js    "></script>
     <!-- Font Awesome Icons-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
@@ -529,7 +529,7 @@
                                 lastBuy: row[lastBuyKey],
                                 sellPrice: row[sellPriceKey],
                                 lowPrice: row[lowPriceKey],
-                                dateObj: new Date(year, month - 1, day) // Store date object for easier comparison
+                                dateObj: new Date(Date.UTC(year, month - 1, day)) // Store date object for easier comparison
                             };
                         });
 
@@ -674,6 +674,7 @@
             let cumulativeDropPercentage = 0;
             let sharesToBuy = 0;
             let purchaseOnDayCount = 0;
+            let sellOnDayCount = 0;
             let totalProfit = 0;
             let firstPurchasePeak = null; // Peak at the time of the first purchase
             let fullySold = true; // Flag to indicate if all stocks are sold
@@ -780,9 +781,12 @@
                                 activeCashInvested += sharesToBuy * buy_price;
                                 purchaseOnDayCount++; // increment purchase count on a single day
 
-                                // Offset by fractional days (e.g., divide the day into 10 parts)
-                                // Is used to create a separation on days where multiple stocks were purchased/sold
-                                const offsetMilliseconds = purchaseOnDayCount * (1000 * 60 * 60 * 24 / 7);
+                                // // Offset by fractional days (e.g., divide the day into 10 parts)
+                                // // Is used to create a separation on days where multiple stocks were purchased/sold
+                                // const offsetMinutes = purchaseOnDayCount * 5;
+                                // // Create a new date with the offset using UTC methods
+                                // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
+                                const yOffset = purchaseOnDayCount * 10; // Adjust the multiplier as needed
 
                                 // Append the buy price to the log string
                                 buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
@@ -799,8 +803,8 @@
 
                                 // **Log the buy point here**
                                 buyPoints.push({
-                                    x: new Date(dataDate.getTime() + offsetMilliseconds),
-                                    y: totalValue,
+                                    x: dataDate,
+                                    y: totalValue + yOffset,
                                     marker: {
                                         color: markerProperties.color,
                                         symbol: 'circle',
@@ -843,16 +847,25 @@
                         action = 'Sell';
                         didSell = true;
                         sellPrice = targetSellPrice; // Record the target sell price as the sell price
+                        sellOnDayCount++; // If multiple sells on the same day, increment the count
 
                         gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
 
                         // Align Sell points with active portfolio value
                         activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
+                        // Calculate offset in minutes for sells - used in conjunction with multiple sells in a single day
+                        // Creates a slight seperation between the two sell points incase multiple transactions happened on one day
+                        // const sellOffsetMinutes = sellOnDayCount * 5;
+
+                        // // Create a new date with the offset using UTC methods
+                        // const sellOffsetDate = new Date(dataDate.getTime() + sellOffsetMinutes * 60000);
+                        const yOffset = sellOnDayCount * 10;
+
                         // **Log the sell point here**
                         sellPoints.push({
                             x: dataDate,
-                            y: totalValue,
+                            y: totalValue - yOffset,
                             marker: {
                                 color: investment.color, // Use the color from the corresponding buy
                                 symbol: 'circle', // Or any desired symbol
@@ -969,7 +982,7 @@
                 return null;
             }
 
-            return new Date(year, month - 1, day);
+            return new Date(Date.UTC(year, month - 1, day));
         }
 
         function formatDate(dateObj) {
@@ -1024,6 +1037,14 @@
                 xaxis: {
                     title: 'Date',
                     type: 'date',
+                    tickformat: '%Y-%m-%d', // Format the date display
+                    tickmode: 'auto',
+                    tickformatstops: [
+                        {
+                            dtickrange: [null, null],
+                            value: '%Y-%m-%d',
+                        },
+                    ],
                 },
                 yaxis: {
                     title: 'Value ($)',
