@@ -674,10 +674,14 @@
             let dropPercentage = 0;
             let cumulativeDropPercentage = 0;
             let sharesToBuy = 0;
+            let purchaseOnDayCount = 0;
 
             const totalPortfolioValues = [];
             const activeProfits = [];
             const transactionLog = [];
+
+            // Offset by fractional days (e.g., divide the day into 10 parts)
+            // Is used to create a seperation on days where multiple stocks were purchased/sold
 
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
@@ -774,6 +778,11 @@
                                 action = 'Buy';
                                 sharesBought += sharesToBuy; // Increment if multiple buys are made
                                 activeCashInvested += sharesToBuy * buy_price;
+                                purchaseOnDayCount++; // increment purchase count on a single day
+
+                                // Offset by fractional days (e.g., divide the day into 10 parts)
+                                // Is used to create a separation on days where multiple stocks were purchased/sold
+                                const offsetMilliseconds = purchaseOnDayCount * (1000 * 60 * 60 * 24 / 7);
 
                                 // Append the buy price to the log string
                                 buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
@@ -790,7 +799,7 @@
 
                                 // **Log the buy point here**
                                 buyPoints.push({
-                                    x: dataDate,
+                                    x: new Date(dataDate.getTime() + offsetMilliseconds),
                                     y: totalValue,
                                     marker: {
                                         color: markerProperties.color,
@@ -800,8 +809,9 @@
                                             width: 1
                                         }
                                     },
-                                    hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesBought.toFixed(2)} shares`
+                                    hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
                                 });
+                                console.log(`Added buy point on ${data.date} with offset ${purchaseOnDayCount}`);
 
                             } else {
                                 break; // Break the loop if no more cash is available
@@ -861,7 +871,7 @@
 
                 // Calculate portfolio values after buy/sell logic
                 activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                passivePortfolioValue = passiveShares * price;
+                passivePortfolioValue = passiveShares * data.price;
                 totalValue = activeInvestmentValue + passivePortfolioValue;
 
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
@@ -871,9 +881,6 @@
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
                 totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
-
-                // activeProfits.push({ x: dataDate, y: activeProfit });
-                // No need to log sell points here as they are already logged inside the map function
 
                 // Modify the transaction log to store the new price fields
                 transactionLog.push({
@@ -899,7 +906,7 @@
                     activeCashInvested: activeCashInvested.toFixed(2),
                     totalValue: totalValue.toFixed(2),
                     totalAmount: (cash + passivePortfolioValue).toFixed(2),
-                    valuePassive: (passiveShares * price).toFixed(2),
+                    valuePassive: (passiveShares * data.price).toFixed(2),
                     ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
                     ndxClosePrice: ndxData ? ndxData.price : 'N/A',
                     ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A'
