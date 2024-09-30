@@ -682,12 +682,15 @@
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
                 const dataDate = data.dateObj;
+
                 let price = data.lowPrice;
                 let action = 'Hold';
                 let sharesBought = 0;
                 let sharesSold = 0;
                 let didBuy = false;
                 let didSell = false;
+                let dailyBuyShares = 0;
+                let dailyBuyPrices = [];
 
                 fullySold = (activeInvestments.length === 0);
 
@@ -797,7 +800,7 @@
                                             width: 1
                                         }
                                     },
-                                    hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                    hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesBought.toFixed(2)} shares`
                                 });
 
                             } else {
