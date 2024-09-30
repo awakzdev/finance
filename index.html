@@ -238,6 +238,23 @@
             margin-bottom: 20px;
         }
         
+        .input-box {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: 16px;
+            line-height: 1.6;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+
+        .input-box:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+            outline: none;
+        }
 
     </style>
 </head>
@@ -266,16 +283,9 @@
 
             <div class="input-group">
                 <label for="totalInvestment">Total Investment ($):</label>
-                <select id="totalInvestment" class="dropdown">
-                    <option value="50000">50,000</option>
-                    <option value="100000" selected>100,000</option> <!-- Set as default -->
-                    <option value="200000">200,000</option>
-                    <option value="500000">500,000</option>
-                    <option value="1000000">1,000,000</option>
-                    <option value="5000000">5,000,000</option>
-                    <option value="10000000">10,000,000</option>
-                </select>
+                <input type="number" id="totalInvestment" class="input-box" value="100000" min="0" step="1000">
             </div>
+            
             
             <div class="input-group input-group-spacing">
                 <label for="allowNegativeBalance" style="font-size: 14px; font-weight: bold; display: flex; align-items: center;">
@@ -348,16 +358,14 @@
                     <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
                     <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
                 </div>
-
-
             </div>
-            
         </div>
 
         <!-- Right Section: Graph -->
         <div class="right-section">
             <div id="totalPortfolioChart"></div>
         </div>
+
     </div>
 
     <script>
@@ -377,7 +385,7 @@
         const sellThresholdSlider = document.getElementById('sellThreshold');
         const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
         const dateRangeDropdown = document.getElementById('dateRange');
-        const totalInvestmentDropdown = document.getElementById('totalInvestment');
+        const totalInvestmentInput = document.getElementById('totalInvestment');
 
         const totalInvestmentValue = document.getElementById('totalInvestmentValue');
         const splitValue = document.getElementById('splitValue');
@@ -425,8 +433,8 @@
             });
 
             // Event listener for the new dropdown
-            totalInvestmentDropdown.addEventListener('change', () => {
-                totalValueDisplay.textContent = totalInvestmentDropdown.value;
+            totalInvestmentInput.addEventListener('change', () => {
+                totalValueDisplay.textContent = totalInvestmentInput.value;
 
                 calculateResults();
             });
@@ -639,7 +647,7 @@
             }
 
             // Initialize variables
-            let totalPortfolioValue = parseInt(totalInvestmentDropdown.value);
+            let totalPortfolioValue = parseInt(totalInvestmentInput.value);
             let cashPercent = parseInt(splitSlider.value) / 100;
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
             let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
@@ -866,7 +874,8 @@
 
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                const ndxData = filteredNDXStockData.find(ndx => ndx.date === data.date);
+                const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item])); // converting arrays to maps for O(1) access times
+                const ndxData = ndxDataMap.get(data.date);
                 const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A'; // Yield calculation for downloadCSV function
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
@@ -913,7 +922,7 @@
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
             // Calculate NDX passive investment
-            let ndxInitialInvestment = parseInt(totalInvestmentDropdown.value);
+            let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
             let ndxPortfolioValues = filteredNDXStockData.map(data => {
                 return {
