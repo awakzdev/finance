@@ -467,7 +467,7 @@
             dropModelRadios.forEach(radio => {
                 radio.addEventListener('change', (event) => {
                     selectedModel = event.target.value; // Update the selected model based on the user's choice
-                    console.log('Selected drop model:', selectedModel);
+                    // console.log('Selected drop model:', selectedModel);
                     calculateResults(); // Recalculate results based on the selected model
                 });
             });
@@ -604,7 +604,7 @@
 
 
         function calculateResults() {
-            console.log("Calculating portfolio results...");
+            // console.log("Calculating portfolio results...");
 
             const buyPoints = [];
             const sellPoints = [];
@@ -632,8 +632,8 @@
                 return isInDateRange;
             });
 
-            console.log("Filtered QLD data dates:", filteredStockData.map(d => d.date));
-            console.log("Filtered NDX data dates:", filteredNDXStockData.map(d => d.date));
+            // console.log("Filtered QLD data dates:", filteredStockData.map(d => d.date));
+            // console.log("Filtered NDX data dates:", filteredNDXStockData.map(d => d.date));
 
             if (!filteredStockData.length || !filteredNDXStockData.length) {
                 console.error("No stock data available for the selected date range.");
@@ -665,6 +665,15 @@
             let activeCashInvested = 0;
             let firstPurchasePeak = null; // Peak at the time of the first purchase
             let fullySold = true; // Flag to indicate if all stocks are sold
+            let activeInvestmentValue = 0;
+            let passivePortfolioValue = 0;
+            let totalValue = 0;
+            let dropFromHighestPeak = 0;
+            let gainPercentage = 0;
+            let currentPurchaseCount = 0;
+            let dropPercentage = 0;
+            let cumulativeDropPercentage = 0;
+            let sharesToBuy = 0;
 
             const totalPortfolioValues = [];
             const activeProfits = [];
@@ -723,14 +732,20 @@
                 }
 
                 // Debugging logs for drop and price information
-                console.log(`Date: ${data.date}, Model: ${selectedModel}, Current Peak: ${currentPeak}, Price: ${price}, Drop from Current Peak: ${dropFromCurrentPeak}`);
+                // console.log(`Date: ${data.date}, Model: ${selectedModel}, Current Peak: ${currentPeak}, Price: ${price}, Drop from Current Peak: ${dropFromCurrentPeak}`);
 
+                // **Calculate portfolio values before buy/sell logic**
+                activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                passivePortfolioValue = passiveShares * price;
+                totalValue = activeInvestmentValue + passivePortfolioValue;
+                
                 // Buy logic
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // Loop to check for multiple purchases on the same day
                     while (dropFromCurrentPeak >= buyThreshold * 100) {
                         currentPurchaseCount = activeInvestments.length + 1; // Increment based on the number of purchases made
                         dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
+                        cumulativeDropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the cumulative drop percentage
 
                         // Calculate the new buy price based on the selected model
                         if (selectedModel === 'modelA') {
@@ -741,14 +756,18 @@
                             buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount);
                         }
 
-                        let sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
+                        // Determine marker properties based on the cumulative drop percentage
+                        let markerProperties = getMarkerProperties('buy', cumulativeDropPercentage);
+
+                        sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
                         // **Additional check: Ensure the low price of the day is below or equal to the buy price**
                         if (data.lowPrice < buy_price) {
                             // Check if there is enough cash to buy the shares
                             if (sharesToBuy > 0 && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
                                 cash -= sharesToBuy * buy_price;
-                                activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy });
+                                // Store the color with the investment
+                                activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
                                 action = 'Buy';
                                 sharesBought += sharesToBuy; // Increment if multiple buys are made
                                 activeCashInvested += sharesToBuy * buy_price;
@@ -763,22 +782,28 @@
                                     lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
                                 }
 
-                                // Align Buy points with active portfolio value
-                                let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-
-                                // Update current peak for subsequent buys
+                                // Update currentPeak for subsequent buys
                                 currentPeak = buy_price;
 
-                                // Debugging log for successful purchase
-                                console.log(`Bought shares on ${data.date} at price: ${buy_price}, Cash remaining: ${cash}`);
+                                // **Log the buy point here**
+                                buyPoints.push({
+                                    x: dataDate,
+                                    y: totalValue,
+                                    marker: {
+                                        color: markerProperties.color,
+                                        symbol: 'circle',
+                                        size: 8,
+                                        line: {
+                                            width: 1
+                                        }
+                                    },
+                                    hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                });
+
                             } else {
-                                // Debugging log for insufficient funds
-                                console.log(`Insufficient cash to buy on ${data.date}, Required: ${sharesToBuy * buy_price}, Available: ${cash}`);
                                 break; // Break the loop if no more cash is available
                             }
                         } else {
-                            // Debugging log if the low price doesn't meet the buy condition
-                            console.log(`Low price on ${data.date} (${data.lowPrice}) is not lower than the target buy price (${buy_price}).`);
                             break; // Break the loop if the low price is not suitable for a buy
                         }
 
@@ -790,26 +815,38 @@
                     }
                 }
 
-                // Sell logic with high price check
+                // Sell logic
                 activeInvestments = activeInvestments.map(investment => {
-                    // Calculate the exact target sell price (10% increase from buy price)
+                    // Calculate the exact target sell price (e.g., 10% increase from buy price)
                     const targetSellPrice = investment.buyPrice * (1 + sellThreshold);
-                    
+
                     // Check if the high price of the day exceeds or equals the target sell price
                     if (data.highPrice >= targetSellPrice) {
                         // Sell the shares at the target sell price
                         let saleProceeds = investment.shares * targetSellPrice; // Use targetSellPrice for sale
                         totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
                         cash += saleProceeds;
-                        sharesSold = investment.shares;
+                        sharesSold += investment.shares; // Accumulate shares sold if multiple investments are sold
                         action = 'Sell';
-                        didSell=true
+                        didSell = true;
                         sellPrice = targetSellPrice; // Record the target sell price as the sell price
 
                         gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
 
                         // Align Sell points with active portfolio value
-                        let activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                        activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+
+                        // **Log the sell point here**
+                        sellPoints.push({
+                            x: dataDate,
+                            y: totalValue,
+                            marker: {
+                                color: investment.color, // Use the color from the corresponding buy
+                                symbol: 'circle', // Or any desired symbol
+                                size: 8
+                            },
+                            hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}, Sold: ${investment.shares.toFixed(2)} shares`
+                        });
 
                         // Mark shares as sold
                         return { ...investment, shares: 0 };
@@ -817,55 +854,23 @@
                     return investment;
                 }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
 
-                // Calculate portfolio values
-                const activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                const passivePortfolioValue = passiveShares * price;
-                const totalValue = activeInvestmentValue + passivePortfolioValue;
+                // **No need to log sell points here since it's done inside the map function**
+
+                // Calculate portfolio values after buy/sell logic
+                activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                passivePortfolioValue = passiveShares * price;
+                totalValue = activeInvestmentValue + passivePortfolioValue;
+
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 const ndxData = filteredNDXStockData.find(ndx => ndx.date === data.date);
                 const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A'; // Yield calculation for downloadCSV function
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
-                totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2) });
+                totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
 
                 // activeProfits.push({ x: dataDate, y: activeProfit });
-                // Log buy and sell points on the graph
-                if(didSell){
-                    // Determine marker properties based on the threshold
-                    
-                    let markerProperties = getMarkerProperties('sell', gainPercentage);
-
-                    // Log the sell point with marker properties
-                    sellPoints.push({
-                        x: dataDate, // Keep as date object
-                        y: totalValue,
-                        marker: {
-                            color: markerProperties.color,
-                            symbol: markerProperties.shape,
-                            size: 8
-                        },
-                        hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}`});
-                }
-                if(didBuy){
-                    // Determine marker properties based on the threshold
-                    let markerProperties = getMarkerProperties('buy', dropPercentage);
-
-                    // Log the buy point with marker properties
-                    buyPoints.push({
-                        x: dataDate, // Keep as date object
-                        y: totalValue,
-                        marker: {
-                            color: markerProperties.color,
-                            symbol: 'circle',
-                            size: 8,
-                            line: {
-                                width: 1
-                            }
-                        },
-                        hovertext: `Buy: ${data.date}, Drop: ${dropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}` // Use data.date directly for hovertext
-                    });
-                }
+                // No need to log sell points here as they are already logged inside the map function
 
                 // Modify the transaction log to store the new price fields
                 transactionLog.push({
@@ -898,7 +903,7 @@
                 });
             });
 
-            console.log("Calculation complete. Final portfolio value:", totalPortfolioValues[totalPortfolioValues.length - 1]);
+            // console.log("Calculation complete. Final portfolio value:", totalPortfolioValues[totalPortfolioValues.length - 1]);
 
             const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
             buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
@@ -966,47 +971,37 @@
         }
         
         function getMarkerProperties(action, threshold) {
-            // Define shapes and colors for different percentages
-            const markerShapes = {
-                'buy': {
-                    '5%': { color: 'green', shape: 'circle' },
-                    '10%': { color: 'cyan', shape: 'diamond-open' },
-                    '15%': { color: 'purple', shape: 'hexagon' },
-                    '20%': { color: 'orange', shape: 'triangle-up' },
-                    '25%': { color: 'blue', shape: 'star' },
-                    '30%': { color: 'magenta', shape: 'triangle-down' },
-                    '35%': { color: 'brown', shape: 'square' },
-                    '40%': { color: 'yellow', shape: 'triangle-right' },
-                    '45%': { color: 'coral', shape: 'triangle-left' },
-                    '50%': { color: 'teal', shape: 'cross' },
-                    '55%': { color: 'olive', shape: 'x' },
-                    '60%': { color: 'lime', shape: 'octagon' },
-                    '65%': { color: 'indigo', shape: 'star-square' },
-                    '70%': { color: 'violet', shape: 'pentagon' },
-                    '75%': { color: 'gold', shape: 'hourglass' },
-                    '80%': { color: 'navy', shape: 'diamond' }
-                },
-                'sell': {
-                    '5%': { color: 'red', shape: 'cross' },
-                    '10%': { color: 'pink', shape: 'star' },
-                    '15%': { color: 'brown', shape: 'x' },
-                    '20%': { color: 'yellow', shape: 'triangle-down' },
-                }
+            // Define colors for different thresholds
+            const colorsByThreshold = {
+                '5%': 'green',
+                '10%': 'cyan',
+                '15%': 'purple',
+                '20%': 'orange',
+                '25%': 'blue',
+                '30%': 'magenta',
+                '35%': 'brown',
+                '40%': 'yellow',
+                '45%': 'coral',
+                '50%': 'teal',
+                '55%': 'olive',
+                '60%': 'lime',
+                '65%': 'indigo',
+                '70%': 'violet',
+                '75%': 'gold',
+                '80%': 'navy'
             };
 
             // Convert threshold to a string key (e.g., '10%')
             const key = `${Math.round(threshold)}%`;
 
-            // Return the appropriate marker properties or a fallback for undefined thresholds
-            if (markerShapes[action][key]) {
-                return markerShapes[action][key];
-            } else {
-                // Fallback for any other threshold
-                return {
-                    color: action === 'buy' ? 'blue' : 'red', // Differentiate by action
-                    shape: action === 'buy' ? 'triangle-right' : 'triangle-left' // Differentiate by action
-                };
-            }
+            // Get the color for the threshold, default to 'blue' if not defined
+            const color = colorsByThreshold[key] || 'blue';
+
+            // Return the marker properties with matching colors for buy and sell
+            return {
+                color: color,
+                shape: 'circle' // Default shape since shapes are not important
+            };
         }
 
         function setupChart() {
@@ -1065,6 +1060,7 @@
                 }
             ], layout, config);
         }
+
 
         function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues) {
             qldCumulativeYields = qldCumulativeYields || [];
