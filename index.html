@@ -7,11 +7,11 @@
     <!-- Chart.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Moment.js -->
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
     <!-- Papa Parse for CSV parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js    "></script>
     <!-- Font Awesome Icons-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <style>
         body {
@@ -22,29 +22,8 @@
             direction: ltr;
             text-align: left;
         }
-
-        /* Style the date dropdown */
-        .dropdown {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            width: 100%;
-            padding: 10px 15px;
-            font-size: 16px;
-            line-height: 1.6;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            cursor: pointer;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            height: auto;
-            display: block;
-            box-sizing: border-box;
-        }
-
+    
+        /* Header */
         .header {
             display: flex;
             justify-content: flex-start;
@@ -52,7 +31,14 @@
             margin-bottom: 20px;
             text-align: left;
         }
-
+    
+        .header h1 {
+            margin: 0;
+            font-size: 1.6em;
+            color: #2c3e50;
+            font-weight: bold; /* Ensuring the main heading is bold */
+        }
+    
         button {
             margin-left: auto;
             padding: 10px 20px;
@@ -65,7 +51,12 @@
             transition: background-color 0.3s;
             text-align: center;
         }
-
+    
+        button:hover {
+            background-color: #45a049;
+        }
+    
+        /* Main Content Area */
         .main-content {
             display: flex;
             justify-content: space-between;
@@ -73,135 +64,112 @@
             text-align: left;
             flex-wrap: nowrap;
         }
-
+    
         .left-section {
             flex: 0 1 300px;
-            min-width: 300px;
+            min-width: 280px; /* Adjusted min-width */
             margin-right: 20px;
             text-align: left;
+            display: flex;
+            flex-direction: column;
         }
-
+    
         .right-section {
             flex: 1;
             padding-left: 20px;
             text-align: left;
         }
-
-        .input-group {
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            text-align: left;
+    
+        /* Controls Section */
+        .controls-section {
+            padding-bottom: 10px;
         }
-
-        .input-group label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            text-align: left;
-        }
-
-        .input-group-spacing {
-            margin-bottom: 10px;
-        }
-
-
-        .left-section .input-group:nth-child(4) {
-            margin-bottom: 10px;
-        }
-
-
-        .slider {
-            width: 100%;
-            margin-top: 5px;
-            direction: ltr;
-        }
-
-        .results {
-            margin-top: 30px;
-            padding: 20px;
-            background: linear-gradient(145deg, #f0f4f8, #ffffff);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
-            text-align: left;
-            box-sizing: border-box;
-            border: 1px solid #e0e0e0;
-        }
-
-        .results h2 {
-            font-size: 1.8em;
-            margin-bottom: 20px;
+    
+        /* Section Headings */
+        .controls-section h3 {
+            margin-top: 0;
+            margin-bottom: 10px; /* Reduced margin-bottom */
+            font-size: 1.1em; /* Slightly reduced font size */
             color: #2c3e50;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 10px 0;
             border-bottom: 1px solid #e0e4e8;
-            line-height: 1.2;
-
+            padding-bottom: 5px; /* Reduced padding-bottom */
+            font-weight: bold; /* Made headings bold */
         }
-
-        .result-item:last-child {
-            border-bottom: none;
+    
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 15px; /* Reduced margin-bottom */
         }
-
-        .result-label {
-            font-weight: bold;
+    
+        /* Labels */
+        .input-group label {
+            margin-bottom: 5px; /* Reduced margin-bottom */
+            font-weight: normal; /* Set to normal for better balance */
             color: #34495e;
-        }
-
-        .result-value {
-            font-size: 1.2em;
-            color: #000;
-        }
-
-        .results-icon {
-            margin-right: 10px;
-            color: #4CAF50;
-        }
-
-         .results, .result-item {
-            /* font-size: 1.6rem !important; */
-            margin-bottom: 10px !important;
             display: block;
         }
-        
-        .modebar {
-        position: absolute !important;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 1;
+    
+        /* Dropdowns */
+        .dropdown {
+            width: 100%;
+            padding: 8px 10px; /* Adjusted padding */
+            font-size: 14px; /* Reduced font size */
+            line-height: 1.5; /* Adjusted line-height to fix text cut-off */
+            border: 1px solid #ccd6dd;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
         }
-        #totalPortfolioChart {
-            position: relative; 
-            height: 600px;
+    
+        .dropdown:focus {
+            border-color: #4CAF50;
+            outline: none;
         }
-
-        canvas {
-            width: auto;
-            height: auto;
-            max-height: 800px;
+    
+        /* Input Boxes */
+        .input-box {
+            width: 100%;
+            padding: 8px 10px; /* Adjusted padding */
+            font-size: 14px; /* Reduced font size */
+            line-height: 1.5; /* Adjusted line-height to fix text cut-off */
+            border: 1px solid #ccd6dd;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
         }
-
+    
+        .input-box:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+    
+        /* Toggle Switch Label */
+        .toggle-label {
+            font-size: 14px;
+            font-weight: normal; /* Set to normal for consistency */
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+    
         /* Toggle Switch */
         .toggle-switch {
             position: relative;
             display: inline-block;
             width: 40px;
             height: 20px;
-            margin-right: 10px;
+            margin-right: 8px; /* Adjusted margin */
             vertical-align: middle;
         }
-
+    
         .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
+    
         .toggle-slider {
             position: absolute;
             cursor: pointer;
@@ -211,9 +179,9 @@
             bottom: 0;
             background-color: #ccc;
             transition: 0.4s;
-            border-radius: 20px; 
+            border-radius: 20px;
         }
-
+    
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -225,108 +193,317 @@
             transition: 0.4s;
             border-radius: 50%;
         }
-
+    
         input:checked + .toggle-slider {
             background-color: #4CAF50;
         }
-
+    
         input:checked + .toggle-slider:before {
             transform: translateX(20px);
         }
-
-        .input-group {
-            margin-bottom: 20px;
+    
+        /* Radio Buttons */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            margin-top: 5px;
         }
-        
-        .input-box {
+    
+        .radio-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+    
+        .radio-option input {
+            margin-right: 8px; /* Adjusted margin */
+        }
+    
+        .radio-option label {
+            font-size: 14px;
+            color: #34495e;
+            font-weight: normal; /* Set to normal */
+        }
+    
+        /* Sliders */
+        .slider {
+            -webkit-appearance: none;
             width: 100%;
-            padding: 10px 15px;
-            font-size: 16px;
-            line-height: 1.6;
-            border: 1px solid #ccc;
+            height: 6px;
+            background: #ddd;
+            outline: none;
             border-radius: 5px;
-            background-color: #f9f9f9;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            margin-top: 8px; /* Adjusted margin-top */
+        }
+    
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+    
+        .slider::-webkit-slider-thumb:hover {
+            background-color: #45a049;
+        }
+    
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+    
+        .slider::-moz-range-thumb:hover {
+            background-color: #45a049;
+        }
+    
+        /* Aligning Sliders and Values */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-top: -2px; /* Adjusted to reduce gap */
+        }
+    
+        .slider-value {
+            margin-left: 8px; /* Adjusted margin */
+            font-size: 14px;
+            font-weight: normal; /* Set to normal */
+            color: #2c3e50;
+        }
+    
+        /* Results */
+        .results {
+            margin-top: 10px;
+            padding: 20px;
+            background: linear-gradient(145deg, #f0f4f8, #ffffff);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
+            text-align: left;
             box-sizing: border-box;
+            border: 1px solid #e0e0e0;
+        }
+    
+        .results h2 {
+            font-size: 1.6em; /* Slightly reduced font size */
+            margin-bottom: 15px; /* Reduced margin-bottom */
+            color: #2c3e50;
+            font-weight: bold;
+        }
+    
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px; /* Reduced margin */
+            padding: 8px 0; /* Adjusted padding */
+            border-bottom: 1px solid #e0e4e8;
+            line-height: 1.2;
+        }
+    
+        .result-item:last-child {
+            border-bottom: none;
+        }
+    
+        .result-label {
+            font-weight: bold;
+            color: #34495e;
+        }
+    
+        .result-value {
+            font-size: 1em;
+            color: #000;
+            font-weight: bold;
+        }
+    
+        .results-icon {
+            margin-right: 8px;
+            color: #4CAF50;
+        }
+    
+        .modebar {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1;
+        }
+    
+        #totalPortfolioChart {
+            position: relative;
+            height: 600px;
+        }
+    
+        canvas {
+            width: auto;
+            height: auto;
+            max-height: 800px;
         }
 
-        .input-box:focus {
+        .icon-toggle {
+            display: flex;
+            margin-top: 5px;
+        }
+
+        .icon-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccd6dd;
+            background-color: #fff;
+            color: #34495e;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .icon-btn:first-child {
+            border-right: none;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .icon-btn:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .icon-btn.active {
+            background-color: #4CAF50;
+            color: #fff;
             border-color: #4CAF50;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
-            outline: none;
+        }
+
+        .icon-btn:hover {
+            background-color: #e6e6e6;
+        }
+
+        /* Icon Toggle */
+        .icon-toggle {
+            display: flex;
+            margin-top: 5px;
+        }
+
+        .icon-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccd6dd;
+            background-color: #fff;
+            color: #34495e;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .icon-btn:first-child {
+            border-right: none;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .icon-btn:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .icon-btn.active {
+            background-color: #4CAF50;
+            color: #fff;
+            border-color: #4CAF50;
+        }
+
+        .icon-btn:hover {
+            background-color: #e6e6e6;
         }
 
     </style>
-</head>
-<body>
+
+    <!-- Body Content -->
     <div class="header">
         <h1>Investment Strategy Comparison</h1>
         <button id="downloadCSV" class="download-btn" onclick="downloadCSV()">Download CSV</button>
     </div>
-
+    
     <!-- Main Content Area -->
     <div class="main-content">
         <!-- Left Section: Controls and Results -->
         <div class="left-section">
-            <!-- Sliders and Controls -->
-            <div class="input-group">
-                <label for="dateRange">Select Opening Range:</label>
-                <select id="dateRange" class="dropdown">
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label for="closingDate">Select Closing Date:</label>
-                <select id="closingDate" class="dropdown">
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label for="totalInvestment">Total Investment ($):</label>
-                <input type="number" id="totalInvestment" class="input-box" value="100000" min="0" step="1000">
-            </div>
-            
-            
-            <div class="input-group input-group-spacing">
-                <label for="allowNegativeBalance" style="font-size: 14px; font-weight: bold; display: flex; align-items: center;">
-                    <div class="toggle-switch" style="margin-right: 10px;">
-                        <input type="checkbox" id="allowNegativeBalance" style="width: 40px; height: 20px;">
-                        <span class="toggle-slider" style="width: 40px; height: 20px;"></span>
+            <!-- Controls Section -->
+            <div class="controls-section">
+                <!-- Date Selection -->
+                <h3>Date Selection</h3>
+                <div class="input-group">
+                    <label for="dateRange">Select Opening Range:</label>
+                    <select id="dateRange" class="dropdown"></select>
+                </div>
+                <div class="input-group">
+                    <label for="closingDate">Select Closing Date:</label>
+                    <select id="closingDate" class="dropdown"></select>
+                </div>
+    
+                <!-- Investment Settings -->
+                <h3>Investment Settings</h3>
+                <div class="input-group">
+                    <label for="totalInvestment">Total Investment ($):</label>
+                    <input type="number" id="totalInvestment" class="input-box" value="100000" min="0" step="1000">
+                </div>
+    
+                <!-- Strategy Options -->
+                <label>Select Strategy:</label>
+                <div class="input-group">
+                    <div class="icon-toggle">
+                        <button type="button" id="modelAIcon" class="icon-btn">
+                            <i class="fas fa-chart-line"></i> Model A
+                        </button>
+                        <button type="button" id="modelBIcon" class="icon-btn active">
+                            <i class="fas fa-chart-bar"></i> Model B
+                        </button>
                     </div>
-                    Allow Negative Balance
-                </label>
-            </div>
-            
-            
-            <div class="input-group">
-                <label style="font-size: 14px; font-weight: bold;">Select Drop Model:</label>
-                <div style="display: flex; align-items: center; margin-top: 5px;">
-                    <input type="radio" id="modelA" name="dropModel" value="modelA" style="margin-right: 5px;">
-                    <label for="modelA" style="font-size: 12px; margin-right: 15px;">Model A (5% drop from last purchase)</label>
                 </div>
-                <div style="display: flex; align-items: center; margin-top: 5px;">
-                    <input type="radio" id="modelB" name="dropModel" value="modelB" checked style="margin-right: 5px;">
-                    <label for="modelB" style="font-size: 12px;">Model B (Drop from highest peak)</label>
+
+                <div class="input-group">
+                    <label>Allow Negative Balance:</label>
+                    <div class="icon-toggle">
+                        <button type="button" id="negativeBalanceAllow" class="icon-btn active">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button type="button" id="negativeBalanceDisallow" class="icon-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Sliders -->
+                <div class="input-group">
+                    <label for="split">Investment vs. Cash Split (%):</label>
+                    <div class="slider-container">
+                        <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
+                        <span class="slider-value" id="splitValue">50%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="buyThreshold">Buy Threshold (% drop):</label>
+                    <div class="slider-container">
+                        <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
+                        <span class="slider-value" id="buyThresholdValue">5%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="sellThreshold">Sell Threshold (% increase):</label>
+                    <div class="slider-container">
+                        <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
+                        <span class="slider-value" id="sellThresholdValue">10%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="buyAmountPercent">Buy Percentage from Cash (%):</label>
+                    <div class="slider-container">
+                        <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
+                        <span class="slider-value" id="buyAmountPercentValue">10%</span>
+                    </div>
                 </div>
             </div>
-
-            <div class="input-group">
-                <label for="split">Investment vs. Cash Split (%): <span id="splitValue">50%</span></label>
-                <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
-            </div>
-            <div class="input-group">
-                <label for="buyThreshold">Buy Threshold (% drop): <span id="buyThresholdValue">5%</span></label>
-                <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
-            </div>
-            <div class="input-group">
-                <label for="sellThreshold">Sell Threshold (% increase): <span id="sellThresholdValue">10%</span></label>
-                <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
-            </div>
-            <div class="input-group">
-                <label for="buyAmountPercent">Buy Percentage from Cash (%): <span id="buyAmountPercentValue">10%</span></label>
-                <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
-            </div>
-
+    
             <!-- Results Section -->
             <div class="results">
                 <h2><i class="fas fa-chart-pie results-icon"></i> Results</h2>
@@ -360,14 +537,13 @@
                 </div>
             </div>
         </div>
-
+    
         <!-- Right Section: Graph -->
         <div class="right-section">
             <div id="totalPortfolioChart"></div>
         </div>
-
     </div>
-
+     
     <script>
         let stockData = [];
         let ndxStockData = [];
@@ -398,10 +574,12 @@
         const stocksLeftDisplay = document.getElementById('stocksLeft');
         const stocksValueDisplay = document.getElementById('stocksValue');
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
+        const closingDateDropdown = document.getElementById('closingDate');
 
         window.onload = function() {
             console.log("Fetching CSV files...");
 
+            // Fetch CSV files
             fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
             .then(response => response.text())
             .then(csvText => {
@@ -423,19 +601,10 @@
             window.addEventListener('resize', () => {
                 Plotly.Plots.resize('totalPortfolioChart');
             });
-            
-            // Set up the event listener for negative balance checkbox
-            const checkbox = document.getElementById('allowNegativeBalance');
-            checkbox.addEventListener('change', function() {
-                allowNegativeBalance = this.checked;
-                console.log('Checkbox state:', allowNegativeBalance); // Log the current state
-                calculateResults();
-            });
 
-            // Event listener for the new dropdown
+            // Event listeners for inputs
             totalInvestmentInput.addEventListener('change', () => {
                 totalValueDisplay.textContent = totalInvestmentInput.value;
-
                 calculateResults();
             });
 
@@ -459,24 +628,79 @@
                 calculateResults();
             });
 
-            document.getElementById('closingDate').addEventListener('change', () => {
+            closingDateDropdown.addEventListener('change', () => {
                 calculateResults();
             });
 
             dateRangeDropdown.addEventListener('change', () => {
                 calculateResults();
             });
+
+            // Event listener for "Allow Negative Balance" buttons
+            const negativeBalanceAllowBtn = document.getElementById('negativeBalanceAllow');
+            const negativeBalanceDisallowBtn = document.getElementById('negativeBalanceDisallow');
+
+            [negativeBalanceAllowBtn, negativeBalanceDisallowBtn].forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Remove 'active' class from both buttons
+                    negativeBalanceAllowBtn.classList.remove('active');
+                    negativeBalanceDisallowBtn.classList.remove('active');
+
+                    // Add 'active' class to the clicked button
+                    this.classList.add('active');
+
+                    // Update allowNegativeBalance based on the clicked button
+                    if (this.id === 'negativeBalanceAllow') {
+                        allowNegativeBalance = true;
+                    } else {
+                        allowNegativeBalance = false;
+                    }
+
+                    console.log('Allow Negative Balance:', allowNegativeBalance);
+
+                    // Recalculate results
+                    calculateResults();
+                });
+            });
+
+            // Event listener for Strategy Icon Buttons
+            const modelAIcon = document.getElementById('modelAIcon');
+            const modelBIcon = document.getElementById('modelBIcon');
+
+            [modelAIcon, modelBIcon].forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Remove 'active' class from both buttons
+                    modelAIcon.classList.remove('active');
+                    modelBIcon.classList.remove('active');
+
+                    // Add 'active' class to the clicked button
+                    this.classList.add('active');
+
+                    // Update selectedModel based on the clicked button
+                    if (this.id === 'modelAIcon') {
+                        selectedModel = 'modelA';
+                    } else {
+                        selectedModel = 'modelB';
+                    }
+
+                    console.log('Selected strategy:', selectedModel);
+
+                    // Recalculate results
+                    calculateResults();
+                });
+            });
             
+            // Event listener for "Select Strategy"
             const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
+
             dropModelRadios.forEach(radio => {
                 radio.addEventListener('change', (event) => {
-                    selectedModel = event.target.value; // Update the selected model based on the user's choice
-                    // console.log('Selected drop model:', selectedModel);
-                    calculateResults(); // Recalculate results based on the selected model
+                    selectedModel = event.target.value;
+                    console.log('Selected drop model:', selectedModel);
+                    calculateResults();
                 });
             });
         };
-
 
         function parseCSVData(csvText, type) {
             Papa.parse(csvText, {
@@ -529,7 +753,7 @@
                                 lastBuy: row[lastBuyKey],
                                 sellPrice: row[sellPriceKey],
                                 lowPrice: row[lowPriceKey],
-                                dateObj: new Date(year, month - 1, day) // Store date object for easier comparison
+                                dateObj: new Date(Date.UTC(year, month - 1, day)) // Store date object for easier comparison
                             };
                         });
 
@@ -674,6 +898,7 @@
             let cumulativeDropPercentage = 0;
             let sharesToBuy = 0;
             let purchaseOnDayCount = 0;
+            let sellOnDayCount = 0;
             let totalProfit = 0;
             let firstPurchasePeak = null; // Peak at the time of the first purchase
             let fullySold = true; // Flag to indicate if all stocks are sold
@@ -780,9 +1005,12 @@
                                 activeCashInvested += sharesToBuy * buy_price;
                                 purchaseOnDayCount++; // increment purchase count on a single day
 
-                                // Offset by fractional days (e.g., divide the day into 10 parts)
-                                // Is used to create a separation on days where multiple stocks were purchased/sold
-                                const offsetMilliseconds = purchaseOnDayCount * (1000 * 60 * 60 * 24 / 7);
+                                // // Offset by fractional days (e.g., divide the day into 10 parts)
+                                // // Is used to create a separation on days where multiple stocks were purchased/sold
+                                // const offsetMinutes = purchaseOnDayCount * 5;
+                                // // Create a new date with the offset using UTC methods
+                                // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
+                                const yOffset = purchaseOnDayCount * 10; // Adjust the multiplier as needed
 
                                 // Append the buy price to the log string
                                 buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
@@ -799,8 +1027,8 @@
 
                                 // **Log the buy point here**
                                 buyPoints.push({
-                                    x: new Date(dataDate.getTime() + offsetMilliseconds),
-                                    y: totalValue,
+                                    x: dataDate,
+                                    y: totalValue + yOffset,
                                     marker: {
                                         color: markerProperties.color,
                                         symbol: 'circle',
@@ -843,16 +1071,25 @@
                         action = 'Sell';
                         didSell = true;
                         sellPrice = targetSellPrice; // Record the target sell price as the sell price
+                        sellOnDayCount++; // If multiple sells on the same day, increment the count
 
                         gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
 
                         // Align Sell points with active portfolio value
                         activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
+                        // Calculate offset in minutes for sells - used in conjunction with multiple sells in a single day
+                        // Creates a slight seperation between the two sell points incase multiple transactions happened on one day
+                        // const sellOffsetMinutes = sellOnDayCount * 5;
+
+                        // // Create a new date with the offset using UTC methods
+                        // const sellOffsetDate = new Date(dataDate.getTime() + sellOffsetMinutes * 60000);
+                        const yOffset = sellOnDayCount * 10;
+
                         // **Log the sell point here**
                         sellPoints.push({
                             x: dataDate,
-                            y: totalValue,
+                            y: totalValue - yOffset,
                             marker: {
                                 color: investment.color, // Use the color from the corresponding buy
                                 symbol: 'circle', // Or any desired symbol
@@ -969,7 +1206,7 @@
                 return null;
             }
 
-            return new Date(year, month - 1, day);
+            return new Date(Date.UTC(year, month - 1, day));
         }
 
         function formatDate(dateObj) {
@@ -1024,6 +1261,14 @@
                 xaxis: {
                     title: 'Date',
                     type: 'date',
+                    tickformat: '%Y-%m-%d', // Format the date display
+                    tickmode: 'auto',
+                    tickformatstops: [
+                        {
+                            dtickrange: [null, null],
+                            value: '%Y-%m-%d',
+                        },
+                    ],
                 },
                 yaxis: {
                     title: 'Value ($)',
