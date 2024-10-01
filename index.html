@@ -103,7 +103,7 @@
         /* Labels */
         .input-group label {
             margin-bottom: 5px;
-            font-weight: normal;
+            font-weight: bold;
             color: #34495e;
             display: block;
         }
@@ -112,7 +112,7 @@
         .dropdown, .input-box {
             width: 100%;
             padding: 5px 10px; /* Adjusted padding */
-            font-size: 14px;
+            font-size: 17px !important;
             line-height: 1.75; /* Increased line-height */
             min-height: 36px; /* Set a minimum height */
             border: 1px solid #ccd6dd;
@@ -306,6 +306,10 @@
             margin-right: 8px;
             color: #4CAF50;
         }
+
+        .bold-label {
+            font-weight: bold;
+        }
     </style>
 
     <!-- Body Content -->
@@ -321,7 +325,7 @@
             <!-- Controls Section -->
             <div class="controls-section">
                 <!-- Date Selection -->
-                <h3>Date Selection</h3>
+                <!-- <h3>Date Selection</h3> -->
                 <div class="input-group">
                     <label for="dateRange">Select Opening Range:</label>
                     <select id="dateRange" class="dropdown"></select>
@@ -332,14 +336,14 @@
                 </div>
     
                 <!-- Investment Settings -->
-                <h3>Investment Settings</h3>
+                <!-- <h3>Investment Settings</h3> -->
                 <div class="input-group">
                     <label for="totalInvestment">Total Investment ($):</label>
                     <input type="number" id="totalInvestment" class="input-box" value="100000" min="0" step="1000">
                 </div>
     
                 <!-- Strategy Options -->
-                <label>Select Strategy:</label>
+                <label class="bold-label">Select Strategy:</label>
                 <div class="input-group">
                     <div class="icon-toggle">
                         <button type="button" id="modelAIcon" class="icon-btn">
