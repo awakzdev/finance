@@ -900,45 +900,62 @@
                         sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
 
                         // **Additional check: Ensure the low price of the day is below or equal to the buy price**
-                        if (data.lowPrice < buy_price) {
-                            // Check if there is enough cash to buy the shares
-                            if (sharesToBuy > 0 && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
-                                cash -= sharesToBuy * buy_price;
-                                // Store the color with the investment
-                                activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
-                                action = 'Buy';
-                                sharesBought += sharesToBuy; // Increment if multiple buys are made
-                                activeCashInvested += sharesToBuy * buy_price;
-                                purchaseOnDayCount++; // increment purchase count on a single day
+                        if (data.lowPrice < buy_price && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
 
-                                // // Offset by fractional days (e.g., divide the day into 10 parts)
-                                // // Is used to create a separation on days where multiple stocks were purchased/sold
-                                // const offsetMinutes = purchaseOnDayCount * 5;
-                                // // Create a new date with the offset using UTC methods
-                                // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
-                                const yOffset = purchaseOnDayCount * 100; // Adjust the multiplier as needed
+                        // Check if there is enough cash to buy the shares
+                            cash -= sharesToBuy * buy_price;
+                            // Store the color with the investment
+                            activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
+                            action = 'Buy';
+                            sharesBought += sharesToBuy; // Increment if multiple buys are made
+                            activeCashInvested += sharesToBuy * buy_price;
+                            purchaseOnDayCount++; // increment purchase count on a single day
 
-                                // Append the buy price to the log string
-                                buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
+                            // // Offset by fractional days (e.g., divide the day into 10 parts)
+                            // // Is used to create a separation on days where multiple stocks were purchased/sold
+                            // const offsetMinutes = purchaseOnDayCount * 5;
+                            // // Create a new date with the offset using UTC methods
+                            // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
+                            const yOffset = purchaseOnDayCount * 100; // Adjust the multiplier as needed
 
-                                didBuy = true;
+                            // Append the buy price to the log string
+                            buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
 
-                                // Update last buy price for Model A
-                                if (selectedModel === 'modelA') {
-                                    lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
-                                }
+                            didBuy = true;
 
-                                // Update currentPeak for subsequent buys
-                                currentPeak = buy_price;
+                            // Update last buy price for Model A
+                            if (selectedModel === 'modelA') {
+                                lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
+                            }
 
-                                // Increment buy count
-                                const dateKey = dataDate.toISOString().split('T')[0];
-                                buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
-                                const buyCount = buyCountsPerDate[dateKey];
-                                // Calculate xOffset
-                                const xOffset = buyCount * OFFSET_INCREMENT;
+                            // Update currentPeak for subsequent buys
+                            currentPeak = buy_price;
 
-                                // Add buy point with adjusted x-value
+                            // Increment buy count
+                            const dateKey = dataDate.toISOString().split('T')[0];
+                            buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
+                            const buyCount = buyCountsPerDate[dateKey];
+                            // Calculate xOffset
+                            const xOffset = buyCount * OFFSET_INCREMENT;
+
+                            // Add buy point with adjusted x-value
+                            if (selectedModel === 'modelA') {
+                                // Trigger purchase based on 5% drop from the last purchase, but show drop from highest peak
+                                buyPoints.push({
+                                    x: new Date(dataDate.getTime() + xOffset),
+                                    y: totalValue,
+                                    marker: {
+                                        color: markerProperties.color,
+                                        symbol: 'circle',
+                                        size: 8,
+                                        line: {
+                                            width: 1
+                                        }
+                                    },
+                                    hovertext: `Buy (Model A): ${data.date}, Drop from Highest Peak: ${dropFromHighestPeak.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                });
+                            } else if (selectedModel === 'modelB') {
+                                // For Model B: Display drop percentage as usual
                                 buyPoints.push({
                                     x: new Date(dataDate.getTime() + xOffset),
                                     y: totalValue,
@@ -952,8 +969,6 @@
                                     },
                                     hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
                                 });
-                            } else {
-                                break; // Break the loop if no more cash is available
                             }
                         } else {
                             break; // Break the loop if the low price is not suitable for a buy
