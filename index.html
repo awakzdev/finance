@@ -772,6 +772,7 @@
             let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
             let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
             let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
+            let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
             let initialCash = totalPortfolioValue * cashPercent; // Cash allocated for active trading
             let initialBuyAmount = initialCash * buyAmountPercent; // Fix the initial buy amount per purchase
             let cash = initialCash;
@@ -799,6 +800,15 @@
             let firstPurchasePeak = null; // Peak at the time of the first purchase
             let fullySold = true; // Flag to indicate if all stocks are sold
             let bought = false;
+
+            // Calculate NDX passive investment
+            let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
+            let ndxPortfolioValues = filteredNDXStockData.map(data => {
+                return {
+                    x: data.dateObj,
+                    y: ndxPassiveShares * data.price
+                };
+            });
 
             const totalPortfolioValues = [];
             const activeProfits = [];
@@ -1019,6 +1029,8 @@
                 const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item])); // converting arrays to maps for O(1) access times
                 const ndxData = ndxDataMap.get(data.date);
                 const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A'; // Yield calculation for downloadCSV function
+                const qldYield = ((totalValue  / totalPortfolioValue) - 1) * 100; // Corrected Yield Calculation
+                const ndxPassiveValue = ndxPortfolioValues[index].y;
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
                 totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
@@ -1050,7 +1062,9 @@
                     valuePassive: (passiveShares * data.price).toFixed(2),
                     ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
                     ndxClosePrice: ndxData ? ndxData.price : 'N/A',
-                    ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A'
+                    ndxPassive: ndxPassiveValue.toFixed(2),
+                    ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A',
+                    qldYield: qldYield.toFixed(2),
                 });
             });
 
@@ -1063,16 +1077,7 @@
             stocksValueDisplay.textContent = `${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)}`;
             availableMoneyDisplay.textContent = cash.toFixed(2);
 
-            // Calculate NDX passive investment
-            let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
-            let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
-            let ndxPortfolioValues = filteredNDXStockData.map(data => {
-                return {
-                    x: data.dateObj,
-                    y: ndxPassiveShares * data.price
-                };
-            });
-            // Calculate yields for result tab
+            // Calculate yields for result tab (Final values)
             const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
             const qldYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
             const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
@@ -1342,7 +1347,7 @@
                 'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
                 'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
-                'NDX Yield'
+                'NDX Passive Investment', 'NDX Yield', 'QLD Passive Yield'
             ];
             csvRows.push(headers.join(','));
 
@@ -1371,7 +1376,9 @@
                     log.downPercentageFromPeak,
                     log.ndxOpen,
                     log.ndxClosePrice,
+                    log.ndxPassive,
                     log.ndxYield,
+                    log.qldYield,
 
                 ];
                 csvRows.push(row.join(','));
