@@ -456,7 +456,6 @@
         const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
         const dateRangeDropdown = document.getElementById('dateRange');
         const totalInvestmentInput = document.getElementById('totalInvestment');
-
         const totalInvestmentValue = document.getElementById('totalInvestmentValue');
         const splitValue = document.getElementById('splitValue');
         const buyThresholdValue = document.getElementById('buyThresholdValue');
@@ -731,11 +730,14 @@
             const buyPoints = [];
             const sellPoints = [];
             const totalCashValues = []; // Array to store total cash values
-
+            // Initialize counters for buys and sells per date
+            const buyCountsPerDate = {};
+            const sellCountsPerDate = {};
+            // Define the offset in milliseconds (e.g., 1 minute)
+            const OFFSET_INCREMENT = 500 * 60 * 1000; // 1 minute in milliseconds
             // Get the selected start and closing dates from the dropdowns
             const selectedStartDate = document.getElementById('dateRange').value;
             const selectedClosingDate = document.getElementById('closingDate').value;
-
             // Convert the selected dates to Date objects for comparison
             const startDateObj = parseDate(selectedStartDate);
             const endDateObj = parseDate(selectedClosingDate);
@@ -904,7 +906,7 @@
                                 // const offsetMinutes = purchaseOnDayCount * 5;
                                 // // Create a new date with the offset using UTC methods
                                 // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
-                                const yOffset = purchaseOnDayCount * 10; // Adjust the multiplier as needed
+                                const yOffset = purchaseOnDayCount * 100; // Adjust the multiplier as needed
 
                                 // Append the buy price to the log string
                                 buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
@@ -919,10 +921,17 @@
                                 // Update currentPeak for subsequent buys
                                 currentPeak = buy_price;
 
-                                // **Log the buy point here**
+                                // Increment buy count
+                                const dateKey = dataDate.toISOString().split('T')[0];
+                                buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
+                                const buyCount = buyCountsPerDate[dateKey];
+                                // Calculate xOffset
+                                const xOffset = buyCount * OFFSET_INCREMENT;
+
+                                // Add buy point with adjusted x-value
                                 buyPoints.push({
-                                    x: dataDate,
-                                    y: totalValue + yOffset,
+                                    x: new Date(dataDate.getTime() + xOffset),
+                                    y: totalValue,
                                     marker: {
                                         color: markerProperties.color,
                                         symbol: 'circle',
@@ -976,17 +985,21 @@
                         // Creates a slight seperation between the two sell points incase multiple transactions happened on one day
                         // const sellOffsetMinutes = sellOnDayCount * 5;
 
-                        // // Create a new date with the offset using UTC methods
-                        // const sellOffsetDate = new Date(dataDate.getTime() + sellOffsetMinutes * 60000);
-                        const yOffset = sellOnDayCount * 10;
+                        // Increment sell count
+                        const dateKey = dataDate.toISOString().split('T')[0];
+                        sellCountsPerDate[dateKey] = (sellCountsPerDate[dateKey] || 0) + 1;
+                        const sellCount = sellCountsPerDate[dateKey];
+
+                        // Calculate xOffset
+                        const xOffset = sellCount * OFFSET_INCREMENT;
 
                         // **Log the sell point here**
                         sellPoints.push({
-                            x: dataDate,
-                            y: totalValue - yOffset,
+                            x: new Date(dataDate.getTime() + xOffset),
+                            y: totalValue, // Align with totalValue
                             marker: {
                                 color: investment.color, // Use the color from the corresponding buy
-                                symbol: 'circle', // Or any desired symbol
+                                symbol: 'star', // Or any desired symbol
                                 size: 8
                             },
                             hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}, Sold: ${investment.shares.toFixed(2)} shares`
@@ -1000,8 +1013,6 @@
 
                 // Calculate portfolio values after buy/sell logic
                 activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                passivePortfolioValue = passiveShares * data.price;
-                totalValue = activeInvestmentValue + passivePortfolioValue;
 
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
@@ -1157,6 +1168,7 @@
                     type: 'date',
                     tickformat: '%Y-%m-%d', // Format the date display
                     tickmode: 'auto',
+                    range: [Math.min(...totalPortfolioValues.map(d => d.x)), Math.max(...totalPortfolioValues.map(d => d.x))],
                     tickformatstops: [
                         {
                             dtickrange: [null, null],
