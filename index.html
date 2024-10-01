@@ -875,8 +875,8 @@
                 // **Calculate portfolio values before buy/sell logic**
                 activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 passivePortfolioValue = passiveShares * price;
-                totalValue = activeInvestmentValue + passivePortfolioValue;
-                
+                totalValue = (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares) * data.price + cash;
+
                 // Buy logic
                 if (dropFromCurrentPeak >= buyThreshold * 100) {
                     // Loop to check for multiple purchases on the same day
@@ -952,8 +952,6 @@
                                     },
                                     hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
                                 });
-                                console.log(`Added buy point on ${data.date} with offset ${purchaseOnDayCount}`);
-
                             } else {
                                 break; // Break the loop if no more cash is available
                             }
