@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Strategy Comparison</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Moment.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+    <!-- Papa Parse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js    "></script>
+    <!-- Font Awesome Icons-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            direction: ltr;
+            text-align: left;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.6em;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        button {
+            margin-left: auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row;
+            text-align: left;
+            flex-wrap: nowrap;
+        }
+
+        .left-section {
+            flex: 0 1 300px;
+            min-width: 280px;
+            margin-right: 20px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-section {
+            flex: 1;
+            padding-left: 20px;
+            text-align: left;
+        }
+
+        /* Controls Section */
+        .controls-section {
+            padding-bottom: 10px;
+        }
+
+        /* Section Headings */
+        .controls-section h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #2c3e50;
+            border-bottom: 1px solid #e0e4e8;
+            padding-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        /* Labels */
+        .input-group label {
+            margin-bottom: 5px;
+            font-weight: normal;
+            color: #34495e;
+            display: block;
+        }
+
+        /* Dropdowns */
+        .dropdown, .input-box {
+            width: 100%;
+            padding: 5px 10px; /* Adjusted padding */
+            font-size: 14px;
+            line-height: 1.75; /* Increased line-height */
+            min-height: 36px; /* Set a minimum height */
+            border: 1px solid #ccd6dd;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .dropdown:focus, .input-box:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 20px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Icon Buttons for Toggle Switches and Model Selection */
+        .icon-toggle {
+            display: flex;
+            margin-top: 5px;
+        }
+
+        .icon-btn {
+            flex: 1;
+            padding: 10px 12px; /* Unified padding */
+            font-size: 14px;
+            border: 1px solid #ccd6dd;
+            background-color: #fff;
+            color: #34495e;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            height: 40px; /* Unified height */
+        }
+
+        .icon-btn:first-child {
+            border-right: none;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .icon-btn:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .icon-btn.active {
+            background-color: #4CAF50;
+            color: #fff;
+            border-color: #4CAF50;
+        }
+
+        .icon-btn:hover {
+            background-color: #e6e6e6;
+        }
+
+        /* Sliders */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-top: -2px;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #ddd;
+            outline: none;
+            border-radius: 5px;
+            margin-top: 8px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background-color: #45a049;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            background-color: #45a049;
+        }
+
+        .slider-value {
+            margin-left: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        /* Results */
+        .results {
+            margin-top: 10px;
+            padding: 20px;
+            background: linear-gradient(145deg, #f0f4f8, #ffffff);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
+            text-align: left;
+            box-sizing: border-box;
+            border: 1px solid #e0e0e0;
+        }
+
+        .results h2 {
+            font-size: 1.6em;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e4e8;
+            line-height: 1.2;
+        }
+
+        .result-label {
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .result-value {
+            font-size: 1em;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .results-icon {
+            margin-right: 8px;
+            color: #4CAF50;
+        }
+    </style>
+
+    <!-- Body Content -->
+    <div class="header">
+        <h1>Investment Strategy Comparison</h1>
+        <button id="downloadCSV" class="download-btn" onclick="downloadCSV()">Download CSV</button>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Left Section: Controls and Results -->
+        <div class="left-section">
+            <!-- Controls Section -->
+            <div class="controls-section">
+                <!-- Date Selection -->
+                <h3>Date Selection</h3>
+                <div class="input-group">
+                    <label for="dateRange">Select Opening Range:</label>
+                    <select id="dateRange" class="dropdown"></select>
+                </div>
+                <div class="input-group">
+                    <label for="closingDate">Select Closing Date:</label>
+                    <select id="closingDate" class="dropdown"></select>
+                </div>
+    
+                <!-- Investment Settings -->
+                <h3>Investment Settings</h3>
+                <div class="input-group">
+                    <label for="totalInvestment">Total Investment ($):</label>
+                    <input type="number" id="totalInvestment" class="input-box" value="100000" min="0" step="1000">
+                </div>
+    
+                <!-- Strategy Options -->
+                <label>Select Strategy:</label>
+                <div class="input-group">
+                    <div class="icon-toggle">
+                        <button type="button" id="modelAIcon" class="icon-btn">
+                            <i class="fas fa-chart-line"></i> Model A
+                        </button>
+                        <button type="button" id="modelBIcon" class="icon-btn active">
+                            <i class="fas fa-chart-bar"></i> Model B
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Allow Negative Balance:</label>
+                    <div class="icon-toggle">
+                        <button type="button" id="negativeBalanceAllow" class="icon-btn">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button type="button" id="negativeBalanceDisallow" class="icon-btn active">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Sliders -->
+                <div class="input-group">
+                    <label for="split">Investment vs. Cash Split (%):</label>
+                    <div class="slider-container">
+                        <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
+                        <span class="slider-value" id="splitValue">50%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="buyThreshold">Buy Threshold (% drop):</label>
+                    <div class="slider-container">
+                        <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
+                        <span class="slider-value" id="buyThresholdValue">5%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="sellThreshold">Sell Threshold (% increase):</label>
+                    <div class="slider-container">
+                        <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
+                        <span class="slider-value" id="sellThresholdValue">10%</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="buyAmountPercent">Buy Percentage from Cash (%):</label>
+                    <div class="slider-container">
+                        <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
+                        <span class="slider-value" id="buyAmountPercentValue">10%</span>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Results Section -->
+            <div class="results">
+                <h2><i class="fas fa-chart-pie results-icon"></i> Results</h2>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-coins results-icon"></i> Total Investment:</span>
+                    <span class="result-value">$<span id="totalValueDisplay">100000</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-shopping-cart results-icon"></i> Buy Amount on Each Purchase:</span>
+                    <span class="result-value">$<span id="buyAmountDisplay">Calculating...</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-wallet results-icon"></i> Available Investment Cash:</span>
+                    <span class="result-value">$<span id="availableMoneyDisplay">Calculating...</span></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-chart-line results-icon"></i> Stocks Left:</span>
+                    <span class="result-value"><span id="stocksLeft">Calculating...</span> ($<span id="stocksValue">Calculating...</span>)</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> QLD Yield (%):</span>
+                    <span class="result-value"><span id="qldYield">Calculating...</span>%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> NDX Yield (%):</span>
+                    <span class="result-value"><span id="ndxYield">Calculating...</span>%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
+                    <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Right Section: Graph -->
+        <div class="right-section">
+            <div id="totalPortfolioChart"></div>
+        </div>
+    </div>
+     
+    <script>
+        let stockData = [];
+        let ndxStockData = [];
+        let totalPortfolioChart;
+        let datasetsLoaded = 0;
+        let allowNegativeBalance = false;
+        let selectedModel = 'modelB';
+        let dropFromCurrentPeak = 0;
+        let qldCumulativeYields = [];
+        let ndxCumulativeYields = [];
+
+        const totalInvestmentSlider = document.getElementById('totalInvestment');
+        const splitSlider = document.getElementById('split');
+        const buyThresholdSlider = document.getElementById('buyThreshold');
+        const sellThresholdSlider = document.getElementById('sellThreshold');
+        const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
+        const dateRangeDropdown = document.getElementById('dateRange');
+        const totalInvestmentInput = document.getElementById('totalInvestment');
+
+        const totalInvestmentValue = document.getElementById('totalInvestmentValue');
+        const splitValue = document.getElementById('splitValue');
+        const buyThresholdValue = document.getElementById('buyThresholdValue');
+        const sellThresholdValue = document.getElementById('sellThresholdValue');
+        const buyAmountPercentValue = document.getElementById('buyAmountPercentValue');
+        const totalValueDisplay = document.getElementById('totalValueDisplay');
+        const buyAmountDisplay = document.getElementById('buyAmountDisplay');
+        const finalTotalValueDisplay = document.getElementById('finalTotalValue');
+        const stocksLeftDisplay = document.getElementById('stocksLeft');
+        const stocksValueDisplay = document.getElementById('stocksValue');
+        const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
+        const closingDateDropdown = document.getElementById('closingDate');
+
+        window.onload = function() {
+            console.log("Fetching CSV files...");
+
+            // Fetch CSV files
+            fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
+            .then(response => response.text())
+            .then(csvText => {
+                parseCSVData(csvText, 'QLD');
+            })
+            .catch(error => {
+                console.error("Error fetching QLD CSV file:", error);
+            });
+
+            fetch('https://raw.githubusercontent.com/awakzdev/finance/main/^ndx_stock_data.csv')
+            .then(response => response.text())
+            .then(csvText => {
+                parseCSVData(csvText, 'NDX');
+            })
+            .catch(error => {
+                console.error("Error fetching NDX CSV file:", error);
+            });
+
+            window.addEventListener('resize', () => {
+                Plotly.Plots.resize('totalPortfolioChart');
+            });
+
+            // Event listeners for inputs
+            totalInvestmentInput.addEventListener('change', () => {
+                totalValueDisplay.textContent = totalInvestmentInput.value;
+                calculateResults();
+            });
+
+            splitSlider.addEventListener('input', () => {
+                splitValue.textContent = `${splitSlider.value}%`;
+                calculateResults();
+            });
+
+            buyThresholdSlider.addEventListener('input', () => {
+                buyThresholdValue.textContent = `${buyThresholdSlider.value}%`;
+                calculateResults();
+            });
+
+            sellThresholdSlider.addEventListener('input', () => {
+                sellThresholdValue.textContent = `${sellThresholdSlider.value}%`;
+                calculateResults();
+            });
+
+            buyAmountPercentSlider.addEventListener('input', () => {
+                buyAmountPercentValue.textContent = `${buyAmountPercentSlider.value}%`;
+                calculateResults();
+            });
+
+            closingDateDropdown.addEventListener('change', () => {
+                calculateResults();
+            });
+
+            dateRangeDropdown.addEventListener('change', () => {
+                calculateResults();
+            });
+            
+            // Event listener for "Allow Negative Balance" buttons
+            const negativeBalanceAllowBtn = document.getElementById('negativeBalanceAllow');
+            const negativeBalanceDisallowBtn = document.getElementById('negativeBalanceDisallow');
+
+            [negativeBalanceAllowBtn, negativeBalanceDisallowBtn].forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Remove 'active' class from both buttons
+                    negativeBalanceAllowBtn.classList.remove('active');
+                    negativeBalanceDisallowBtn.classList.remove('active');
+
+                    // Add 'active' class to the clicked button
+                    this.classList.add('active');
+
+                    // Update allowNegativeBalance based on the clicked button
+                    if (this.id === 'negativeBalanceAllow') {
+                        allowNegativeBalance = true;
+                    } else {
+                        allowNegativeBalance = false;
+                    }
+
+                    console.log('Allow Negative Balance:', allowNegativeBalance);
+
+                    // Recalculate results
+                    calculateResults();
+                });
+            });
+
+            // Event listener for Strategy Icon Buttons
+            const modelAIcon = document.getElementById('modelAIcon');
+            const modelBIcon = document.getElementById('modelBIcon');
+
+            [modelAIcon, modelBIcon].forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Remove 'active' class from both buttons
+                    modelAIcon.classList.remove('active');
+                    modelBIcon.classList.remove('active');
+
+                    // Add 'active' class to the clicked button
+                    this.classList.add('active');
+
+                    // Update selectedModel based on the clicked button
+                    if (this.id === 'modelAIcon') {
+                        selectedModel = 'modelA';
+                    } else {
+                        selectedModel = 'modelB';
+                    }
+
+                    console.log('Selected strategy:', selectedModel);
+
+                    // Recalculate results
+                    calculateResults();
+                });
+            });
+            
+            // Event listener for "Select Strategy"
+            const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
+
+            dropModelRadios.forEach(radio => {
+                radio.addEventListener('change', (event) => {
+                    selectedModel = event.target.value;
+                    console.log('Selected drop model:', selectedModel);
+                    calculateResults();
+                });
+            });
+        };
+
+        function parseCSVData(csvText, type) {
+            Papa.parse(csvText, {
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    console.log(`CSV data parsed successfully for ${type}.`);
+
+                    const dateKey = results.data.length > 0 && ('Date' in results.data[0]) ? 'Date' : 'date';
+                    const closePriceKey = 'Close';
+                    const openPriceKey = 'Open';
+                    const highPriceKey = 'High';
+                    const lastBuyKey = 'Buy';
+                    const sellPriceKey = 'Sell'
+                    const lowPriceKey = 'Low';
+
+                    if (!dateKey || !closePriceKey || !openPriceKey) {
+                        console.error(`CSV data for ${type} is missing required columns ('Date', 'Close', or 'Open').`);
+                        finalTotalValueDisplay.textContent = 'Invalid data: Missing columns';
+                        return;
+                    }
+
+                    const parsedData = results.data
+                        .filter(row => {
+                            const dateStr = row[dateKey];
+                            const price = row[closePriceKey];
+                            const openPrice = row[openPriceKey];
+                            const highPrice = row[highPriceKey];
+                            const lowPrice = row[lowPriceKey];
+
+                            if (!dateStr || isNaN(price) || isNaN(openPrice)) {
+                                console.warn(`Skipping invalid row in ${type} data:`, row);
+                                return false;
+                            }
+                            return true;
+                        })
+                        .map(row => {
+
+                            const dateStr = row[dateKey].trim();
+                            const [dayStr, monthStr, yearStr] = dateStr.split('/');
+                            const day = parseInt(dayStr);
+                            const month = parseInt(monthStr);
+                            const year = parseInt(yearStr);
+
+                            return {
+                                date: dateStr,
+                                price: row[closePriceKey],
+                                openPrice: row[openPriceKey],
+                                highPrice: row[highPriceKey],
+                                lastBuy: row[lastBuyKey],
+                                sellPrice: row[sellPriceKey],
+                                lowPrice: row[lowPriceKey],
+                                dateObj: new Date(Date.UTC(year, month - 1, day)) // Store date object for easier comparison
+                            };
+                        });
+
+                    if (parsedData.length > 0) {
+                        if (type === 'QLD') {
+                            stockData = parsedData;
+                            console.log("QLD stock data loaded. Total entries:", stockData.length);
+                        } else if (type === 'NDX') {
+                            ndxStockData = parsedData;
+                            console.log("NDX stock data loaded. Total entries:", ndxStockData.length);
+                        }
+
+                        datasetsLoaded++;
+                        if (datasetsLoaded === 2) {
+                            populateDateDropdown();
+                            setupChart();
+                            calculateResults();
+                        }
+                    } else {
+                        console.error(`Invalid data: No valid stock data found for ${type}.`);
+                        finalTotalValueDisplay.textContent = 'Invalid data';
+                    }
+                },
+                error: function(error) {
+                    console.error(`Error parsing CSV data for ${type}:`, error);
+                }
+            });
+        }
+
+        function populateDateDropdown() {
+            // Combine dates from both datasets
+            const combinedDates = [...stockData, ...ndxStockData].map(data => data.dateObj.getTime());
+            const uniqueDatesSet = new Set(combinedDates);
+            const uniqueDates = Array.from(uniqueDatesSet).map(time => new Date(time));
+
+            // Sort the dates in ascending order
+            uniqueDates.sort((a, b) => a - b);
+
+            // Clear existing options in the dropdowns
+            dateRangeDropdown.innerHTML = '';
+            const closingDateDropdown = document.getElementById('closingDate');
+            closingDateDropdown.innerHTML = '';
+
+            // Add unique dates to both dropdowns
+            uniqueDates.forEach(dateObj => {
+                const dateStr = formatDate(dateObj);
+
+                const option1 = document.createElement('option');
+                option1.value = dateStr;
+                option1.textContent = dateStr;
+                dateRangeDropdown.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = dateStr;
+                option2.textContent = dateStr;
+                closingDateDropdown.appendChild(option2);
+            });
+
+            // Set the opening date to '26/07/2019' if it exists
+            const defaultDate = '26/07/2019';
+            const defaultDateExists = Array.from(dateRangeDropdown.options).some(option => option.value === defaultDate);
+
+            if (defaultDateExists) {
+                dateRangeDropdown.value = defaultDate;
+            } else {
+                // Fallback to the first date if the default date isn't found
+                dateRangeDropdown.value = formatDate(uniqueDates[0]);
+            }
+
+            // Always set the closing date to the last date in the dataset
+            closingDateDropdown.value = formatDate(uniqueDates[uniqueDates.length - 1]);
+
+            // Trigger the initial calculation
+            calculateResults();
+        }
+
+
+        function calculateResults() {
+            // console.log("Calculating portfolio results...");
+
+            const buyPoints = [];
+            const sellPoints = [];
+            const totalCashValues = []; // Array to store total cash values
+
+            // Get the selected start and closing dates from the dropdowns
+            const selectedStartDate = document.getElementById('dateRange').value;
+            const selectedClosingDate = document.getElementById('closingDate').value;
+
+            // Convert the selected dates to Date objects for comparison
+            const startDateObj = parseDate(selectedStartDate);
+            const endDateObj = parseDate(selectedClosingDate);
+
+            console.log("Selected start date:", startDateObj);
+            console.log("Selected end date:", endDateObj);
+
+            // Filter stock data to include only dates within the selected range
+            const filteredStockData = stockData.filter(data => {
+                const isInDateRange = data.dateObj >= startDateObj && data.dateObj <= endDateObj;
+                return isInDateRange;
+            });
+
+            const filteredNDXStockData = ndxStockData.filter(data => {
+                const isInDateRange = data.dateObj >= startDateObj && data.dateObj <= endDateObj;
+                return isInDateRange;
+            });
+
+            // console.log("Filtered QLD data dates:", filteredStockData.map(d => d.date));
+            // console.log("Filtered NDX data dates:", filteredNDXStockData.map(d => d.date));
+
+            if (!filteredStockData.length || !filteredNDXStockData.length) {
+                console.error("No stock data available for the selected date range.");
+                finalTotalValueDisplay.textContent = 'No data';
+                updateChart([], [], [], [], []); // Include totalCashValues in the updateChart call
+                return;
+            }
+
+            // Initialize variables
+            let totalPortfolioValue = parseInt(totalInvestmentInput.value);
+            let cashPercent = parseInt(splitSlider.value) / 100;
+            let buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
+            let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
+            let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
+            let initialCash = totalPortfolioValue * cashPercent; // Cash allocated for active trading
+            let initialBuyAmount = initialCash * buyAmountPercent; // Fix the initial buy amount per purchase
+            let cash = initialCash;
+            let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Passive investment
+            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+            let passiveInvestmentPrice = filteredStockData[0].openPrice;
+            let activeInvestments = [];
+            let highestPeak = filteredStockData[0].price;
+            let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
+            let currentPeak = highestPeak;
+            let purchaseCount = 0; // Track the number of purchases made
+            let activeCashInvested = 0;
+            let activeInvestmentValue = 0;
+            let passivePortfolioValue = 0;
+            let totalValue = 0;
+            let dropFromHighestPeak = 0;
+            let gainPercentage = 0;
+            let currentPurchaseCount = 0;
+            let dropPercentage = 0;
+            let cumulativeDropPercentage = 0;
+            let sharesToBuy = 0;
+            let purchaseOnDayCount = 0;
+            let sellOnDayCount = 0;
+            let totalProfit = 0;
+            let firstPurchasePeak = null; // Peak at the time of the first purchase
+            let fullySold = true; // Flag to indicate if all stocks are sold
+            let bought = false;
+
+            const totalPortfolioValues = [];
+            const activeProfits = [];
+            const transactionLog = [];
+
+            // Iterate over filtered stock data for calculations
+            filteredStockData.forEach((data, index) => {
+                const dataDate = data.dateObj;
+
+                let price = data.lowPrice;
+                let action = 'Hold';
+                let sharesBought = 0;
+                let sharesSold = 0;
+                let didBuy = false;
+                let didSell = false;
+                let dailyBuyShares = 0;
+                let dailyBuyPrices = [];
+
+                fullySold = (activeInvestments.length === 0);
+
+                // Update the highest peak (always check if price exceeds the highestPeak)
+                if (data.price > highestPeak) {
+                    highestPeak = data.price;
+                }
+
+                // If fully sold, reset the first purchase peak and purchase count
+                if (fullySold) {
+                    firstPurchasePeak = highestPeak;
+                    purchaseCount = 0; // Reset purchase count
+                }
+
+                let buy_price = null;
+                let sellPrice = null;
+                let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
+
+                let peakToUse = fullySold ? highestPeak : firstPurchasePeak;
+
+                // Adjust `currentPeak` based on the selected model
+                if (selectedModel === 'modelA') {
+                    if (fullySold) {
+                        // If fully sold, reset to the highest peak for the next potential buy
+                        currentPeak = highestPeak;
+                    }
+                    // No need to set currentPeak otherwise, as it should always use `lastBuyPrice` after the first purchase
+                } else if (selectedModel === 'modelB') {
+                    // Model B: Drop from the highest peak
+                    currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
+                }
+
+                // Calculate drop from current peak
+                const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
+                
+                if (selectedModel === 'modelA') {
+                    // For Model A, calculate the drop from the highest peak instead of last purchase
+                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+                } else if (selectedModel === 'modelB') {
+                    // Model B: The logic remains unchanged
+                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+                }
+
+                // Debugging logs for drop and price information
+                // console.log(`Date: ${data.date}, Model: ${selectedModel}, Current Peak: ${currentPeak}, Price: ${price}, Drop from Current Peak: ${dropFromCurrentPeak}`);
+
+                // **Calculate portfolio values before buy/sell logic**
+                activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                passivePortfolioValue = passiveShares * price;
+                totalValue = activeInvestmentValue + passivePortfolioValue;
+                
+                // Buy logic
+                if (dropFromCurrentPeak >= buyThreshold * 100) {
+                    // Loop to check for multiple purchases on the same day
+                    while (dropFromCurrentPeak >= buyThreshold * 100) {
+                        currentPurchaseCount = activeInvestments.length + 1; // Increment based on the number of purchases made
+                        dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
+                        cumulativeDropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the cumulative drop percentage
+
+                        // Calculate the new buy price based on the selected model
+                        if (selectedModel === 'modelA') {
+                            // Model A: Buy price based on a drop from the last purchase
+                            buy_price = fullySold ? currentPeak * (1 - buyThreshold) : lastBuyPrice * (1 - buyThreshold);
+                        } else if (selectedModel === 'modelB') {
+                            // Model B: Buy price based on the highest peak
+                            buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount);
+                        }
+
+                        // Determine marker properties based on the cumulative drop percentage
+                        let markerProperties = getMarkerProperties('buy', cumulativeDropPercentage);
+
+                        sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
+
+                        // **Additional check: Ensure the low price of the day is below or equal to the buy price**
+                        if (data.lowPrice < buy_price) {
+                            // Check if there is enough cash to buy the shares
+                            if (sharesToBuy > 0 && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
+                                cash -= sharesToBuy * buy_price;
+                                // Store the color with the investment
+                                activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
+                                action = 'Buy';
+                                sharesBought += sharesToBuy; // Increment if multiple buys are made
+                                activeCashInvested += sharesToBuy * buy_price;
+                                purchaseOnDayCount++; // increment purchase count on a single day
+
+                                // // Offset by fractional days (e.g., divide the day into 10 parts)
+                                // // Is used to create a separation on days where multiple stocks were purchased/sold
+                                // const offsetMinutes = purchaseOnDayCount * 5;
+                                // // Create a new date with the offset using UTC methods
+                                // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
+                                const yOffset = purchaseOnDayCount * 10; // Adjust the multiplier as needed
+
+                                // Append the buy price to the log string
+                                buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
+
+                                didBuy = true;
+
+                                // Update last buy price for Model A
+                                if (selectedModel === 'modelA') {
+                                    lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
+                                }
+
+                                // Update currentPeak for subsequent buys
+                                currentPeak = buy_price;
+
+                                // **Log the buy point here**
+                                buyPoints.push({
+                                    x: dataDate,
+                                    y: totalValue + yOffset,
+                                    marker: {
+                                        color: markerProperties.color,
+                                        symbol: 'circle',
+                                        size: 8,
+                                        line: {
+                                            width: 1
+                                        }
+                                    },
+                                    hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                });
+                                console.log(`Added buy point on ${data.date} with offset ${purchaseOnDayCount}`);
+
+                            } else {
+                                break; // Break the loop if no more cash is available
+                            }
+                        } else {
+                            break; // Break the loop if the low price is not suitable for a buy
+                        }
+
+                        // Recalculate drop from current peak after the purchase
+                        const newDropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
+                        if (newDropFromCurrentPeak < buyThreshold * 100) {
+                            break; // Break the loop if no further purchases can be made
+                        }
+                    }
+                }
+
+                // Sell logic
+                activeInvestments = activeInvestments.map(investment => {
+                    // Calculate the exact target sell price (e.g., 10% increase from buy price)
+                    const targetSellPrice = investment.buyPrice * (1 + sellThreshold);
+
+                    // Check if the high price of the day exceeds or equals the target sell price
+                    if (data.highPrice >= targetSellPrice) {
+                        // Sell the shares at the target sell price
+                        let saleProceeds = investment.shares * targetSellPrice; // Use targetSellPrice for sale
+                        totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
+                        cash += saleProceeds;
+                        sharesSold += investment.shares; // Accumulate shares sold if multiple investments are sold
+                        action = 'Sell';
+                        didSell = true;
+                        sellPrice = targetSellPrice; // Record the target sell price as the sell price
+                        sellOnDayCount++; // If multiple sells on the same day, increment the count
+
+                        gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
+
+                        // Align Sell points with active portfolio value
+                        activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+
+                        // Calculate offset in minutes for sells - used in conjunction with multiple sells in a single day
+                        // Creates a slight seperation between the two sell points incase multiple transactions happened on one day
+                        // const sellOffsetMinutes = sellOnDayCount * 5;
+
+                        // // Create a new date with the offset using UTC methods
+                        // const sellOffsetDate = new Date(dataDate.getTime() + sellOffsetMinutes * 60000);
+                        const yOffset = sellOnDayCount * 10;
+
+                        // **Log the sell point here**
+                        sellPoints.push({
+                            x: dataDate,
+                            y: totalValue - yOffset,
+                            marker: {
+                                color: investment.color, // Use the color from the corresponding buy
+                                symbol: 'circle', // Or any desired symbol
+                                size: 8
+                            },
+                            hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}, Sold: ${investment.shares.toFixed(2)} shares`
+                        });
+
+                        // Mark shares as sold
+                        return { ...investment, shares: 0 };
+                    }
+                    return investment;
+                }).filter(investment => investment.shares > 0); // Keep investments with shares > 0
+
+                // Calculate portfolio values after buy/sell logic
+                activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                passivePortfolioValue = passiveShares * data.price;
+                totalValue = activeInvestmentValue + passivePortfolioValue;
+
+                const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
+                const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item])); // converting arrays to maps for O(1) access times
+                const ndxData = ndxDataMap.get(data.date);
+                const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A'; // Yield calculation for downloadCSV function
+
+                totalPortfolioValues.push({ x: dataDate, y: totalValue });
+                totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
+
+                // Modify the transaction log to store the new price fields
+                transactionLog.push({
+                    date: data.date,
+                    action: action,
+                    sharesBought: sharesBought,
+                    sharesSold: sharesSold,
+                    openPrice: data.openPrice,
+                    lastBuy: buyPricesLog, // Log multiple buy prices
+                    sellPrice: sellPrice,
+                    highPrice: data.highPrice,
+                    lowPrice: data.lowPrice,
+                    closePrice: data.price,
+                    totalCash: cash.toFixed(2),
+                    stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
+                    passiveShares: passiveShares,
+                    totalShares: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares,
+                    highestPeak: highestPeak,
+                    downPercentageFromPeak: dropFromHighestPeak.toFixed(2),
+                    passiveInvestmentPrice: passiveInvestmentPrice,
+                    passiveProfit: passiveProfit.toFixed(2),
+                    activeProfit: activeProfit.toFixed(2),
+                    activeCashInvested: activeCashInvested.toFixed(2),
+                    totalValue: totalValue.toFixed(2),
+                    totalAmount: (cash + passivePortfolioValue).toFixed(2),
+                    valuePassive: (passiveShares * data.price).toFixed(2),
+                    ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
+                    ndxClosePrice: ndxData ? ndxData.price : 'N/A',
+                    ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A'
+                });
+            });
+
+            // console.log("Calculation complete. Final portfolio value:", totalPortfolioValues[totalPortfolioValues.length - 1]);
+
+            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
+            buyAmountDisplay.textContent = Math.floor(initialCash * (buyAmountPercentSlider.value / 100)).toFixed(0);
+            finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
+            stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
+            stocksValueDisplay.textContent = `${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)}`;
+            availableMoneyDisplay.textContent = cash.toFixed(2);
+
+            // Calculate NDX passive investment
+            let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
+            let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
+            let ndxPortfolioValues = filteredNDXStockData.map(data => {
+                return {
+                    x: data.dateObj,
+                    y: ndxPassiveShares * data.price
+                };
+            });
+            // Calculate yields for result tab
+            const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
+            const qldYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
+            const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
+
+            // Display yields in results
+            document.getElementById('qldYield').textContent = qldYield.toFixed(2);
+            document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
+
+            // Daily cumulative yield calculation for both QLD and NDX
+            const qldCumulativeYields = totalPortfolioValues.map(data => {
+                return {
+                    x: data.x,
+                    y: ((data.y / totalPortfolioValue) - 1) * 100
+                };
+            });
+
+            const ndxCumulativeYields = ndxPortfolioValues.map(data => {
+                return {
+                    x: data.x,
+                    y: ((data.y / ndxInitialInvestment) - 1) * 100
+                };
+            });
+
+            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues); // qldCumulativeYields, ndxCumulativeYields);
+            window.transactionLog = transactionLog;
+        }
+
+        function parseDate(dateStr) {
+            const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
+            const day = parseInt(dayStr);
+            const month = parseInt(monthStr);
+            const year = parseInt(yearStr);
+
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                console.error(`Invalid date format: ${dateStr}`);
+                return null;
+            }
+
+            return new Date(Date.UTC(year, month - 1, day));
+        }
+
+        function formatDate(dateObj) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        function getMarkerProperties(action, threshold) {
+            // Define colors for different thresholds
+            const colorsByThreshold = {
+                '5%': 'green',
+                '10%': 'cyan',
+                '15%': 'purple',
+                '20%': 'orange',
+                '25%': 'blue',
+                '30%': 'magenta',
+                '35%': 'brown',
+                '40%': 'yellow',
+                '45%': 'coral',
+                '50%': 'teal',
+                '55%': 'olive',
+                '60%': 'lime',
+                '65%': 'indigo',
+                '70%': 'violet',
+                '75%': 'gold',
+                '80%': 'navy'
+            };
+
+            // Convert threshold to a string key (e.g., '10%')
+            const key = `${Math.round(threshold)}%`;
+
+            // Get the color for the threshold, default to 'blue' if not defined
+            const color = colorsByThreshold[key] || 'blue';
+
+            // Return the marker properties with matching colors for buy and sell
+            return {
+                color: color,
+                shape: 'circle'
+            };
+        }
+
+        function setupChart() {
+            const totalPortfolioValues = [];
+            const activeProfits = [];
+            const ndxPortfolioValues = [];
+            const totalCashValues = [];
+
+            const layout = {
+                title: 'Portfolio Values Over Time',
+                xaxis: {
+                    title: 'Date',
+                    type: 'date',
+                    tickformat: '%Y-%m-%d', // Format the date display
+                    tickmode: 'auto',
+                    tickformatstops: [
+                        {
+                            dtickrange: [null, null],
+                            value: '%Y-%m-%d',
+                        },
+                    ],
+                },
+                yaxis: {
+                    title: 'Value ($)',
+                },
+                margin: {
+                    l: 50, // left margin
+                    r: 50, // right margin
+                    t: 20, // top margin - reduce this to make more space
+                    b: 50, // bottom margin
+                }
+            };
+
+
+            const config = {
+                displaylogo: false, // Remove the Plotly logo
+                displayModeBar: true, // Always show the mode bar
+            };
+
+            Plotly.newPlot('totalPortfolioChart', [
+                {
+                    x: totalPortfolioValues.map(data => data.x),
+                    y: totalPortfolioValues.map(data => data.y),
+                    mode: 'lines',
+                    name: 'Total Portfolio Value',
+                    line: { color: 'rgba(75, 192, 192, 1)' },
+                    fill: 'tozeroy',
+                },
+                {
+                    x: activeProfits.map(data => data.x),
+                    y: activeProfits.map(data => data.y),
+                    mode: 'lines',
+                    name: 'Active Profit',
+                    line: { color: 'rgba(255, 99, 132, 1)' },
+                    fill: 'tozeroy',
+                },
+                {
+                    x: ndxPortfolioValues.map(data => data.x),
+                    y: ndxPortfolioValues.map(data => data.y),
+                    mode: 'lines',
+                    name: 'NDX Passive Investment',
+                    line: { color: 'rgba(54, 162, 235, 1)' },
+                    fill: 'tozeroy',
+                }
+            ], layout, config);
+        }
+
+
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues) {
+            qldCumulativeYields = qldCumulativeYields || [];
+            ndxCumulativeYields = ndxCumulativeYields || [];
+
+            const allXValues = [
+                ...totalPortfolioValues.map(data => data.x),
+                ...ndxPortfolioValues.map(data => data.x),
+                ...buyPoints.map(point => point.x),
+                ...sellPoints.map(point => point.x),
+                ...totalCashValues.map(data => data.x),
+                ...qldCumulativeYields.map(data => data.x),
+                ...ndxCumulativeYields.map(data => data.x)
+            ];
+
+            // Calculate the min and max dates for the x-axis range
+            const minXValue = Math.min(...allXValues);
+            const maxXValue = Math.max(...allXValues);
+
+            const updatedData = [
+                {
+                    x: totalPortfolioValues.map(data => data.x),
+                    y: totalPortfolioValues.map(data => data.y),
+                    name: 'Total Portfolio Value',
+                    mode: 'lines',
+                },
+                {
+                    x: ndxPortfolioValues.map(data => data.x),
+                    y: ndxPortfolioValues.map(data => data.y),
+                    name: 'NDX Passive Investment',
+                    mode: 'lines',
+                },
+                // {
+                //     x: qldCumulativeYields.map(data => data.x),
+                //     y: qldCumulativeYields.map(data => data.y),
+                //     name: 'QLD Cumulative Yield (%)',
+                //     mode: 'lines',
+                //     hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
+                //     line: { dash: 'dot', color: 'rgba(0, 128, 0, 1)' } // Green dashed line
+                // },
+                // {
+                //     x: ndxCumulativeYields.map(data => data.x),
+                //     y: ndxCumulativeYields.map(data => data.y),
+                //     name: 'NDX Cumulative Yield (%)',
+                //     mode: 'lines',
+                //     hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
+                //     line: { dash: 'dot', color: 'rgba(0, 0, 255, 1)' } // Blue dashed line
+                // },
+                {
+                    x: totalCashValues.map(data => data.x),
+                    y: totalCashValues.map(data => data.y),
+                    name: 'Total Cash',
+                    mode: 'lines',
+                    line: { dash: 'dot', color: 'rgba(255, 165, 0, 1)' } // Dashed orange line for cash
+                },
+                // Buy Points
+                {
+                    x: buyPoints.map(point => point.x),
+                    y: buyPoints.map(point => point.y),
+                    mode: 'markers',
+                    name: 'Buy Points',
+                    marker: {
+                        color: buyPoints.map(point => point.marker.color),
+                        symbol: buyPoints.map(point => point.marker.symbol),
+                        size: 8,
+                    },
+                    hoverinfo: 'text',
+                    text: buyPoints.map(point => point.hovertext),
+                },
+                // Sell Points
+                {
+                    x: sellPoints.map(point => point.x),
+                    y: sellPoints.map(point => point.y),
+                    mode: 'markers',
+                    name: 'Sell Points',
+                    marker: {
+                        color: sellPoints.map(point => point.marker.color),
+                        symbol: sellPoints.map(point => point.marker.symbol),
+                        size: 8,
+                    },
+                    hoverinfo: 'text',
+                    text: sellPoints.map(point => point.hovertext),
+                }
+            ];
+
+            const layout = {
+                title: 'Portfolio Values Over Time',
+                xaxis: {
+                    title: 'Date',
+                    type: 'date',
+                    range: [minXValue, maxXValue],
+                },
+                yaxis: {
+                    title: 'Value ($) / Yield (%)',
+                },
+                hovermode: 'closest',
+                legend: {
+                    orientation: 'h',
+                    x: 0.5,
+                    y: 1.0,
+                    xanchor: 'center',
+                    yanchor: 'bottom',
+                },
+                margin: {
+                    l: 50,
+                    r: 50,
+                    t: 70,
+                    b: 50,
+                },
+            };
+
+            Plotly.react('totalPortfolioChart', updatedData, layout);
+        }
+
+        // Update the CSV download logic
+        function downloadCSV() {
+            const csvRows = [];
+            const headers = [
+                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
+                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
+                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
+                'NDX Yield'
+            ];
+            csvRows.push(headers.join(','));
+
+            window.transactionLog.forEach(log => {
+                const row = [
+                    log.date,
+                    log.action,
+                    log.sharesBought,
+                    log.sharesSold,
+                    log.lastBuy,
+                    log.sellPrice,
+                    log.openPrice,
+                    log.highPrice,
+                    log.lowPrice,
+                    log.closePrice,
+                    log.totalCash,
+                    log.stocksHeld,
+                    log.passiveShares,
+                    log.totalShares,
+                    log.highestPeak,
+                    log.passiveProfit,
+                    log.activeProfit,
+                    log.activeCashInvested,
+                    log.totalValue,
+                    log.valuePassive,
+                    log.downPercentageFromPeak,
+                    log.ndxOpen,
+                    log.ndxClosePrice,
+                    log.ndxYield,
+
+                ];
+                csvRows.push(row.join(','));
+            });
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'investment_strategy_log.csv');
+            a.click();
+        }
+    </script>
+</body>
+</html>
