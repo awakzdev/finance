@@ -22,7 +22,7 @@
             direction: ltr;
             text-align: left;
         }
-    
+
         /* Header */
         .header {
             display: flex;
@@ -31,14 +31,14 @@
             margin-bottom: 20px;
             text-align: left;
         }
-    
+
         .header h1 {
             margin: 0;
             font-size: 1.6em;
             color: #2c3e50;
-            font-weight: bold; /* Ensuring the main heading is bold */
+            font-weight: bold;
         }
-    
+
         button {
             margin-left: auto;
             padding: 10px 20px;
@@ -49,13 +49,12 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
-            text-align: center;
         }
-    
+
         button:hover {
             background-color: #45a049;
         }
-    
+
         /* Main Content Area */
         .main-content {
             display: flex;
@@ -64,112 +63,86 @@
             text-align: left;
             flex-wrap: nowrap;
         }
-    
+
         .left-section {
             flex: 0 1 300px;
-            min-width: 280px; /* Adjusted min-width */
+            min-width: 280px;
             margin-right: 20px;
             text-align: left;
             display: flex;
             flex-direction: column;
         }
-    
+
         .right-section {
             flex: 1;
             padding-left: 20px;
             text-align: left;
         }
-    
+
         /* Controls Section */
         .controls-section {
             padding-bottom: 10px;
         }
-    
+
         /* Section Headings */
         .controls-section h3 {
             margin-top: 0;
-            margin-bottom: 10px; /* Reduced margin-bottom */
-            font-size: 1.1em; /* Slightly reduced font size */
+            margin-bottom: 10px;
+            font-size: 1.1em;
             color: #2c3e50;
             border-bottom: 1px solid #e0e4e8;
-            padding-bottom: 5px; /* Reduced padding-bottom */
-            font-weight: bold; /* Made headings bold */
+            padding-bottom: 5px;
+            font-weight: bold;
         }
-    
+
         /* Input Groups */
         .input-group {
-            margin-bottom: 15px; /* Reduced margin-bottom */
+            margin-bottom: 15px;
         }
-    
+
         /* Labels */
         .input-group label {
-            margin-bottom: 5px; /* Reduced margin-bottom */
-            font-weight: normal; /* Set to normal for better balance */
+            margin-bottom: 5px;
+            font-weight: normal;
             color: #34495e;
             display: block;
         }
-    
+
         /* Dropdowns */
-        .dropdown {
+        .dropdown, .input-box {
             width: 100%;
-            padding: 8px 10px; /* Adjusted padding */
-            font-size: 14px; /* Reduced font size */
-            line-height: 1.5; /* Adjusted line-height to fix text cut-off */
-            border: 1px solid #ccd6dd;
-            border-radius: 5px;
-            background-color: #fff;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-    
-        .dropdown:focus {
-            border-color: #4CAF50;
-            outline: none;
-        }
-    
-        /* Input Boxes */
-        .input-box {
-            width: 100%;
-            padding: 8px 10px; /* Adjusted padding */
-            font-size: 14px; /* Reduced font size */
-            line-height: 1.5; /* Adjusted line-height to fix text cut-off */
-            border: 1px solid #ccd6dd;
-            border-radius: 5px;
-            background-color: #fff;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-    
-        .input-box:focus {
-            border-color: #4CAF50;
-            outline: none;
-        }
-    
-        /* Toggle Switch Label */
-        .toggle-label {
+            padding: 5px 10px; /* Adjusted padding */
             font-size: 14px;
-            font-weight: normal; /* Set to normal for consistency */
-            display: flex;
-            align-items: center;
-            cursor: pointer;
+            line-height: 1.75; /* Increased line-height */
+            min-height: 36px; /* Set a minimum height */
+            border: 1px solid #ccd6dd;
+            border-radius: 5px;
+            background-color: #fff;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
         }
-    
+
+        .dropdown:focus, .input-box:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
         /* Toggle Switch */
         .toggle-switch {
             position: relative;
             display: inline-block;
             width: 40px;
             height: 20px;
-            margin-right: 8px; /* Adjusted margin */
+            margin-right: 8px;
             vertical-align: middle;
         }
-    
+
         .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-    
+
         .toggle-slider {
             position: absolute;
             cursor: pointer;
@@ -181,7 +154,7 @@
             transition: 0.4s;
             border-radius: 20px;
         }
-    
+
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -193,39 +166,59 @@
             transition: 0.4s;
             border-radius: 50%;
         }
-    
+
         input:checked + .toggle-slider {
             background-color: #4CAF50;
         }
-    
+
         input:checked + .toggle-slider:before {
             transform: translateX(20px);
         }
-    
-        /* Radio Buttons */
-        .radio-group {
+
+        /* Icon Buttons for Toggle Switches and Model Selection */
+        .icon-toggle {
             display: flex;
-            flex-direction: column;
             margin-top: 5px;
         }
-    
-        .radio-option {
+
+        .icon-btn {
+            flex: 1;
+            padding: 10px 12px; /* Unified padding */
+            font-size: 14px;
+            border: 1px solid #ccd6dd;
+            background-color: #fff;
+            color: #34495e;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            height: 40px; /* Unified height */
+        }
+
+        .icon-btn:first-child {
+            border-right: none;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .icon-btn:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .icon-btn.active {
+            background-color: #4CAF50;
+            color: #fff;
+            border-color: #4CAF50;
+        }
+
+        .icon-btn:hover {
+            background-color: #e6e6e6;
+        }
+
+        /* Sliders */
+        .slider-container {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-top: -2px;
         }
-    
-        .radio-option input {
-            margin-right: 8px; /* Adjusted margin */
-        }
-    
-        .radio-option label {
-            font-size: 14px;
-            color: #34495e;
-            font-weight: normal; /* Set to normal */
-        }
-    
-        /* Sliders */
+
         .slider {
             -webkit-appearance: none;
             width: 100%;
@@ -233,9 +226,9 @@
             background: #ddd;
             outline: none;
             border-radius: 5px;
-            margin-top: 8px; /* Adjusted margin-top */
+            margin-top: 8px;
         }
-    
+
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -246,11 +239,11 @@
             border-radius: 50%;
             transition: background-color 0.3s;
         }
-    
+
         .slider::-webkit-slider-thumb:hover {
             background-color: #45a049;
         }
-    
+
         .slider::-moz-range-thumb {
             width: 16px;
             height: 16px;
@@ -259,25 +252,17 @@
             border-radius: 50%;
             transition: background-color 0.3s;
         }
-    
+
         .slider::-moz-range-thumb:hover {
             background-color: #45a049;
         }
-    
-        /* Aligning Sliders and Values */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            margin-top: -2px; /* Adjusted to reduce gap */
-        }
-    
+
         .slider-value {
-            margin-left: 8px; /* Adjusted margin */
+            margin-left: 8px;
             font-size: 14px;
-            font-weight: normal; /* Set to normal */
             color: #2c3e50;
         }
-    
+
         /* Results */
         .results {
             margin-top: 10px;
@@ -289,133 +274,38 @@
             box-sizing: border-box;
             border: 1px solid #e0e0e0;
         }
-    
+
         .results h2 {
-            font-size: 1.6em; /* Slightly reduced font size */
-            margin-bottom: 15px; /* Reduced margin-bottom */
+            font-size: 1.6em;
+            margin-bottom: 15px;
             color: #2c3e50;
             font-weight: bold;
         }
-    
+
         .result-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px; /* Reduced margin */
-            padding: 8px 0; /* Adjusted padding */
+            margin-bottom: 12px;
+            padding: 8px 0;
             border-bottom: 1px solid #e0e4e8;
             line-height: 1.2;
         }
-    
-        .result-item:last-child {
-            border-bottom: none;
-        }
-    
+
         .result-label {
             font-weight: bold;
             color: #34495e;
         }
-    
+
         .result-value {
             font-size: 1em;
             color: #000;
             font-weight: bold;
         }
-    
+
         .results-icon {
             margin-right: 8px;
             color: #4CAF50;
         }
-    
-        .modebar {
-            position: absolute !important;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1;
-        }
-    
-        #totalPortfolioChart {
-            position: relative;
-            height: 600px;
-        }
-    
-        canvas {
-            width: auto;
-            height: auto;
-            max-height: 800px;
-        }
-
-        .icon-toggle {
-            display: flex;
-            margin-top: 5px;
-        }
-
-        .icon-btn {
-            flex: 1;
-            padding: 8px;
-            font-size: 16px;
-            border: 1px solid #ccd6dd;
-            background-color: #fff;
-            color: #34495e;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .icon-btn:first-child {
-            border-right: none;
-            border-radius: 5px 0 0 5px;
-        }
-
-        .icon-btn:last-child {
-            border-radius: 0 5px 5px 0;
-        }
-
-        .icon-btn.active {
-            background-color: #4CAF50;
-            color: #fff;
-            border-color: #4CAF50;
-        }
-
-        .icon-btn:hover {
-            background-color: #e6e6e6;
-        }
-
-        /* Icon Toggle */
-        .icon-toggle {
-            display: flex;
-            margin-top: 5px;
-        }
-
-        .icon-btn {
-            flex: 1;
-            padding: 8px;
-            font-size: 14px;
-            border: 1px solid #ccd6dd;
-            background-color: #fff;
-            color: #34495e;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .icon-btn:first-child {
-            border-right: none;
-            border-radius: 5px 0 0 5px;
-        }
-
-        .icon-btn:last-child {
-            border-radius: 0 5px 5px 0;
-        }
-
-        .icon-btn.active {
-            background-color: #4CAF50;
-            color: #fff;
-            border-color: #4CAF50;
-        }
-
-        .icon-btn:hover {
-            background-color: #e6e6e6;
-        }
-
     </style>
 
     <!-- Body Content -->
@@ -464,10 +354,10 @@
                 <div class="input-group">
                     <label>Allow Negative Balance:</label>
                     <div class="icon-toggle">
-                        <button type="button" id="negativeBalanceAllow" class="icon-btn active">
+                        <button type="button" id="negativeBalanceAllow" class="icon-btn">
                             <i class="fas fa-check"></i>
                         </button>
-                        <button type="button" id="negativeBalanceDisallow" class="icon-btn">
+                        <button type="button" id="negativeBalanceDisallow" class="icon-btn active">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -635,7 +525,7 @@
             dateRangeDropdown.addEventListener('change', () => {
                 calculateResults();
             });
-
+            
             // Event listener for "Allow Negative Balance" buttons
             const negativeBalanceAllowBtn = document.getElementById('negativeBalanceAllow');
             const negativeBalanceDisallowBtn = document.getElementById('negativeBalanceDisallow');
