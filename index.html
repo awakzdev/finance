@@ -860,17 +860,7 @@
 
                 // Calculate drop from current peak
                 const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
-                
-                if (selectedModel === 'modelA') {
-                    // For Model A, calculate the drop from the highest peak instead of last purchase
-                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
-                } else if (selectedModel === 'modelB') {
-                    // Model B: The logic remains unchanged
-                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
-                }
-
-                // Debugging logs for drop and price information
-                // console.log(`Date: ${data.date}, Model: ${selectedModel}, Current Peak: ${currentPeak}, Price: ${price}, Drop from Current Peak: ${dropFromCurrentPeak}`);
+                dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
 
                 // **Calculate portfolio values before buy/sell logic**
                 activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
@@ -894,35 +884,29 @@
                             buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount);
                         }
 
+                        // **Calculate drop from the highest peak using the buy price** (Used in conjuction with modelA)
+                        dropFromHighestPeak = ((highestPeak - buy_price) / highestPeak) * 100;
                         // Determine marker properties based on the cumulative drop percentage
                         let markerProperties = getMarkerProperties('buy', cumulativeDropPercentage);
-
-                        sharesToBuy = initialBuyAmount / buy_price; // Use initialBuyAmount for purchase size
+                         // Use initialBuyAmount for purchase size
+                        sharesToBuy = initialBuyAmount / buy_price;
 
                         // **Additional check: Ensure the low price of the day is below or equal to the buy price**
                         if (data.lowPrice < buy_price && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
-
                         // Check if there is enough cash to buy the shares
                             cash -= sharesToBuy * buy_price;
                             // Store the color with the investment
                             activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
-                            action = 'Buy';
-                            sharesBought += sharesToBuy; // Increment if multiple buys are made
+                             // Increment if multiple buys are made
+                            sharesBought += sharesToBuy;
                             activeCashInvested += sharesToBuy * buy_price;
-                            purchaseOnDayCount++; // increment purchase count on a single day
-
-                            // // Offset by fractional days (e.g., divide the day into 10 parts)
-                            // // Is used to create a separation on days where multiple stocks were purchased/sold
-                            // const offsetMinutes = purchaseOnDayCount * 5;
-                            // // Create a new date with the offset using UTC methods
-                            // const offsetDate = new Date(dataDate.getTime() + offsetMinutes * 60000);
-                            const yOffset = purchaseOnDayCount * 100; // Adjust the multiplier as needed
-
+                             // increment purchase count on a single day
+                            purchaseOnDayCount++;
                             // Append the buy price to the log string
                             buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
-
+                            action = 'Buy';
                             didBuy = true;
-
+                            
                             // Update last buy price for Model A
                             if (selectedModel === 'modelA') {
                                 lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
@@ -952,7 +936,7 @@
                                             width: 1
                                         }
                                     },
-                                    hovertext: `Buy (Model A): ${data.date}, Drop from Highest Peak: ${dropFromHighestPeak.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                    hovertext: `Buy (Model A): ${data.date}, Drop from Highest Peak: ${dropFromHighestPeak.toFixed(6)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
                                 });
                             } else if (selectedModel === 'modelB') {
                                 // For Model B: Display drop percentage as usual
