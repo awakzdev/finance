@@ -1124,7 +1124,7 @@
         }
         
         function getMarkerProperties(action, threshold) {
-            // Define colors for different thresholds
+            // Define colors for specific thresholds
             const colorsByThreshold = {
                 '5%': 'green',
                 '10%': 'cyan',
@@ -1144,11 +1144,14 @@
                 '80%': 'navy'
             };
 
-            // Convert threshold to a string key (e.g., '10%')
-            const key = `${Math.round(threshold)}%`;
+            // Define a function to generate colors based on the threshold
+            function generateColor(threshold) {
+                const hue = Math.round((threshold / 20) * 240); // Generates a color based on the threshold
+                return `hsl(${hue}, 100%, 50%)`; // Return an HSL color
+            }
 
-            // Get the color for the threshold, default to 'blue' if not defined
-            const color = colorsByThreshold[key] || 'blue';
+            // Generate a color dynamically if the specific threshold isn't in the map
+            const color = colorsByThreshold[`${Math.round(threshold)}%`] || generateColor(threshold);
 
             // Return the marker properties with matching colors for buy and sell
             return {
