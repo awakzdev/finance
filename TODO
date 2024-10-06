@@ -1,1 +1,5 @@
-- Fix the A model buy markers not showing the correct percentage from the highest peak
+# - Add QLD Yield the downloadCSV function. The formula should be (Close Price / Open Price[0] - 1)
+- Add a button for the QLD Yield on the result tab
+- Add the QLD Yield to the graph
+- Check why module A didn't buy between the dates of Jan 2023 to July 2023
+

@@ -418,8 +418,8 @@
                     <span class="result-value"><span id="stocksLeft">Calculating...</span> ($<span id="stocksValue">Calculating...</span>)</span>
                 </div>
                 <div class="result-item">
-                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> QLD Yield (%):</span>
-                    <span class="result-value"><span id="qldYield">Calculating...</span>%</span>
+                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> Model Yield (%):</span>
+                    <span class="result-value"><span id="modelYield">Calculating...</span>%</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-percentage results-icon"></i> NDX Yield (%):</span>
@@ -448,6 +448,7 @@
         let dropFromCurrentPeak = 0;
         let qldCumulativeYields = [];
         let ndxCumulativeYields = [];
+        let qldYieldValues = [];
 
         const totalInvestmentSlider = document.getElementById('totalInvestment');
         const splitSlider = document.getElementById('split');
@@ -723,23 +724,19 @@
             calculateResults();
         }
 
-
         function calculateResults() {
-            // console.log("Calculating portfolio results...");
-
             const buyPoints = [];
             const sellPoints = [];
+
             const totalCashValues = []; // Array to store total cash values
-            // Initialize counters for buys and sells per date
-            const buyCountsPerDate = {};
+            const buyCountsPerDate = {}; // Initialize counters for buys and sells per date
             const sellCountsPerDate = {};
             // Define the offset in milliseconds (e.g., 1 minute)
             const OFFSET_INCREMENT = 500 * 60 * 1000; // 1 minute in milliseconds
             // Get the selected start and closing dates from the dropdowns
             const selectedStartDate = document.getElementById('dateRange').value;
             const selectedClosingDate = document.getElementById('closingDate').value;
-            // Convert the selected dates to Date objects for comparison
-            const startDateObj = parseDate(selectedStartDate);
+            const startDateObj = parseDate(selectedStartDate); // Convert the selected dates to Date objects for comparison
             const endDateObj = parseDate(selectedClosingDate);
 
             console.log("Selected start date:", startDateObj);
@@ -807,6 +804,14 @@
                 return {
                     x: data.dateObj,
                     y: ndxPassiveShares * data.price
+                };
+            });
+
+            let qldPassiveShares = totalPortfolioValue / filteredStockData[0].openPrice;
+            let qldYieldValues = filteredStockData.map(data => {
+                return {
+                    x: data.dateObj,
+                    y: qldPassiveShares * data.price
                 };
             });
 
@@ -988,10 +993,6 @@
                         // Align Sell points with active portfolio value
                         activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
 
-                        // Calculate offset in minutes for sells - used in conjunction with multiple sells in a single day
-                        // Creates a slight seperation between the two sell points incase multiple transactions happened on one day
-                        // const sellOffsetMinutes = sellOnDayCount * 5;
-
                         // Increment sell count
                         const dateKey = dataDate.toISOString().split('T')[0];
                         sellCountsPerDate[dateKey] = (sellCountsPerDate[dateKey] || 0) + 1;
@@ -1026,8 +1027,9 @@
                 const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item])); // converting arrays to maps for O(1) access times
                 const ndxData = ndxDataMap.get(data.date);
                 const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A'; // Yield calculation for downloadCSV function
-                const qldYield = ((totalValue  / totalPortfolioValue) - 1) * 100; // Corrected Yield Calculation
+                const modelYield = ((totalValue  / totalPortfolioValue) - 1) * 100; // Corrected Yield Calculation
                 const ndxPassiveValue = ndxPortfolioValues[index].y;
+                const qldYield = ((data.price / filteredStockData[0].openPrice) - 1) * 100;
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
                 totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
@@ -1061,6 +1063,7 @@
                     ndxClosePrice: ndxData ? ndxData.price : 'N/A',
                     ndxPassive: ndxPassiveValue.toFixed(2),
                     ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A',
+                    modelYield: modelYield.toFixed(2),
                     qldYield: qldYield.toFixed(2),
                 });
             });
@@ -1076,11 +1079,11 @@
 
             // Calculate yields for result tab (Final values)
             const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
-            const qldYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
+            const modelYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
             const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
 
             // Display yields in results
-            document.getElementById('qldYield').textContent = qldYield.toFixed(2);
+            document.getElementById('modelYield').textContent = modelYield.toFixed(2);
             document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
 
             // Daily cumulative yield calculation for both QLD and NDX
@@ -1098,7 +1101,7 @@
                 };
             });
 
-            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues); // qldCumulativeYields, ndxCumulativeYields);
+            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues); // qldCumulativeYields, ndxCumulativeYields);
             window.transactionLog = transactionLog;
         }
 
@@ -1227,13 +1230,14 @@
         }
 
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, buyPoints, sellPoints, totalCashValues) {
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues) {
             qldCumulativeYields = qldCumulativeYields || [];
             ndxCumulativeYields = ndxCumulativeYields || [];
 
             const allXValues = [
                 ...totalPortfolioValues.map(data => data.x),
                 ...ndxPortfolioValues.map(data => data.x),
+                ...qldYieldValues.map(data => data.x),
                 ...buyPoints.map(point => point.x),
                 ...sellPoints.map(point => point.x),
                 ...totalCashValues.map(data => data.x),
@@ -1258,28 +1262,21 @@
                     name: 'NDX Passive Investment',
                     mode: 'lines',
                 },
-                // {
-                //     x: qldCumulativeYields.map(data => data.x),
-                //     y: qldCumulativeYields.map(data => data.y),
-                //     name: 'QLD Cumulative Yield (%)',
-                //     mode: 'lines',
-                //     hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
-                //     line: { dash: 'dot', color: 'rgba(0, 128, 0, 1)' } // Green dashed line
-                // },
-                // {
-                //     x: ndxCumulativeYields.map(data => data.x),
-                //     y: ndxCumulativeYields.map(data => data.y),
-                //     name: 'NDX Cumulative Yield (%)',
-                //     mode: 'lines',
-                //     hovertemplate: 'Date: %{x}<br>Yield: %{y:.2f}%',
-                //     line: { dash: 'dot', color: 'rgba(0, 0, 255, 1)' } // Blue dashed line
-                // },
                 {
                     x: totalCashValues.map(data => data.x),
                     y: totalCashValues.map(data => data.y),
                     name: 'Total Cash',
                     mode: 'lines',
                     line: { dash: 'dot', color: 'rgba(255, 165, 0, 1)' } // Dashed orange line for cash
+                },
+                // QLD Yield
+                {
+                    x: qldYieldValues.map(data => data.x),
+                    y: qldYieldValues.map(data => data.y),
+                    name: 'QLD Yield (%)',
+                    mode: 'lines',
+                    line: { dash: 'dot', color: 'rgba(0, 128, 128, 1)' }, // Dashed teal line for QLD Yield
+                    hovertemplate: 'Date: %{x}<br>QLD Yield: %{y:.2f}%',
                 },
                 // Buy Points
                 {
@@ -1347,7 +1344,7 @@
                 'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
                 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
                 'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
-                'NDX Passive Investment', 'NDX Yield', 'QLD Passive Yield'
+                'NDX Passive Investment', 'NDX Yield', 'Model Yield', 'QLD Yield'
             ];
             csvRows.push(headers.join(','));
 
@@ -1378,8 +1375,8 @@
                     log.ndxClosePrice,
                     log.ndxPassive,
                     log.ndxYield,
+                    log.modelYield,
                     log.qldYield,
-
                 ];
                 csvRows.push(row.join(','));
             });
