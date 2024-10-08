@@ -883,7 +883,7 @@
                         // Calculate the new buy price based on the selected model
                         if (selectedModel === 'modelA') {
                             // Model A: Buy price based on a drop from the last purchase
-                            buy_price = fullySold ? currentPeak * (1 - buyThreshold) : lastBuyPrice * (1 - buyThreshold);
+                            buy_price = fullySold ? currentPeak * (1 - buyThreshold) : activeInvestments[activeInvestments.length-1]['buyPrice']* (1 - buyThreshold)
                         } else if (selectedModel === 'modelB') {
                             // Model B: Buy price based on the highest peak
                             buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount);
@@ -911,11 +911,6 @@
                             buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
                             action = 'Buy';
                             didBuy = true;
-                            
-                            // Update last buy price for Model A
-                            if (selectedModel === 'modelA') {
-                                lastBuyPrice = buy_price; // Correctly update `lastBuyPrice` for subsequent purchases
-                            }
 
                             // Update currentPeak for subsequent buys
                             currentPeak = buy_price;
