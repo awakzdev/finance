@@ -1025,6 +1025,10 @@
                 const modelYield = ((totalValue  / totalPortfolioValue) - 1) * 100; // Corrected Yield Calculation
                 const ndxPassiveValue = ndxPortfolioValues[index].y;
                 const qldYield = ((data.price / filteredStockData[0].openPrice) - 1) * 100;
+                const totalInvestments = data.price * (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares)
+                const leveragedHoldings = totalInvestments * 2
+                const LeveragedHoldingPercentage = ((leveragedHoldings.toFixed(2) / totalValue) - 1) * 100
+                const cashRatio = totalPortfolioValue / totalValue
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
                 totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
@@ -1045,6 +1049,10 @@
                     stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
                     passiveShares: passiveShares,
                     totalShares: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares,
+                    totalInvestments: totalInvestments.toFixed(2),
+                    leveragedHolding: leveragedHoldings.toFixed(2),
+                    LeveragedHoldingPercentage: LeveragedHoldingPercentage.toFixed(2),
+                    cashRatio: cashRatio,
                     highestPeak: highestPeak,
                     downPercentageFromPeak: dropFromHighestPeak.toFixed(2),
                     passiveInvestmentPrice: passiveInvestmentPrice,
@@ -1337,8 +1345,8 @@
             const csvRows = [];
             const headers = [
                 'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
-                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Highest Peak',
-                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
+                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Total Investment', 'Leveraged Holding', 'Leveraged Holding Percentage', 'Cash Ratio',
+                'Highest Peak', 'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
                 'NDX Passive Investment', 'NDX Yield', 'Model Yield', 'QLD Yield'
             ];
             csvRows.push(headers.join(','));
@@ -1359,6 +1367,10 @@
                     log.stocksHeld,
                     log.passiveShares,
                     log.totalShares,
+                    log.totalInvestments,
+                    log.leveragedHolding,
+                    log.LeveragedHoldingPercentage,
+                    log.cashRatio,
                     log.highestPeak,
                     log.passiveProfit,
                     log.activeProfit,
