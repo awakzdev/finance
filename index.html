@@ -923,14 +923,27 @@
             let fullySold = true; // Flag to indicate if all stocks are sold
             let bought = false;
 
+            // // Override passive investment variables for Model C
+            // if (selectedModel === 'modelC') {
+            //     initialPassiveInvestment = 0; // No passive investment
+            //     passiveShares = 0; // No passive shares
+            //     passiveInvestmentPrice = 0; // No passive investment price
+            // } else {
+            //     // For Models A and B
+            //     passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+            //     passiveInvestmentPrice = filteredStockData[0].openPrice;
+            // }
             // Read Model C parameters and convert to decimal fractions
+            
             let modelCBuyPercentage = parseFloat(document.getElementById('modelCBuyPercentage').value) / 100;
             let modelCSellFromBuy = parseFloat(document.getElementById('modelCSellFromBuy').value) / 100;
 
             // Adjust dynamic parameters based on selected model
             if (selectedModel === 'modelC') {
+                cashPercent = 1; // Set to 100% cash for Model C
                 buyAmountPercent = modelCBuyPercentage;
                 sellThreshold = modelCSellFromBuy;
+                buyThreshold = 0.05; // Set to 5% for Model C
             }
 
             // Calculate NDX passive investment
