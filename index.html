@@ -14,323 +14,381 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            direction: ltr;
-            text-align: left;
-        }
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        direction: ltr;
+        text-align: left;
+    }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-bottom: 20px;
-            text-align: left;
-        }
+    /* Header */
+    .header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 20px;
+        text-align: left;
+    }
 
-        .header h1 {
-            margin: 0;
-            font-size: 1.6em;
-            color: #2c3e50;
-            font-weight: bold;
-        }
+    .header h1 {
+        margin: 0;
+        font-size: 1.6em;
+        color: #2c3e50;
+        font-weight: bold;
+    }
 
-        button {
-            margin-left: auto;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+    button {
+        margin-left: auto;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
 
-        button:hover {
-            background-color: #45a049;
-        }
+    button:hover {
+        background-color: #45a049;
+    }
 
-        /* Main Content Area */
-        .main-content {
-            display: flex;
-            justify-content: space-between;
-            flex-direction: row;
-            text-align: left;
-            flex-wrap: nowrap;
-        }
+    /* Main Content Area */
+    .main-content {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: row;
+        text-align: left;
+        flex-wrap: nowrap;
+    }
 
-        .left-section {
-            flex: 0 1 300px;
-            min-width: 280px;
-            margin-right: 20px;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-        }
+    .left-section {
+        flex: 0 1 300px;
+        min-width: 280px;
+        margin-right: 20px;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .right-section {
-            flex: 1;
-            padding-left: 20px;
-            text-align: left;
-        }
+    .right-section {
+        flex: 1;
+        padding-left: 20px;
+        text-align: left;
+    }
 
-        /* Controls Section */
-        .controls-section {
-            padding-bottom: 10px;
-        }
+    /* Controls Section */
+    .controls-section {
+        padding-bottom: 10px;
+    }
 
-        /* Section Headings */
-        .controls-section h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            color: #2c3e50;
-            border-bottom: 1px solid #e0e4e8;
-            padding-bottom: 5px;
-            font-weight: bold;
-        }
+    /* Section Headings */
+    .controls-section h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+        color: #2c3e50;
+        border-bottom: 1px solid #e0e4e8;
+        padding-bottom: 5px;
+        font-weight: bold;
+    }
 
-        /* Input Groups */
-        .input-group {
-            margin-bottom: 15px;
-        }
+    /* Input Groups */
+    .input-group {
+        margin-bottom: 15px;
+    }
 
-        /* Labels */
-        .input-group label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #34495e;
-            display: block;
-        }
+    /* Labels */
+    .input-group label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #34495e;
+        display: block;
+    }
 
-        /* Dropdowns */
-        .dropdown, .input-box {
-            width: 100%;
-            padding: 5px 10px; /* Adjusted padding */
-            font-size: 17px !important;
-            line-height: 1.75; /* Increased line-height */
-            min-height: 36px; /* Set a minimum height */
-            border: 1px solid #ccd6dd;
-            border-radius: 5px;
-            background-color: #fff;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
+    /* Dropdowns */
+    .dropdown, .input-box {
+        width: 100%;
+        padding: 5px 10px; /* Adjusted padding */
+        font-size: 17px !important;
+        line-height: 1.75; /* Increased line-height */
+        min-height: 36px; /* Set a minimum height */
+        border: 1px solid #ccd6dd;
+        border-radius: 5px;
+        background-color: #fff;
+        transition: border-color 0.3s;
+        box-sizing: border-box;
+    }
 
-        .dropdown:focus, .input-box:focus {
-            border-color: #4CAF50;
-            outline: none;
-        }
+    .dropdown:focus, .input-box:focus {
+        border-color: #4CAF50;
+        outline: none;
+    }
 
-        /* Toggle Switch */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
 
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
 
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 20px;
-        }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 20px;
+    }
 
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
 
-        input:checked + .toggle-slider {
-            background-color: #4CAF50;
-        }
+    input:checked + .toggle-slider {
+        background-color: #4CAF50;
+    }
 
-        input:checked + .toggle-slider:before {
-            transform: translateX(20px);
-        }
+    input:checked + .toggle-slider:before {
+        transform: translateX(20px);
+    }
 
-        /* Icon Buttons for Toggle Switches and Model Selection */
-        .icon-toggle {
-            display: flex;
-            margin-top: 5px;
-        }
+    /* Icon Buttons for Toggle Switches and Model Selection */
+    .icon-toggle {
+        display: flex;
+        margin-top: 5px;
+    }
 
-        .icon-btn {
-            flex: 1;
-            padding: 10px 12px; /* Unified padding */
-            font-size: 14px;
-            border: 1px solid #ccd6dd;
-            background-color: #fff;
-            color: #34495e;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-            height: 40px; /* Unified height */
-        }
+    .icon-btn {
+        flex: 1;
+        padding: 10px 12px; /* Unified padding */
+        font-size: 14px;
+        border: 1px solid #ccd6dd;
+        background-color: #fff;
+        color: #34495e;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+        height: 40px; /* Unified height */
+    }
 
-        .icon-btn:first-child {
-            border-right: none;
-            border-radius: 5px 0 0 5px;
-        }
+    .icon-btn:first-child {
+        border-right: none;
+        border-radius: 5px 0 0 5px;
+    }
 
-        .icon-btn:last-child {
-            border-radius: 0 5px 5px 0;
-        }
+    .icon-btn:last-child {
+        border-radius: 0 5px 5px 0;
+    }
 
-        .icon-btn.active {
-            background-color: #4CAF50;
-            color: #fff;
-            border-color: #4CAF50;
-        }
+    .icon-btn.active {
+        background-color: #4CAF50;
+        color: #fff;
+        border-color: #4CAF50;
+    }
 
-        .icon-btn:hover {
-            background-color: #e6e6e6;
-        }
+    .icon-btn:hover {
+        background-color: #e6e6e6;
+    }
 
-        /* Sliders */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            margin-top: -2px;
-        }
+    /* Container for the slider and its value */
+    .slider-container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-bottom: 10px !important; /* Add spacing between sliders */
+    }
 
-        .slider {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            background: #ddd;
-            outline: none;
-            border-radius: 5px;
-            margin-top: 8px;
-        }
+    .slider-container input[type="range"] {
+        flex-grow: 1 !important; /* Make the slider take up most of the space */
+        margin-right: 10px !important; /* Add some spacing between slider and value */
+    }
 
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #4CAF50;
-            cursor: pointer;
-            border-radius: 50%;
-            transition: background-color 0.3s;
-        }
+    .slider-container .slider-value {
+        flex-shrink: 0 !important; /* Ensure the value stays at a fixed size */
+        white-space: nowrap !important; /* Prevent the value from wrapping to a new line */
+    }
 
-        .slider::-webkit-slider-thumb:hover {
-            background-color: #45a049;
-        }
+    /* Ensure input-group elements stack properly */
+    .input-group {
+        margin-bottom: 20px !important;
+    }
 
-        .slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            background: #4CAF50;
-            cursor: pointer;
-            border-radius: 50%;
-            transition: background-color 0.3s;
-        }
+    /* Optional: Style for slider labels */
+    .slider-label {
+        display: block !important;
+        font-weight: bold !important;
+        margin-bottom: 5px !important;
+    }
 
-        .slider::-moz-range-thumb:hover {
-            background-color: #45a049;
-        }
+    .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 6px;
+        background: #ddd;
+        outline: none;
+        border-radius: 5px;
+        margin-top: 8px;
+    }
 
-        .slider-value {
-            margin-left: 8px;
-            font-size: 14px;
-            color: #2c3e50;
-        }
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #4CAF50;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: background-color 0.3s;
+    }
 
-        /* Results */
-        .results {
-            margin-top: 10px;
-            padding: 20px;
-            background: linear-gradient(145deg, #f0f4f8, #ffffff);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
-            text-align: left;
-            box-sizing: border-box;
-            border: 1px solid #e0e0e0;
-        }
+    .slider::-webkit-slider-thumb:hover {
+        background-color: #45a049;
+    }
 
-        .results h2 {
-            font-size: 1.6em;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            font-weight: bold;
-        }
+    .slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #4CAF50;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: background-color 0.3s;
+    }
 
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            padding: 8px 0;
-            border-bottom: 1px solid #e0e4e8;
-            line-height: 1.2;
-        }
+    .slider::-moz-range-thumb:hover {
+        background-color: #45a049;
+    }
 
-        .result-label {
-            font-weight: bold;
-            color: #34495e;
-        }
+    .slider-value {
+        margin-left: 8px;
+        font-size: 14px;
+        color: #2c3e50;
+    }
 
-        .result-value {
-            font-size: 1em;
-            color: #000;
-            font-weight: bold;
-        }
+    /* Results */
+    .results {
+        margin-top: 10px;
+        padding: 20px;
+        background: linear-gradient(145deg, #f0f4f8, #ffffff);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.05);
+        text-align: left;
+        box-sizing: border-box;
+        border: 1px solid #e0e0e0;
+    }
 
-        .results-icon {
-            margin-right: 8px;
-            color: #4CAF50;
-        }
+    .results h2 {
+        font-size: 1.6em;
+        margin-bottom: 15px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
 
-        .bold-label {
-            font-weight: bold;
-        }
-        
-        .custom-dropdown {
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2334495e"><polygon points="0,0 16,0 8,8"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 12px;
-            padding-right: 30px;
-        }
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e4e8;
+        line-height: 1.2;
+    }
 
-        .custom-dropdown option {
-            padding: 10px;
-        }
+    .result-label {
+        font-weight: bold;
+        color: #34495e;
+    }
+
+    .result-value {
+        font-size: 1em;
+        color: #000;
+        font-weight: bold;
+    }
+
+    .results-icon {
+        margin-right: 8px;
+        color: #4CAF50;
+    }
+
+    .bold-label {
+        font-weight: bold;
+    }
+    
+    .custom-dropdown {
+        appearance: none;
+        background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2334495e"><polygon points="0,0 16,0 8,8"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px;
+        padding-right: 30px;
+    }
+
+    .custom-dropdown option {
+        padding: 10px;
+    }
+
+    .strategy-box {
+        display: flex !important;
+        align-items: center !important;  /* Vertical centering */
+        justify-content: center !important;  /* Horizontal centering */
+        text-align: center !important;  /* Center the text */
+        padding: 20px !important;  /* Add padding around the text */
+        box-sizing: border-box !important;  /* Ensure padding is included in the box size */
+        height: 100% !important;  /* Make sure the box takes up full height */
+        width: 100% !important;  /* Ensure the box uses full width */
+        background-color: #f9f9f9 !important;  /* Light background color */
+        border: 1px solid #ccc !important;  /* Border with light gray color */
+        border-radius: 8px !important;  /* Rounded corners */
+        overflow: hidden !important;  /* Prevent text from spilling outside the box */
+        white-space: normal !important;  /* Allow text to wrap */
+        word-wrap: break-word !important;  /* Break long words if necessary */
+    }
+
+    .strategy-box p {
+        margin: 0 !important;  /* Remove default margins */
+        line-height: 1.5 !important;  /* Improve readability */
+        font-size: 16px !important;  /* Adjust font size */
+        width: 100% !important;  /* Ensure text takes full width */
+        vertical-align: middle !important;  /* Align text vertically */
+    }
+
+    /* Reduce gap between the "Model" label and the selection buttons/dropdown */
+    .model-label {
+        margin-right: 5px !important;  /* Adjust as needed to reduce the gap */
+        font-weight: bold !important;  /* Ensure the label is consistent */
+    }
+
+    .icon-btn {
+        padding: 8px 10px !important;  /* Adjust padding to make buttons smaller */
+        font-size: 14px !important;  /* Reduce font size if necessary */
+    }
     </style>
-
     <!-- Body Content -->
     <div class="header">
         <h1>Investment Strategy Comparison</h1>
         <button id="downloadCSV" class="download-btn" onclick="downloadCSV()">Download CSV</button>
     </div>
-    
+
     <!-- Main Content Area -->
     <div class="main-content">
         <!-- Left Section: Controls and Results -->
@@ -338,7 +396,6 @@
             <!-- Controls Section -->
             <div class="controls-section">
                 <!-- Date Selection -->
-                <!-- <h3>Date Selection</h3> -->
                 <div class="input-group">
                     <label for="dateRange">Select Opening Range:</label>
                     <select id="dateRange" class="dropdown custom-dropdown"></select>
@@ -347,27 +404,33 @@
                     <label for="closingDate">Select Closing Date:</label>
                     <select id="closingDate" class="dropdown custom-dropdown"></select>
                 </div>
-    
+
                 <!-- Investment Settings -->
-                <!-- <h3>Investment Settings</h3> -->
                 <div class="input-group">
                     <label for="totalInvestment">Total Investment ($):</label>
                     <input type="number" id="totalInvestment" class="input-box" value="100000" min="0" step="1000">
                 </div>
-    
+
                 <!-- Strategy Options -->
                 <label class="bold-label">Select Strategy:</label>
                 <div class="input-group">
                     <div class="icon-toggle">
-                        <button type="button" id="modelAIcon" class="icon-btn">
+                        <button type="button" id="modelAIcon" class="icon-btn" style="width: 120px; height: 80px; text-align: center;">
                             <i class="fas fa-chart-line"></i> Model A
                         </button>
-                        <button type="button" id="modelBIcon" class="icon-btn active">
+                        <button type="button" id="modelBIcon" class="icon-btn active" style="width: 120px; height: 80px; text-align: center;">
                             <i class="fas fa-chart-bar"></i> Model B
                         </button>
+                        <button type="button" id="modelCIcon" class="icon-btn" style="width: 120px; height: 80px; text-align: center;">
+                            <i class="fas fa-chart-pie"></i> Model C
+                        </button>
+                        <button type="button" id="modelDIcon" class="icon-btn" style="width: 120px; height: 80px; text-align: center;">
+                            <i class="fas fa-chart-area"></i> Model D
+                        </button>
                     </div>
-                </div>
+                </div>   
 
+                <!-- Allow Negative Balance -->
                 <div class="input-group">
                     <label>Allow Negative Balance:</label>
                     <div class="icon-toggle">
@@ -379,38 +442,53 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Sliders -->
-                <div class="input-group">
-                    <label for="split">Investment vs. Cash Split (%):</label>
-                    <div class="slider-container">
-                        <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
-                        <span class="slider-value" id="splitValue">50%</span>
+                <div id="defaultSliders">
+                    <div class="input-group">
+                        <label for="split" class="slider-label">Investment vs. Cash Split (%):</label>
+                        <div class="slider-container">
+                            <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
+                            <span class="slider-value" id="splitValue">50%</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="buyThreshold" class="slider-label">Buy Threshold (% drop):</label>
+                        <div class="slider-container">
+                            <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
+                            <span class="slider-value" id="buyThresholdValue">5%</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="sellThreshold" class="slider-label">Sell Threshold (% increase):</label>
+                        <div class="slider-container">
+                            <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
+                            <span class="slider-value" id="sellThresholdValue">10%</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="buyAmountPercent" class="slider-label">Buy Percentage from Cash (%):</label>
+                        <div class="slider-container">
+                            <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
+                            <span class="slider-value" id="buyAmountPercentValue">10%</span>
+                        </div>
                     </div>
                 </div>
-                <div class="input-group">
-                    <label for="buyThreshold">Buy Threshold (% drop):</label>
-                    <div class="slider-container">
-                        <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
-                        <span class="slider-value" id="buyThresholdValue">5%</span>
+
+                <!-- Model C Parameters (if needed) -->
+                <div id="modelCParameters" style="display: none;">
+                    <h3>Model C Customization</h3>
+                    <div class="input-group">
+                        <label for="modelCBuyPercentage">Buy Percentage from Cash (%):</label>
+                        <input type="number" id="modelCBuyPercentage" class="input-box" value="10" min="5" max="95" step="5">
                     </div>
-                </div>
-                <div class="input-group">
-                    <label for="sellThreshold">Sell Threshold (% increase):</label>
-                    <div class="slider-container">
-                        <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
-                        <span class="slider-value" id="sellThresholdValue">10%</span>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="buyAmountPercent">Buy Percentage from Cash (%):</label>
-                    <div class="slider-container">
-                        <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
-                        <span class="slider-value" id="buyAmountPercentValue">10%</span>
+                    <div class="input-group">
+                        <label for="modelCSellFromBuy">Sell from Buy Price (%):</label>
+                        <input type="number" id="modelCSellFromBuy" class="input-box" value="3" min="1" max="10" step="1">
                     </div>
                 </div>
             </div>
-    
+
             <!-- Results Section -->
             <div class="results">
                 <h2><i class="fas fa-chart-pie results-icon"></i> Results</h2>
@@ -444,13 +522,13 @@
                 </div>
             </div>
         </div>
-    
+
         <!-- Right Section: Graph -->
         <div class="right-section">
             <div id="totalPortfolioChart"></div>
         </div>
     </div>
-     
+    
     <script>
         let stockData = [];
         let ndxStockData = [];
@@ -482,6 +560,8 @@
         const stocksValueDisplay = document.getElementById('stocksValue');
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
         const closingDateDropdown = document.getElementById('closingDate');
+        const modelCBuyPercentageInput = document.getElementById('modelCBuyPercentage');
+        const modelCSellFromBuyInput = document.getElementById('modelCSellFromBuy');
 
         window.onload = function() {
             console.log("Fetching CSV files...");
@@ -520,6 +600,14 @@
                 calculateResults();
             });
 
+            modelCBuyPercentageInput.addEventListener('input', () => {
+                calculateResults();
+            });
+
+            modelCSellFromBuyInput.addEventListener('input', () => {
+                calculateResults();
+            });
+            
             buyThresholdSlider.addEventListener('input', () => {
                 buyThresholdValue.textContent = `${buyThresholdSlider.value}%`;
                 calculateResults();
@@ -573,33 +661,55 @@
             // Event listener for Strategy Icon Buttons
             const modelAIcon = document.getElementById('modelAIcon');
             const modelBIcon = document.getElementById('modelBIcon');
+            const modelCIcon = document.getElementById('modelCIcon');
+            const modelDIcon = document.getElementById('modelDIcon');
 
-            [modelAIcon, modelBIcon].forEach(function(button) {
-                button.addEventListener('click', function() {
-                    // Remove 'active' class from both buttons
-                    modelAIcon.classList.remove('active');
-                    modelBIcon.classList.remove('active');
+            // Function to handle the active class switching and display logic
+            function selectModel(model) {
+                // Remove 'active' class from all buttons
+                document.querySelectorAll('.icon-btn').forEach(function (button) {
+                    button.classList.remove('active');
+                });
 
-                    // Add 'active' class to the clicked button
-                    this.classList.add('active');
+                // Add 'active' class to the selected button
+                document.getElementById(model).classList.add('active');
 
-                    // Update selectedModel based on the clicked button
-                    if (this.id === 'modelAIcon') {
-                        selectedModel = 'modelA';
-                    } else {
-                        selectedModel = 'modelB';
-                    }
+                if (model === 'modelCIcon') {
+                    // Display Model C parameters and hide sliders and their labels
+                    document.getElementById('modelCParameters').style.display = 'block';
+                    document.getElementById('defaultSliders').style.display = 'none';
+                } else {
+                    // Hide Model C parameters and show sliders and their labels
+                    document.getElementById('modelCParameters').style.display = 'none';
+                    document.getElementById('defaultSliders').style.display = 'block';
+                }
 
-                    console.log('Selected strategy:', selectedModel);
+                // Update selectedModel variable based on the clicked model
+                if (model === 'modelAIcon') {
+                    selectedModel = 'modelA';
+                } else if (model === 'modelBIcon') {
+                    selectedModel = 'modelB';
+                } else if (model === 'modelCIcon') {
+                    selectedModel = 'modelC';
+                } else if (model === 'modelDIcon') {
+                    selectedModel = 'modelD';
+                }
 
-                    // Recalculate results
-                    calculateResults();
+                console.log('Selected strategy:', selectedModel);
+
+                // Recalculate results based on the selected model
+                calculateResults();
+            }
+
+            // Add event listeners to strategy buttons
+            [modelAIcon, modelBIcon, modelCIcon, modelDIcon].forEach(function (button) {
+                button.addEventListener('click', function () {
+                    selectModel(this.id);
                 });
             });
-            
-            // Event listener for "Select Strategy"
-            const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
 
+            // Event listener for "Select Strategy" radio buttons (if applicable)
+            const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
             dropModelRadios.forEach(radio => {
                 radio.addEventListener('change', (event) => {
                     selectedModel = event.target.value;
@@ -751,9 +861,11 @@
             const selectedClosingDate = document.getElementById('closingDate').value;
             const startDateObj = parseDate(selectedStartDate); // Convert the selected dates to Date objects for comparison
             const endDateObj = parseDate(selectedClosingDate);
-
-            console.log("Selected start date:", startDateObj);
-            console.log("Selected end date:", endDateObj);
+            // keep track of purchases at each drop level
+            const modelCPurchases = {};
+            
+            // console.log("Selected start date:", startDateObj);
+            // console.log("Selected end date:", endDateObj);
 
             // Filter stock data to include only dates within the selected range
             const filteredStockData = stockData.filter(data => {
@@ -811,6 +923,10 @@
             let fullySold = true; // Flag to indicate if all stocks are sold
             let bought = false;
 
+            // Read Model C parameters and convert to decimal fractions
+            let modelCBuyPercentage = parseFloat(document.getElementById('modelCBuyPercentage').value) / 100;
+            let modelCSellFromBuy = parseFloat(document.getElementById('modelCSellFromBuy').value) / 100;
+
             // Calculate NDX passive investment
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
             let ndxPortfolioValues = filteredNDXStockData.map(data => {
@@ -835,7 +951,6 @@
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
                 const dataDate = data.dateObj;
-
                 let price = data.lowPrice;
                 let action = 'Hold';
                 let sharesBought = 0;
@@ -844,7 +959,6 @@
                 let didSell = false;
                 let dailyBuyShares = 0;
                 let dailyBuyPrices = [];
-
                 fullySold = (activeInvestments.length === 0);
 
                 // Update the highest peak (always check if price exceeds the highestPeak)
@@ -861,19 +975,19 @@
                 let buy_price = null;
                 let sellPrice = null;
                 let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
-
                 let peakToUse = fullySold ? highestPeak : firstPurchasePeak;
 
-                // Adjust `currentPeak` based on the selected model
+                // Adjust currentPeak based on the selected model
                 if (selectedModel === 'modelA') {
                     if (fullySold) {
-                        // If fully sold, reset to the highest peak for the next potential buy
                         currentPeak = highestPeak;
                     }
-                    // No need to set currentPeak otherwise, as it should always use `lastBuyPrice` after the first purchase
                 } else if (selectedModel === 'modelB') {
-                    // Model B: Drop from the highest peak
                     currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
+                } else if (selectedModel === 'modelC') {
+                    buyAmountPercent = modelCBuyPercentage;
+                    sellThreshold = modelCSellFromBuy;
+                    currentPeak = highestPeak;
                 }
 
                 // Calculate drop from current peak
@@ -895,19 +1009,24 @@
 
                         // Calculate the new buy price based on the selected model
                         if (selectedModel === 'modelA') {
-                            // Model A: Buy price based on a drop from the last purchase
-                            buy_price = fullySold ? currentPeak * (1 - buyThreshold) : activeInvestments[activeInvestments.length-1]['buyPrice']* (1 - buyThreshold)
+                            buy_price = fullySold ? currentPeak * (1 - buyThreshold) : activeInvestments[activeInvestments.length - 1]['buyPrice'] * (1 - buyThreshold);
                         } else if (selectedModel === 'modelB') {
-                            // Model B: Buy price based on the highest peak
-                            buy_price = peakToUse - (peakToUse * buyThreshold * currentPurchaseCount);
+                            buy_price = peakToUse - peakToUse * buyThreshold * currentPurchaseCount;
+                        } else if (selectedModel === 'modelC') {
+                            buy_price = currentPeak * (1 - buyAmountPercent);
+                        }
+
+                        // Shares to buy calculation
+                        if (selectedModel === 'modelC') {
+                            sharesToBuy = cash * buyAmountPercent / buy_price;
+                        } else {
+                            sharesToBuy = initialBuyAmount / buy_price;
                         }
 
                         // **Calculate drop from the highest peak using the buy price** (Used in conjuction with modelA)
                         dropFromHighestPeak = ((highestPeak - buy_price) / highestPeak) * 100;
                         // Determine marker properties based on the cumulative drop percentage
                         let markerProperties = getMarkerProperties('buy', cumulativeDropPercentage);
-                         // Use initialBuyAmount for purchase size
-                        sharesToBuy = initialBuyAmount / buy_price;
 
                         // **Additional check: Ensure the low price of the day is below or equal to the buy price**
                         if (data.lowPrice < buy_price && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
@@ -924,7 +1043,6 @@
                             buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
                             action = 'Buy';
                             didBuy = true;
-
                             // Update currentPeak for subsequent buys
                             currentPeak = buy_price;
 
@@ -966,11 +1084,24 @@
                                     },
                                     hovertext: `Buy: ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
                                 });
-                            }
-                        } else {
+                            } else if (selectedModel === 'modelC') {
+                                // For Model B: Display drop percentage as usual
+                                buyPoints.push({
+                                    x: new Date(dataDate.getTime() + xOffset),
+                                    y: totalValue,
+                                    marker: {
+                                        color: markerProperties.color,
+                                        symbol: 'circle',
+                                        size: 8,
+                                        line: {
+                                            width: 1
+                                        }
+                                    },
+                                    hovertext: `Buy (Model C): ${data.date}, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                });
+                            }} else {
                             break; // Break the loop if the low price is not suitable for a buy
                         }
-
                         // Recalculate drop from current peak after the purchase
                         const newDropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
                         if (newDropFromCurrentPeak < buyThreshold * 100) {
@@ -982,9 +1113,15 @@
                 // Sell logic
                 activeInvestments = activeInvestments.map(investment => {
                     // Calculate the exact target sell price (e.g., 10% increase from buy price)
-                    const targetSellPrice = investment.buyPrice * (1 + sellThreshold);
-
-                    // Check if the high price of the day exceeds or equals the target sell price
+                    let targetSellPrice;
+                    // Calculate the exact target sell price based on the selected model
+                    if (selectedModel === 'modelC') {
+                        // Model C's custom sell condition
+                        targetSellPrice = investment.buyPrice * (1 + (modelCSellFromBuy / 100)); // Use custom sell percentage from Model C
+                    } else {
+                        // For other models, use the default sell threshold
+                        targetSellPrice = investment.buyPrice * (1 + sellThreshold);
+                    }
                     if (data.highPrice >= targetSellPrice) {
                         // Sell the shares at the target sell price
                         let saleProceeds = investment.shares * targetSellPrice; // Use targetSellPrice for sale
@@ -995,17 +1132,13 @@
                         didSell = true;
                         sellPrice = targetSellPrice; // Record the target sell price as the sell price
                         sellOnDayCount++; // If multiple sells on the same day, increment the count
-
                         gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
-
                         // Align Sell points with active portfolio value
                         activeInvestmentValue = cash - initialCash + totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-
                         // Increment sell count
                         const dateKey = dataDate.toISOString().split('T')[0];
                         sellCountsPerDate[dateKey] = (sellCountsPerDate[dateKey] || 0) + 1;
                         const sellCount = sellCountsPerDate[dateKey];
-
                         // Calculate xOffset
                         const xOffset = sellCount * OFFSET_INCREMENT;
 
