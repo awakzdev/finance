@@ -310,6 +310,19 @@
         .bold-label {
             font-weight: bold;
         }
+        
+        .custom-dropdown {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2334495e"><polygon points="0,0 16,0 8,8"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            padding-right: 30px;
+        }
+
+        .custom-dropdown option {
+            padding: 10px;
+        }
     </style>
 
     <!-- Body Content -->
@@ -328,11 +341,11 @@
                 <!-- <h3>Date Selection</h3> -->
                 <div class="input-group">
                     <label for="dateRange">Select Opening Range:</label>
-                    <select id="dateRange" class="dropdown"></select>
+                    <select id="dateRange" class="dropdown custom-dropdown"></select>
                 </div>
                 <div class="input-group">
                     <label for="closingDate">Select Closing Date:</label>
-                    <select id="closingDate" class="dropdown"></select>
+                    <select id="closingDate" class="dropdown custom-dropdown"></select>
                 </div>
     
                 <!-- Investment Settings -->
