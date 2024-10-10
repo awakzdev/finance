@@ -596,8 +596,10 @@
             });
 
             splitSlider.addEventListener('input', () => {
-                splitValue.textContent = `${splitSlider.value}%`;
-                calculateResults();
+                if (selectedModel !== 'modelC') {
+                    cashPercent = parseInt(splitSlider.value) / 100;
+                    calculateResults();
+                }
             });
 
             modelCBuyPercentageInput.addEventListener('input', () => {
@@ -899,8 +901,8 @@
             let initialBuyAmount = initialCash * buyAmountPercent; // Fix the initial buy amount per purchase
             let cash = initialCash;
             let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Passive investment
-            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-            let passiveInvestmentPrice = filteredStockData[0].openPrice;
+            // let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+            // let passiveInvestmentPrice = filteredStockData[0].openPrice;
             let activeInvestments = [];
             let highestPeak = filteredStockData[0].price;
             let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
@@ -923,18 +925,18 @@
             let fullySold = true; // Flag to indicate if all stocks are sold
             let bought = false;
 
-            // // Override passive investment variables for Model C
-            // if (selectedModel === 'modelC') {
-            //     initialPassiveInvestment = 0; // No passive investment
-            //     passiveShares = 0; // No passive shares
-            //     passiveInvestmentPrice = 0; // No passive investment price
-            // } else {
-            //     // For Models A and B
-            //     passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-            //     passiveInvestmentPrice = filteredStockData[0].openPrice;
-            // }
+            // Override passive investment variables for Model C
+            if (selectedModel === 'modelC') {
+                initialPassiveInvestment = 0; // No passive investment
+                passiveShares = 0; // No passive shares
+                passiveInvestmentPrice = 0; // No passive investment price
+            } else {
+                // For Models A and B
+                passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+                passiveInvestmentPrice = filteredStockData[0].openPrice;
+            }
+
             // Read Model C parameters and convert to decimal fractions
-            
             let modelCBuyPercentage = parseFloat(document.getElementById('modelCBuyPercentage').value) / 100;
             let modelCSellFromBuy = parseFloat(document.getElementById('modelCSellFromBuy').value) / 100;
 
@@ -1166,7 +1168,7 @@
                 const qldYield = ((data.price / filteredStockData[0].openPrice) - 1) * 100;
                 const totalInvestments = data.price * (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares)
                 const leveragedHoldings = totalInvestments * 2
-                const LeveragedHoldingPercentage = ((leveragedHoldings.toFixed(2) / totalValue) - 1) * 100
+                const LeveragedHoldingPercentage = (leveragedHoldings / totalValue) * 100
                 const cashRatio = totalPortfolioValue / totalValue
 
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
@@ -1190,7 +1192,7 @@
                     totalShares: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares,
                     totalInvestments: totalInvestments.toFixed(2),
                     leveragedHolding: leveragedHoldings.toFixed(2),
-                    LeveragedHoldingPercentage: LeveragedHoldingPercentage.toFixed(2),
+                    LeveragedHoldingPercentage: LeveragedHoldingPercentage,
                     cashRatio: cashRatio,
                     highestPeak: highestPeak,
                     downPercentageFromPeak: dropFromHighestPeak.toFixed(2),
@@ -1508,7 +1510,7 @@
                     log.totalShares,
                     log.totalInvestments,
                     log.leveragedHolding,
-                    log.LeveragedHoldingPercentage,
+                    `${log.LeveragedHoldingPercentage}%`,
                     log.cashRatio,
                     log.highestPeak,
                     log.passiveProfit,
