@@ -531,6 +531,7 @@
                             buyPercentages.push($(`#buy-${i}`).val()/100);
                             sellPercentages.push($(`#sell-${i}`).val()/100);
                         }
+                        calculateResults();
                     }
                     </script>
                 </div>
@@ -936,6 +937,9 @@
                 updateChart([], [], [], [], []); // Include totalCashValues in the updateChart call
                 return;
             }
+            //model c defulat
+            let def_modelC_percent_buy = 0.05
+            let def_modelC_percent_sell = 0.10
 
             // Initialize variables
             let totalPortfolioValue = parseInt(totalInvestmentInput.value);
@@ -989,7 +993,7 @@
                 cashPercent = 1; // Set to 100% cash for Model C
                 // buyAmountPercent = modelCBuyPercentage;
                 // sellThreshold = modelCSellFromBuy;
-                buyThreshold = 0.05; // Set to 5% for Model C
+
             }
 
             // Calculate NDX passive investment
@@ -1047,9 +1051,7 @@
                     if (fullySold) {
                         currentPeak = highestPeak;
                     }
-                } else if (selectedModel === 'modelB') {
-                    currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
-                } else if (selectedModel === 'modelC') {
+                } else if (['modelB','modelC'].includes(selectedModel)) {
                     currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
                 }
 
@@ -1081,7 +1083,14 @@
 
                         // Shares to buy calculation
                         if (selectedModel === 'modelC') {
-                            sharesToBuy = cash * buyAmountPercent / buy_price;
+                            console.log(buyPercentages)
+                            if (activeInvestments.length>=buyPercentages.length){
+                                sharesToBuy = cash * def_modelC_percent_buy/ buy_price // def
+                            }
+                            else{
+                                sharesToBuy = cash * buyPercentages[activeInvestments.length]/ buy_price;
+                            }
+                            console.log("shares_to_buy:",sharesToBuy)
                         } else {
                             sharesToBuy = initialBuyAmount / buy_price;
                         }
@@ -1097,6 +1106,7 @@
                             cash -= sharesToBuy * buy_price;
                             // Store the color with the investment
                             activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
+                            console.log("active",activeInvestments)
                              // Increment if multiple buys are made
                             sharesBought += sharesToBuy;
                             activeCashInvested += sharesToBuy * buy_price;
@@ -1156,7 +1166,16 @@
                     // Calculate the exact target sell price based on the selected model
                     if (selectedModel === 'modelC') {
                         // Model C's custom sell condition
-                        // targetSellPrice = investment.buyPrice * (1 + (modelCSellFromBuy)); // Use custom sell percentage from Model C
+
+                        if (activeInvestments.length>=sellPercentages.length)
+                        {
+                            targetSellPrice = investment.buyPrice * (1 + (def_modelC_percent_sell)) // def
+                        }
+                        else
+                        {
+                            targetSellPrice = investment.buyPrice * (1 + sellPercentages[activeInvestments.length])
+                        }
+                         console.log("target:",targetSellPrice)
                     } else {
                         // For other models, use the default sell threshold
                         targetSellPrice = investment.buyPrice * (1 + sellThreshold);
