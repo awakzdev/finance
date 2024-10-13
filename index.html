@@ -12,6 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js    "></script>
     <!-- Font Awesome Icons-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <!-- ajax-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 
     <style>
     body {
@@ -109,7 +112,7 @@
     }
 
     /* Dropdowns */
-    .dropdown, .input-box {
+    .dropdown, .input-box, .moduleC_input-box {
         width: 100%;
         padding: 5px 10px; /* Adjusted padding */
         font-size: 17px !important;
@@ -120,8 +123,13 @@
         background-color: #fff;
         transition: border-color 0.3s;
         box-sizing: border-box;
-    }
 
+    }
+    .moduleC_input-box{
+        width: 20%;
+/*justify-content: space-between;*/
+/*float: right*/
+    }
     .dropdown:focus, .input-box:focus {
         border-color: #4CAF50;
         outline: none;
@@ -443,6 +451,8 @@
                     </div>
                 </div>
 
+                <!-- Modules-->
+                <div id="Title_model_c"><h3>Model C Customization</h3></div>
                 <!-- Sliders -->
                 <div id="defaultSliders">
                     <div class="input-group">
@@ -459,33 +469,70 @@
                             <span class="slider-value" id="buyThresholdValue">5%</span>
                         </div>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" id="div_sellThresholdValue">
                         <label for="sellThreshold" class="slider-label">Sell Threshold (% increase):</label>
                         <div class="slider-container">
                             <input type="range" id="sellThreshold" class="slider" min="1" max="30" value="10" step="1">
                             <span class="slider-value" id="sellThresholdValue">10%</span>
                         </div>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" id="div_buyThresholdValue">
                         <label for="buyAmountPercent" class="slider-label">Buy Percentage from Cash (%):</label>
                         <div class="slider-container">
                             <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
                             <span class="slider-value" id="buyAmountPercentValue">10%</span>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Model C Parameters (if needed) -->
                 <div id="modelCParameters" style="display: none;">
-                    <h3>Model C Customization</h3>
-                    <div class="input-group">
-                        <label for="modelCBuyPercentage">Buy Percentage from Cash (%):</label>
-                        <input type="number" id="modelCBuyPercentage" class="input-box" value="10" min="5" max="95" step="5">
-                    </div>
-                    <div class="input-group">
-                        <label for="modelCSellFromBuy">Sell from Buy Price (%):</label>
-                        <input type="number" id="modelCSellFromBuy" class="input-box" value="3" min="1" max="10" step="1">
-                    </div>
+                <button id="addButton">+</button>
+                <button id="removeButton">-</button>
+                    <button id="test_button">test</button>
+                    <script>
+                    let counter = 0, buyPercentages = [], sellPercentages = [];
+
+                    $('#addButton').click(function() {
+                        console.log("click")
+                        counter++;
+                        $('#modelCParameters').append(`
+                            <div id="group-${counter}">
+                                <label>Buy (%):</label>
+                                <input type="number" id="buy-${counter}" class="moduleC_input-box" value="10" min="5" max="95" step="5">
+                                <label>Sell (%):</label>
+                                <input type="number" id="sell-${counter}" class="moduleC_input-box" value="3" min="1" max="10" step="1">
+                            </div>
+                        `);
+                            $(`#buy-${counter}`).on('input', function() {
+                                collectData();
+                            });
+                            $(`#sell-${counter}`).on('input', function() {
+                                collectData();
+                            });
+
+                        collectData();  // Call this whenever you need updated arrays
+                    });
+
+                    $('#removeButton').click(function() {
+                        if (counter > 0) {
+                            $(`#group-${counter}`).remove();
+                            buyPercentages.pop();
+                            sellPercentages.pop();
+                            counter--;
+                        }
+                    });
+
+
+                    function collectData() {
+                        buyPercentages = [], sellPercentages = [];
+                        for (let i = 1; i <= counter; i++) {
+                            buyPercentages.push($(`#buy-${i}`).val()/100);
+                            sellPercentages.push($(`#sell-${i}`).val()/100);
+                        }
+                    }
+                    </script>
                 </div>
             </div>
 
@@ -530,6 +577,10 @@
     </div>
     
     <script>
+        $('#test_button').click(function() {
+            console.log(buyPercentages,sellPercentages)
+        });
+
         let stockData = [];
         let ndxStockData = [];
         let totalPortfolioChart;
@@ -560,8 +611,6 @@
         const stocksValueDisplay = document.getElementById('stocksValue');
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
         const closingDateDropdown = document.getElementById('closingDate');
-        const modelCBuyPercentageInput = document.getElementById('modelCBuyPercentage');
-        const modelCSellFromBuyInput = document.getElementById('modelCSellFromBuy');
 
         window.onload = function() {
             console.log("Fetching CSV files...");
@@ -602,13 +651,6 @@
                 }
             });
 
-            modelCBuyPercentageInput.addEventListener('input', () => {
-                calculateResults();
-            });
-
-            modelCSellFromBuyInput.addEventListener('input', () => {
-                calculateResults();
-            });
             
             buyThresholdSlider.addEventListener('input', () => {
                 buyThresholdValue.textContent = `${buyThresholdSlider.value}%`;
@@ -679,11 +721,16 @@
                 if (model === 'modelCIcon') {
                     // Display Model C parameters and hide sliders and their labels
                     document.getElementById('modelCParameters').style.display = 'block';
-                    document.getElementById('defaultSliders').style.display = 'none';
+                    document.getElementById('Title_model_c').style.display = 'block';
+                    document.getElementById('div_buyThresholdValue').style.display = 'none';
+                    document.getElementById('div_sellThresholdValue').style.display = 'none';
+
                 } else {
                     // Hide Model C parameters and show sliders and their labels
                     document.getElementById('modelCParameters').style.display = 'none';
-                    document.getElementById('defaultSliders').style.display = 'block';
+                    document.getElementById('Title_model_c').style.display = 'none';
+                    document.getElementById('div_buyThresholdValue').style.display = 'block';
+                    document.getElementById('div_sellThresholdValue').style.display = 'block';
                 }
 
                 // Update selectedModel variable based on the clicked model
@@ -936,15 +983,12 @@
                 passiveInvestmentPrice = filteredStockData[0].openPrice;
             }
 
-            // Read Model C parameters and convert to decimal fractions
-            let modelCBuyPercentage = parseFloat(document.getElementById('modelCBuyPercentage').value) / 100;
-            let modelCSellFromBuy = parseFloat(document.getElementById('modelCSellFromBuy').value) / 100;
 
             // Adjust dynamic parameters based on selected model
             if (selectedModel === 'modelC') {
                 cashPercent = 1; // Set to 100% cash for Model C
-                buyAmountPercent = modelCBuyPercentage;
-                sellThreshold = modelCSellFromBuy;
+                // buyAmountPercent = modelCBuyPercentage;
+                // sellThreshold = modelCSellFromBuy;
                 buyThreshold = 0.05; // Set to 5% for Model C
             }
 
@@ -1112,7 +1156,7 @@
                     // Calculate the exact target sell price based on the selected model
                     if (selectedModel === 'modelC') {
                         // Model C's custom sell condition
-                        targetSellPrice = investment.buyPrice * (1 + (modelCSellFromBuy)); // Use custom sell percentage from Model C
+                        // targetSellPrice = investment.buyPrice * (1 + (modelCSellFromBuy)); // Use custom sell percentage from Model C
                     } else {
                         // For other models, use the default sell threshold
                         targetSellPrice = investment.buyPrice * (1 + sellThreshold);
