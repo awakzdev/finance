@@ -951,9 +951,10 @@
             let initialCash = totalPortfolioValue * cashPercent; // Cash allocated for active trading
             let initialBuyAmount = initialCash * buyAmountPercent; // Fix the initial buy amount per purchase
             let cash = initialCash;
+            console.log("cash:",cash)
             let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent); // Passive investment
-            // let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-            // let passiveInvestmentPrice = filteredStockData[0].openPrice;
+            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+            let passiveInvestmentPrice = filteredStockData[0].openPrice;
             let activeInvestments = [];
             let highestPeak = filteredStockData[0].price;
             let lastBuyPrice = filteredStockData[0].highPrice; // Tracks the last buy price for tracking subsequent drops
@@ -975,26 +976,6 @@
             let firstPurchasePeak = null; // Peak at the time of the first purchase
             let fullySold = true; // Flag to indicate if all stocks are sold
             let bought = false;
-
-            // Override passive investment variables for Model C
-            if (selectedModel === 'modelC') {
-                initialPassiveInvestment = 0; // No passive investment
-                passiveShares = 0; // No passive shares
-                passiveInvestmentPrice = 0; // No passive investment price
-            } else {
-                // For Models A and B
-                passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-                passiveInvestmentPrice = filteredStockData[0].openPrice;
-            }
-
-
-            // Adjust dynamic parameters based on selected model
-            if (selectedModel === 'modelC') {
-                cashPercent = 1; // Set to 100% cash for Model C
-                // buyAmountPercent = modelCBuyPercentage;
-                // sellThreshold = modelCSellFromBuy;
-
-            }
 
             // Calculate NDX passive investment
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
