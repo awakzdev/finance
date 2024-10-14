@@ -1148,13 +1148,13 @@
                     if (selectedModel === 'modelC') {
                         // Model C's custom sell condition
 
-                        if (activeInvestments.length>=sellPercentages.length)
+                        if (activeInvestments.length>sellPercentages.length)
                         {
                             targetSellPrice = investment.buyPrice * (1 + (def_modelC_percent_sell)) // def
                         }
                         else
                         {
-                            targetSellPrice = investment.buyPrice * (1 + sellPercentages[activeInvestments.length])
+                            targetSellPrice = investment.buyPrice * (1 + sellPercentages[activeInvestments.length-1])
                         }
                          console.log("target:",targetSellPrice)
                     } else {
