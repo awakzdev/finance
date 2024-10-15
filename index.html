@@ -822,6 +822,7 @@
                     // Hide Buy Amount on Each Purchase
                     document.querySelector('.result-item:nth-child(2)').style.display = 'none';
                 } else {
+                    document.getElementById('defaultSliders').classList.remove('hidden'); // Add this line
                     document.getElementById('modelCParameters').style.display = 'none';
                     document.getElementById('Title_model_c').style.display = 'none';
                     document.getElementById('div_buyThresholdValue').style.display = 'block';
