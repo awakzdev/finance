@@ -648,6 +648,8 @@
             });
 
             splitSlider.addEventListener('input', () => {
+                // Update the displayed value next to the slider
+                splitValue.textContent = `${splitSlider.value}%`;
                 if (selectedModel !== 'modelC') {
                     cashPercent = parseInt(splitSlider.value) / 100;
                     calculateResults();
@@ -759,6 +761,9 @@
                     selectModel(this.id);
                 });
             });
+
+            // Initialize the UI with the default model (Model B)
+            selectModel('modelBIcon');
 
             // Event listener for "Select Strategy" radio buttons (if applicable)
             const dropModelRadios = document.querySelectorAll('input[name="dropModel"]');
