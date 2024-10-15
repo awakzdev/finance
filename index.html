@@ -411,6 +411,97 @@
         border-color: #4CAF50;
         outline: none;
     }
+
+    /* Model C Customization Styles */
+    #modelCContainer {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+    }
+
+    #modelCContainer h3 {
+        font-size: 1.2em;
+        margin-bottom: 15px;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+
+    #modelCTable {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+
+    #modelCTable th, #modelCTable td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        /* text-align: left; */
+        /* Add this line to reduce font size */
+        font-size: 14px; /* Adjust the size as needed */
+        /* Optional: Center the text */
+        text-align: center;
+    }
+
+    #modelCTable th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    #modelCTable tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    #modelCTable input[type="number"] {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+        font-size: 14px;
+        border: 1px solid #ccd6dd;
+        border-radius: 4px;
+    }
+
+    #modelCTable input[type="number"]:focus {
+        border-color: #4CAF50;
+        outline: none;
+    }
+
+    /* Style for Add and Remove Row Buttons */
+    #modelCButtons {
+        margin-top: 10px;
+    }
+
+    #modelCButtons button {
+        padding: 8px 12px;
+        margin-right: 5px;
+        font-size: 14px;
+        color: #fff;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    #modelCButtons button:hover {
+        background-color: #45a049;
+    }
+
+    /* Adjust input group styles for Model C */
+    #modelCParameters .input-group {
+        margin-bottom: 15px;
+    }
+
+    #modelCParameters label {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    /* Hide the default sliders when Model C is selected */
+    #defaultSliders.hidden {
+        display: none;
+    }
     </style>
 </head>
 <body>
@@ -446,16 +537,16 @@
                 <label class="bold-label">Select Strategy:</label>
                 <div class="input-group">
                     <div class="icon-toggle">
-                        <button type="button" id="modelAIcon" class="icon-btn" style="width: 120px; height: 80px; text-align: center;">
+                        <button type="button" id="modelAIcon" class="icon-btn model-btn" style="width: 120px; height: 80px; text-align: center;">
                             <i class="fas fa-chart-line"></i> Model A
                         </button>
-                        <button type="button" id="modelBIcon" class="icon-btn active" style="width: 120px; height: 80px; text-align: center;">
+                        <button type="button" id="modelBIcon" class="icon-btn model-btn active" style="width: 120px; height: 80px; text-align: center;">
                             <i class="fas fa-chart-bar"></i> Model B
                         </button>
-                        <button type="button" id="modelCIcon" class="icon-btn" style="width: 120px; height: 80px; text-align: center;">
+                        <button type="button" id="modelCIcon" class="icon-btn model-btn" style="width: 120px; height: 80px; text-align: center;">
                             <i class="fas fa-chart-pie"></i> Model C
                         </button>
-                        <button type="button" id="modelDIcon" class="icon-btn" style="width: 120px; height: 80px; text-align: center;">
+                        <button type="button" id="modelDIcon" class="icon-btn model-btn" style="width: 120px; height: 80px; text-align: center;">
                             <i class="fas fa-chart-area"></i> Model D
                         </button>
                     </div>
@@ -497,16 +588,14 @@
                             <span class="slider-value" id="sellThresholdValue">10%</span>
                         </div>
                     </div>
-                    <!-- Removed Buy Percentage from Cash Slider -->
-                    <!--
-                    <div class="input-group">
+
+                    <div class="input-group" id="div_buyAmountPercent">
                         <label for="buyAmountPercent" class="slider-label">Buy Percentage from Cash (%):</label>
                         <div class="slider-container">
                             <input type="range" id="buyAmountPercent" class="slider" min="1" max="50" value="10" step="1">
                             <span class="slider-value" id="buyAmountPercentValue">10%</span>
                         </div>
                     </div>
-                    -->
                 </div>
 
                 <!-- Model C Customization -->
@@ -525,7 +614,7 @@
                     <table id="modelCTable" style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr>
-                                <th style="border: 1px solid #ddd; padding: 8px;">Drop Percentage (%)</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">Buy Threshold (%)</th>
                                 <th style="border: 1px solid #ddd; padding: 8px;">Buy Percentage from Cash (%)</th>
                                 <th style="border: 1px solid #ddd; padding: 8px;">Sell Threshold (%)</th>
                             </tr>
@@ -582,7 +671,6 @@
     </div>
 
     <!-- Scripts -->
-    <!-- Scripts -->
     <script>
         let buyPercentages = [], sellPercentages = [], dropPercentages = [];
         let stockData = [];
@@ -609,6 +697,8 @@
         const stocksLeftDisplay = document.getElementById('stocksLeft');
         const stocksValueDisplay = document.getElementById('stocksValue');
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
+        const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
+        const buyAmountPercentValue = document.getElementById('buyAmountPercentValue');
 
         // Debounce function to limit the rate of function calls
         function debounce(func, delay) {
@@ -670,6 +760,11 @@
                 sellThresholdValue.textContent = `${sellThresholdSlider.value}%`;
                 debouncedCalculateResults();
             });
+            
+            buyAmountPercentSlider.addEventListener('input', () => {
+                buyAmountPercentValue.textContent = `${buyAmountPercentSlider.value}%`;
+                debouncedCalculateResults();
+            });
 
             closingDateDropdown.addEventListener('change', debouncedCalculateResults);
             dateRangeDropdown.addEventListener('change', debouncedCalculateResults);
@@ -687,6 +782,11 @@
             // Event listener for "Allow Negative Balance" buttons
             const negativeBalanceAllowBtn = document.getElementById('negativeBalanceAllow');
             const negativeBalanceDisallowBtn = document.getElementById('negativeBalanceDisallow');
+            buyAmountPercentValue.textContent = `${buyAmountPercentSlider.value}%`;
+            // Set the "No" option as active by default
+            negativeBalanceAllowBtn.classList.remove('active');
+            negativeBalanceDisallowBtn.classList.add('active');
+            allowNegativeBalance = false; // Ensure it's set to false by default
 
             [negativeBalanceAllowBtn, negativeBalanceDisallowBtn].forEach(function(button) {
                 button.addEventListener('click', function() {
@@ -706,7 +806,8 @@
             const modelDIcon = document.getElementById('modelDIcon');
 
             function selectModel(model) {
-                document.querySelectorAll('.icon-btn').forEach(function (button) {
+                // Only remove 'active' class from model selection buttons
+                document.querySelectorAll('.model-btn').forEach(function (button) {
                     button.classList.remove('active');
                 });
                 document.getElementById(model).classList.add('active');
@@ -715,6 +816,7 @@
                     document.getElementById('modelCParameters').style.display = 'block';
                     document.getElementById('Title_model_c').style.display = 'block';
                     document.getElementById('div_buyThresholdValue').style.display = 'none';
+                    document.getElementById('div_buyAmountPercent').style.display = 'none'; // Hide Buy Percentage from Cash slider
                     buyThresholdSlider.parentElement.style.display = 'none'; // Hide buy threshold slider
                     // Hide Buy Amount on Each Purchase
                     document.querySelector('.result-item:nth-child(2)').style.display = 'none';
@@ -722,6 +824,7 @@
                     document.getElementById('modelCParameters').style.display = 'none';
                     document.getElementById('Title_model_c').style.display = 'none';
                     document.getElementById('div_buyThresholdValue').style.display = 'block';
+                    document.getElementById('div_buyAmountPercent').style.display = 'block'; // Show Buy Percentage from Cash slider
                     buyThresholdSlider.parentElement.style.display = 'block'; // Show buy threshold slider
                     // Show Buy Amount on Each Purchase
                     document.querySelector('.result-item:nth-child(2)').style.display = 'flex';
@@ -753,10 +856,34 @@
             const cellDropPercentage = row.insertCell(0);
             const dropPercentageInput = document.createElement('input');
             dropPercentageInput.type = 'number';
-            dropPercentageInput.min = '1';
             dropPercentageInput.max = '100';
             dropPercentageInput.step = '1';
-            dropPercentageInput.value = rowCount === 0 ? '5' : ''; // Default value for first row
+            dropPercentageInput.style.width = '100%';
+
+            // Set default value based on the previous row's drop percentage
+            let previousDropPercentage = 0;
+            if (rowCount > 0) {
+                const previousRow = tableBody.rows[rowCount - 1];
+                const previousDropInput = previousRow.cells[0].querySelector('input');
+                previousDropPercentage = parseFloat(previousDropInput.value);
+                // Set the min attribute
+                dropPercentageInput.min = previousDropPercentage + 1;
+                // Add event listener to update min of this input when previous input changes
+                previousDropInput.addEventListener('input', () => {
+                    const newMin = parseFloat(previousDropInput.value) + 1;
+                    dropPercentageInput.min = newMin;
+                    if (parseFloat(dropPercentageInput.value) < newMin) {
+                        dropPercentageInput.value = newMin;
+                    }
+                    updateMinValuesFromRow(row.rowIndex - 1);
+                });
+            } else {
+                dropPercentageInput.min = '1';
+            }
+            
+            dropPercentageInput.min = previousDropPercentage + 1; // Set the min attribute
+            dropPercentageInput.value = previousDropPercentage + 5; // Default increment
+
             dropPercentageInput.style.width = '100%';
             dropPercentageInput.addEventListener('input', () => {
                 collectData();
@@ -789,7 +916,7 @@
             sellInput.type = 'number';
             sellInput.min = '0';
             sellInput.max = '100';
-            sellInput.step = '1';
+            sellInput.step = '5';
             sellInput.value = '5';
             sellInput.style.width = '100%';
             sellInput.addEventListener('input', () => {
@@ -818,17 +945,22 @@
             buyPercentages = [];
             sellPercentages = [];
             dropPercentages = [];
+
             const tableBody = document.querySelector('#modelCTable tbody');
             let previousDropPercentage = 0;
+            
+            // Get all rows in the tbody
+            const rows = tableBody.rows;
             for (let row of tableBody.rows) {
                 const dropPercentageInput = row.cells[0].querySelector('input');
                 const buyInput = row.cells[1].querySelector('input');
                 const sellInput = row.cells[2].querySelector('input');
 
-                const dropPercentage = parseInt(dropPercentageInput.value);
+                const dropPercentage = parseFloat(dropPercentageInput.value);
+
                 if (isNaN(dropPercentage) || dropPercentage <= previousDropPercentage) {
                     dropPercentageInput.style.borderColor = 'red';
-                    return; // Exit the function if validation fails
+                    return; // Skip this row but continue processing others
                 } else {
                     dropPercentageInput.style.borderColor = '';
                     previousDropPercentage = dropPercentage;
@@ -944,13 +1076,14 @@
         }
 
         function calculateResults() {
+            collectData(); // Ensure we have the latest data for modeL c
+
             const buyPoints = [];
             const sellPoints = [];
             const totalCashValues = [];
             const buyCountsPerDate = {};
             const sellCountsPerDate = {};
             const OFFSET_INCREMENT = 500 * 60 * 1000;
-
             const selectedStartDate = dateRangeDropdown.value;
             const selectedClosingDate = closingDateDropdown.value;
             const startDateObj = parseDate(selectedStartDate);
@@ -1002,6 +1135,7 @@
             let firstPurchasePeak = null;
             let fullySold = true;
             let bought = false;
+            let buyAmountPercent = 0;
 
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
             let ndxPortfolioValues = filteredNDXStockData.map(data => {
@@ -1012,10 +1146,13 @@
             });
 
             let qldPassiveShares = totalPortfolioValue / filteredStockData[0].openPrice;
+            let initialQLDInvestment = qldPassiveShares * filteredStockData[0].openPrice; // This should equal totalPortfolioValue
             let qldYieldValues = filteredStockData.map(data => {
+                const currentValue = qldPassiveShares * data.price;
+                const yieldPercentage = ((currentValue / initialQLDInvestment) - 1) * 100;
                 return {
                     x: data.dateObj,
-                    y: qldPassiveShares * data.price
+                    y: yieldPercentage
                 };
             });
 
@@ -1072,7 +1209,7 @@
 
                 // Buy logic
                 if (selectedModel !== 'modelC') {
-                    let buyAmountPercent = 0.1; // Assuming a default of 10%
+                    buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
                     let initialBuyAmount = initialCash * buyAmountPercent;
 
                     if (dropFromCurrentPeak >= buyThreshold * 100) {
@@ -1313,7 +1450,7 @@
             });
 
             const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
-            buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * 0.1).toFixed(0) : 'Varies';
+            buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
             finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
             stocksValueDisplay.textContent = `${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)}`;
@@ -1465,6 +1602,15 @@
                     y: ndxPortfolioValues.map(data => data.y),
                     name: 'NDX Passive Investment',
                     mode: 'lines',
+                },
+                // QLD Yield
+                {
+                    x: qldYieldValues.map(data => data.x),
+                    y: qldYieldValues.map(data => data.y),
+                    name: 'QLD Yield (%)',
+                    mode: 'lines',
+                    line: { dash: 'dot', color: 'rgba(0, 128, 128, 1)' }, // Dashed teal line for QLD Yield
+                    hovertemplate: 'Date: %{x}<br>QLD Yield: %{y:.2f}%',
                 },
                 {
                     x: totalCashValues.map(data => data.x),
