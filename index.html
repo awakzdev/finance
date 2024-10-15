@@ -1306,7 +1306,7 @@
                             // Calculate buy price
                             buy_price = highestPeak * (1 - cumulativeDropPercentage);
                             let buyPercentageFromCash = level.buyPercentage;
-                            let amountToInvest = cash * buyPercentageFromCash;
+                            let amountToInvest = initialCash * buyPercentageFromCash;
 
                             sharesToBuy = amountToInvest / buy_price;
 
