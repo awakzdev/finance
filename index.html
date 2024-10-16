@@ -503,6 +503,53 @@
         display: none;
     }
 
+    /* Styles for Reset Threshold Slider */
+    #div_resetThresholdValue {
+        margin-bottom: 15px;
+    }
+
+    #div_resetThresholdValue .slider-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    #div_resetThresholdValue .slider-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    #div_resetThresholdValue .slider {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+
+    #div_resetThresholdValue .slider-value {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    /* Styles for Holding Ratio Result Item */
+    #holdingRatioResult {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e4e8;
+        line-height: 1.2;
+    }
+
+    #holdingRatioResult .result-label {
+        font-weight: bold;
+        color: #34495e;
+    }
+
+    #holdingRatioResult .result-value {
+        font-size: 1em;
+        color: #000;
+        font-weight: bold;
+    }
+
     </style>
 </head>
 <body>
@@ -614,13 +661,21 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Rows will be added dynamically -->
                         </tbody>
                     </table>
                     <div style="margin-top: 10px;">
                         <button id="addRowButton" style="padding: 10px 20px; margin-right: 5px;">Add Row</button>
                         <button id="removeRowButton" style="padding: 10px 20px;">Remove Row</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Slider for Model D -->
+            <div class="input-group" id="div_resetThresholdValue" style="display: none;">
+                <label for="resetThreshold" class="slider-label">Reset Threshold (% deviation):</label>
+                <div class="slider-container">
+                    <input type="range" id="resetThreshold" class="slider" min="1" max="20" value="5" step="1">
+                    <span class="slider-value" id="resetThresholdValue">5%</span>
                 </div>
             </div>
 
@@ -655,6 +710,11 @@
                     <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
                     <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
                 </div>
+                <!-- Holding Ratio for Model D -->
+                <div class="result-item" id="holdingRatioResult" style="display: none;">
+                    <span class="result-label"><i class="fas fa-balance-scale results-icon"></i> Final Holding Ratio (%):</span>
+                    <span class="result-value"><span id="finalHoldingRatio">Calculating...</span>%</span>
+                </div>
             </div>
         </div>
 
@@ -675,6 +735,7 @@
         let qldCumulativeYields = [];
         let ndxCumulativeYields = [];
         let qldYieldValues = [];
+        let holdingRatios = [];
 
         const totalInvestmentInput = document.getElementById('totalInvestment');
         const splitSlider = document.getElementById('split');
@@ -693,6 +754,9 @@
         const availableMoneyDisplay = document.getElementById('availableMoneyDisplay');
         const buyAmountPercentSlider = document.getElementById('buyAmountPercent');
         const buyAmountPercentValue = document.getElementById('buyAmountPercentValue');
+        const resetThresholdSlider = document.getElementById('resetThreshold');
+        const resetThresholdValueDisplay = document.getElementById('resetThresholdValue');
+        const holdingRatioResult = document.getElementById('holdingRatioResult');
 
         // Debounce function to limit the rate of function calls
         function debounce(func, delay) {
@@ -773,6 +837,11 @@
                 debouncedCalculateResults();
             });
 
+            resetThresholdSlider.addEventListener('input', function () {
+                resetThresholdValueDisplay.textContent = resetThresholdSlider.value + '%';
+                debouncedCalculateResults();
+            });
+
             // Event listener for "Allow Negative Balance" buttons
             const negativeBalanceAllowBtn = document.getElementById('negativeBalanceAllow');
             const negativeBalanceDisallowBtn = document.getElementById('negativeBalanceDisallow');
@@ -800,36 +869,61 @@
             const modelDIcon = document.getElementById('modelDIcon');
 
             function selectModel(model) {
-                // Only remove 'active' class from model selection buttons
+                // Remove 'active' class from all model buttons
                 document.querySelectorAll('.model-btn').forEach(function (button) {
                     button.classList.remove('active');
                 });
+                // Add 'active' class to the selected model button
                 document.getElementById(model).classList.add('active');
 
-                if (model === 'modelCIcon') {
+                if (model === 'modelDIcon') {
+                    document.getElementById('defaultSliders').classList.add('hidden');
+                    document.getElementById('modelCParameters').style.display = 'none';
+                    document.getElementById('Title_model_c').style.display = 'none';
+                    document.getElementById('div_buyThresholdValue').style.display = 'none';
+                    document.getElementById('div_buyAmountPercent').style.display = 'none';
+                    buyThresholdSlider.parentElement.style.display = 'none';
+                    // Show Reset Threshold Slider
+                    document.getElementById('div_resetThresholdValue').style.display = 'block';
+                    // Hide Buy Amount on Each Purchase
+                    document.querySelector('.result-item:nth-child(2)').style.display = 'none';
+                    // Show Holding Ratio in Results
+                    holdingRatioResult.style.display = 'flex';
+                } else if (model === 'modelCIcon') {
+                    // Existing code for Model C
                     document.getElementById('defaultSliders').classList.add('hidden');
                     document.getElementById('modelCParameters').style.display = 'block';
                     document.getElementById('Title_model_c').style.display = 'block';
                     document.getElementById('div_buyThresholdValue').style.display = 'none';
-                    document.getElementById('div_buyAmountPercent').style.display = 'none'; // Hide Buy Percentage from Cash slider
-                    buyThresholdSlider.parentElement.style.display = 'none'; // Hide buy threshold slider
+                    document.getElementById('div_buyAmountPercent').style.display = 'none';
+                    buyThresholdSlider.parentElement.style.display = 'none';
                     // Hide Buy Amount on Each Purchase
                     document.querySelector('.result-item:nth-child(2)').style.display = 'none';
+                    // Hide Holding Ratio in Results
+                    holdingRatioResult.style.display = 'none';
+                    // Hide Reset Threshold Slider
+                    document.getElementById('div_resetThresholdValue').style.display = 'none'; // Add this line
                 } else {
-                    document.getElementById('defaultSliders').classList.remove('hidden'); // Add this line
+                    // Existing code for Models A and B
+                    document.getElementById('defaultSliders').classList.remove('hidden');
                     document.getElementById('modelCParameters').style.display = 'none';
                     document.getElementById('Title_model_c').style.display = 'none';
                     document.getElementById('div_buyThresholdValue').style.display = 'block';
-                    document.getElementById('div_buyAmountPercent').style.display = 'block'; // Show Buy Percentage from Cash slider
-                    buyThresholdSlider.parentElement.style.display = 'block'; // Show buy threshold slider
+                    document.getElementById('div_buyAmountPercent').style.display = 'block';
+                    buyThresholdSlider.parentElement.style.display = 'block';
                     // Show Buy Amount on Each Purchase
                     document.querySelector('.result-item:nth-child(2)').style.display = 'flex';
+                    // Hide Holding Ratio in Results
+                    holdingRatioResult.style.display = 'none';
+                    // Hide Reset Threshold Slider
+                    document.getElementById('div_resetThresholdValue').style.display = 'none';
                 }
 
                 selectedModel = model.replace('Icon', '');
                 console.log('Selected strategy:', selectedModel);
                 debouncedCalculateResults();
             }
+
 
             [modelAIcon, modelBIcon, modelCIcon, modelDIcon].forEach(function (button) {
                 button.addEventListener('click', function () {
