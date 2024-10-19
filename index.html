@@ -1171,6 +1171,7 @@
             const buyPoints = [];
             const sellPoints = [];
             const totalCashValues = [];
+            const resetPoints = [];
             const buyCountsPerDate = {};
             const sellCountsPerDate = {};
             const OFFSET_INCREMENT = 500 * 60 * 1000;
@@ -1226,7 +1227,11 @@
             let fullySold = true;
             let bought = false;
             let buyAmountPercent = 0;
-
+            // Variables specific to Model D
+            let modelDPortfolioValue = totalPortfolioValue;
+            let modelDCash = 50000;
+            let modelDInvestments = [{ buyPrice: filteredStockData[0].price, shares: 50000 / filteredStockData[0].price }];
+            
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
             let ndxPortfolioValues = filteredNDXStockData.map(data => {
                 return {
@@ -1286,6 +1291,44 @@
                     }
                 } else if (selectedModel === 'modelB') {
                     currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
+                }
+
+                // Model D Reset Logic
+                if (selectedModel === 'modelD') {
+                    const resetThreshold = parseFloat(resetThresholdSlider.value) / 100;
+                    const lowerBound = 100000  * (1 - resetThreshold);
+                    const upperBound = 100000  * (1 + resetThreshold);
+
+                    // Calculate current Model D portfolio value
+                    modelDPortfolioValue = modelDCash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+
+                    // Check if the Model D portfolio should be reset
+                    if (modelDPortfolioValue <= lowerBound || modelDPortfolioValue >= upperBound) {
+                        modelDCash = 50000;
+                        modelDInvestments = [{ buyPrice: data.price, shares: 50000 / data.price }];
+                        modelDPortfolioValue = 100000; // Reset to original total value
+
+                        resetPoints.push({
+                            x: dataDate,
+                            y: modelDPortfolioValue,
+                            marker: {
+                                color: 'orange',
+                                symbol: 'triangle-up',
+                                size: 10
+                            },
+                            hovertext: `Reset: ${data.date}, Portfolio Value: $100,000`
+                        });
+
+                        action = 'Reset';
+                    }
+
+                    // Add Model D portfolio values
+                    totalPortfolioValues.push({ x: dataDate, y: modelDPortfolioValue });
+                    totalCashValues.push({ x: dataDate, y: modelDCash });
+                } else {
+                    // Add portfolio values for other models
+                    totalPortfolioValues.push({ x: dataDate, y: totalValue });
+                    totalCashValues.push({ x: dataDate, y: cash });
                 }
 
                 // Calculate drop from current peak
@@ -1529,6 +1572,7 @@
                     activeCashInvested: activeCashInvested.toFixed(2),
                     totalValue: totalValue.toFixed(2),
                     totalAmount: (cash + passivePortfolioValue).toFixed(2),
+                    modelDPortfolioValue: modelDPortfolioValue.toFixed(2),
                     valuePassive: (passiveShares * data.price).toFixed(2),
                     ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
                     ndxClosePrice: ndxData ? ndxData.price : 'N/A',
@@ -1539,12 +1583,13 @@
                 });
             });
 
-            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
+            const finalPortfolioValue = selectedModel === 'modelD' ? modelDPortfolioValue : totalPortfolioValues[totalPortfolioValues.length - 1].y;
             buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
             finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
-            stocksValueDisplay.textContent = `${(activeInvestments.reduce((sum, inv) => sum + inv.shares * filteredStockData[filteredStockData.length - 1].price, 0)).toFixed(2)}`;
-            availableMoneyDisplay.textContent = cash.toFixed(2);
+            stocksLeftDisplay.textContent = (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2);
+            availableMoneyDisplay.textContent = (selectedModel === 'modelD' ? modelDCash : cash).toFixed(2);
+
 
             // Calculate yields for result tab (Final values)
             const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
@@ -1570,7 +1615,7 @@
                 };
             });
 
-            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues); // qldCumulativeYields, ndxCumulativeYields);
+            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues, resetPoints); // qldCumulativeYields, ndxCumulativeYields);
             window.transactionLog = transactionLog;
         }
 
@@ -1662,7 +1707,7 @@
             Plotly.newPlot('totalPortfolioChart', [], layout, config);
         }
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues) {
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues, resetPoints) {
             qldCumulativeYields = qldCumulativeYields || [];
             ndxCumulativeYields = ndxCumulativeYields || [];
 
@@ -1672,6 +1717,7 @@
                 ...qldYieldValues.map(data => data.x),
                 ...buyPoints.map(point => point.x),
                 ...sellPoints.map(point => point.x),
+                ...resetPoints.map(point => point.x), // Include resetPoints in the x-values calculation
                 ...totalCashValues.map(data => data.x),
                 ...qldCumulativeYields.map(data => data.x),
                 ...ndxCumulativeYields.map(data => data.x)
@@ -1693,13 +1739,12 @@
                     name: 'NDX Passive Investment',
                     mode: 'lines',
                 },
-                // QLD Yield
                 {
                     x: qldYieldValues.map(data => data.x),
                     y: qldYieldValues.map(data => data.y),
                     name: 'QLD Yield (%)',
                     mode: 'lines',
-                    line: { dash: 'dot', color: 'rgba(0, 128, 128, 1)' }, // Dashed teal line for QLD Yield
+                    line: { dash: 'dot', color: 'rgba(0, 128, 128, 1)' },
                     hovertemplate: 'Date: %{x}<br>QLD Yield: %{y:.2f}%',
                 },
                 {
@@ -1721,6 +1766,19 @@
                     },
                     hoverinfo: 'text',
                     text: buyPoints.map(point => point.hovertext),
+                },
+                {
+                    x: resetPoints.map(point => point.x),
+                    y: resetPoints.map(point => point.y),
+                    mode: 'markers',
+                    name: 'Reset Points',
+                    marker: {
+                        color: resetPoints.map(point => point.marker.color),
+                        symbol: resetPoints.map(point => point.marker.symbol),
+                        size: resetPoints.map(point => point.marker.size)
+                    },
+                    hoverinfo: 'text',
+                    text: resetPoints.map(point => point.hovertext)
                 },
                 {
                     x: sellPoints.map(point => point.x),
@@ -1769,10 +1827,12 @@
         function downloadCSV() {
             const csvRows = [];
             const headers = [
-                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 'Low Price', 'Close Price',
-                'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 'Total Investment', 'Leveraged Holding', 'Leveraged Holding Percentage', 'Cash Ratio',
-                'Highest Peak', 'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close',
-                'NDX Passive Investment', 'NDX Yield', 'Model Yield', 'QLD Yield'
+                'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 
+                'Low Price', 'Close Price', 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 
+                'Total Investment', 'Leveraged Holding', 'Leveraged Holding Percentage', 'Cash Ratio', 'Highest Peak', 
+                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Model D Portfolio Value', // Add this line
+                'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close', 'NDX Passive Investment', 
+                'NDX Yield', 'Model Yield', 'QLD Yield'
             ];
             csvRows.push(headers.join(','));
 
@@ -1801,6 +1861,7 @@
                     log.activeProfit,
                     log.activeCashInvested,
                     log.totalValue,
+                    log.modelDPortfolioValue, // Add this line
                     log.valuePassive,
                     log.downPercentageFromPeak,
                     log.ndxOpen,
