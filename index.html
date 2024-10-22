@@ -1306,47 +1306,46 @@
                     // Calculate current Model D portfolio value
                     modelDPortfolioValue = modelDCash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
 
+                    // Check if the Model D portfolio should be reset
                     if (modelDPortfolioValue <= lowerBound || modelDPortfolioValue >= upperBound) {
-                // Store the previous portfolio value before reset
-                const previousPortfolioValue = modelDPortfolioValue;
+                        // Store the previous portfolio value before reset
+                        const previousPortfolioValue = modelDPortfolioValue;
 
-                // Determine if the reset is due to a drop or a rise
-                const resetDueToDrop = modelDPortfolioValue <= lowerBound;
+                        // **Calculate the adjustment needed to reset the portfolio value to $100,000**
+                        const adjustment = totalPortfolioValue - modelDPortfolioValue;
 
-                // Calculate the adjustment needed to reset the portfolio value to $100,000
-                const adjustment = totalPortfolioValue - modelDPortfolioValue;
+                        // **Adjust modelDCash to reflect the injection or withdrawal of funds**
+                        modelDCash += adjustment;
 
-                // Adjust modelDCash to reflect the injection or withdrawal of funds
-                modelDCash += adjustment;
+                        // Sell all investments
+                        modelDCash += modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
 
-                // Sell all investments
-                modelDCash += modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                        // Allocate according to the cashPercent
+                        let investmentAmount = modelDCash * (1 - cashPercent);
+                        modelDCash = modelDCash * cashPercent;
 
-                // Allocate according to the cashPercent
-                let investmentAmount = modelDCash * (1 - cashPercent);
-                modelDCash = modelDCash * cashPercent;
+                        // Buy new investments
+                        modelDInvestments = [{ buyPrice: data.price, shares: investmentAmount / data.price }];
 
-                // Buy new investments
-                modelDInvestments = [{ buyPrice: data.price, shares: investmentAmount / data.price }];
+                        // Recalculate portfolio value
+                        modelDPortfolioValue = modelDCash + modelDInvestments[0].shares * data.price;
 
-                // Recalculate portfolio value
-                modelDPortfolioValue = modelDCash + modelDInvestments[0].shares * data.price;
+                        resetPoints.push({
+                            x: dataDate,
+                            y: modelDPortfolioValue,
+                            marker: {
+                                color: 'green',
+                                symbol: 'triangle-up',
+                                size: 15,
+                            },
+                            hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${modelDCash.toFixed(2)}`
+                        });
 
-                // Set marker properties based on whether reset is due to drop or rise
-                const markerProperties = resetDueToDrop
-                    ? { color: 'red', symbol: 'triangle-down', size: 15 }
-                    : { color: 'green', symbol: 'triangle-up', size: 15 };
+                        action = 'Reset';
+                    }
 
-                // Push the reset point with the updated marker properties
-                resetPoints.push({
-                    x: dataDate,
-                    y: modelDPortfolioValue,
-                    marker: markerProperties,
-                    hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${modelDCash.toFixed(2)}`
-                });
-
-                action = 'Reset';
-            }
+                    // Update totalValue for Model D
+                    // totalValue = modelDPortfolioValue;
 
                     // Add Model D portfolio values
                     totalPortfolioValues.push({ x: dataDate, y: totalValue });
@@ -1807,7 +1806,11 @@
                     y: resetPoints.map(point => point.y),
                     mode: 'markers',
                     name: 'Reset Points',
-                    marker: resetPoints.map(point => point.marker),
+                    marker: {
+                        color: resetPoints.map(point => point.marker.color),
+                        symbol: resetPoints.map(point => point.marker.symbol),
+                        size: resetPoints.map(point => point.marker.size)
+                    },
                     hoverinfo: 'text',
                     text: resetPoints.map(point => point.hovertext)
                 },
