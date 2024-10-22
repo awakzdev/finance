@@ -882,6 +882,8 @@
                     document.getElementById('Title_model_c').style.display = 'none';
                     document.getElementById('div_buyThresholdValue').style.display = 'none';
                     document.getElementById('div_buyAmountPercent').style.display = 'none';
+                           document.querySelector('.result-item:nth-child(2)').style.display = 'none'; // Hide Buy Amount on Each Purchase
+                    document.querySelector('.result-item:nth-child(3)').style.display = 'none'; // Hide Available Investment Cash
                     buyThresholdSlider.parentElement.style.display = 'none';
                     // Show Reset Threshold Slider
                     document.getElementById('div_resetThresholdValue').style.display = 'block';
@@ -1229,9 +1231,12 @@
             let buyAmountPercent = 0;
             // Variables specific to Model D
             let modelDPortfolioValue = totalPortfolioValue;
-            let modelDCash = 50000;
-            let modelDInvestments = [{ buyPrice: filteredStockData[0].price, shares: 50000 / filteredStockData[0].price }];
-            
+            let modelDCash = initialCash;
+            let modelDInvestments = [{
+                buyPrice: filteredStockData[0].openPrice,
+                shares: (totalPortfolioValue - initialCash) / filteredStockData[0].openPrice
+            }];        
+
             let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
             let ndxPortfolioValues = filteredNDXStockData.map(data => {
                 return {
@@ -1293,38 +1298,58 @@
                     currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
                 }
 
-                // Model D Reset Logic
                 if (selectedModel === 'modelD') {
                     const resetThreshold = parseFloat(resetThresholdSlider.value) / 100;
-                    const lowerBound = 100000  * (1 - resetThreshold);
-                    const upperBound = 100000  * (1 + resetThreshold);
+                    const lowerBound = totalPortfolioValue * (1 - resetThreshold);
+                    const upperBound = totalPortfolioValue * (1 + resetThreshold);
 
                     // Calculate current Model D portfolio value
                     modelDPortfolioValue = modelDCash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
 
-                    // Check if the Model D portfolio should be reset
                     if (modelDPortfolioValue <= lowerBound || modelDPortfolioValue >= upperBound) {
-                        modelDCash = 50000;
-                        modelDInvestments = [{ buyPrice: data.price, shares: 50000 / data.price }];
-                        modelDPortfolioValue = 100000; // Reset to original total value
+                // Store the previous portfolio value before reset
+                const previousPortfolioValue = modelDPortfolioValue;
 
-                        resetPoints.push({
-                            x: dataDate,
-                            y: modelDPortfolioValue,
-                            marker: {
-                                color: 'orange',
-                                symbol: 'triangle-up',
-                                size: 10
-                            },
-                            hovertext: `Reset: ${data.date}, Portfolio Value: $100,000`
-                            // Add what value it was reset from and whats the total available cash as an option 
-                        });
+                // Determine if the reset is due to a drop or a rise
+                const resetDueToDrop = modelDPortfolioValue <= lowerBound;
 
-                        action = 'Reset';
-                    }
+                // Calculate the adjustment needed to reset the portfolio value to $100,000
+                const adjustment = totalPortfolioValue - modelDPortfolioValue;
+
+                // Adjust modelDCash to reflect the injection or withdrawal of funds
+                modelDCash += adjustment;
+
+                // Sell all investments
+                modelDCash += modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+
+                // Allocate according to the cashPercent
+                let investmentAmount = modelDCash * (1 - cashPercent);
+                modelDCash = modelDCash * cashPercent;
+
+                // Buy new investments
+                modelDInvestments = [{ buyPrice: data.price, shares: investmentAmount / data.price }];
+
+                // Recalculate portfolio value
+                modelDPortfolioValue = modelDCash + modelDInvestments[0].shares * data.price;
+
+                // Set marker properties based on whether reset is due to drop or rise
+                const markerProperties = resetDueToDrop
+                    ? { color: 'red', symbol: 'triangle-down', size: 15 }
+                    : { color: 'green', symbol: 'triangle-up', size: 15 };
+
+                // Push the reset point with the updated marker properties
+                resetPoints.push({
+                    x: dataDate,
+                    y: modelDPortfolioValue,
+                    marker: markerProperties,
+                    hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${modelDCash.toFixed(2)}`
+                });
+
+                action = 'Reset';
+            }
 
                     // Add Model D portfolio values
-                    totalPortfolioValues.push({ x: dataDate, y: modelDPortfolioValue });
+                    totalPortfolioValues.push({ x: dataDate, y: totalValue });
                     totalCashValues.push({ x: dataDate, y: modelDCash });
                 } else {
                     // Add portfolio values for other models
@@ -1542,8 +1567,17 @@
                 const LeveragedHoldingPercentage = (leveragedHoldings / totalValue) * 100
                 const cashRatio = totalPortfolioValue / totalValue
 
+                if (selectedModel === 'modelD') {
+                    const modelDInvestmentValue = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                    totalValue = modelDCash + modelDInvestmentValue;
+                } else {
+                    const activeInvestmentValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                    const passiveInvestmentValue = passiveShares * data.price;
+                    totalValue = activeInvestmentValue + passiveInvestmentValue + cash;
+                }
+
                 totalPortfolioValues.push({ x: dataDate, y: totalValue });
-                totalCashValues.push({ x: dataDate, y: cash, dropPercentage: dropFromHighestPeak.toFixed(2)});
+                totalCashValues.push({ x: dataDate, y: (selectedModel === 'modelD' ? modelDCash : cash) });
 
                 // Modify the transaction log to store the new price fields
                 transactionLog.push({
@@ -1557,10 +1591,10 @@
                     highPrice: data.highPrice,
                     lowPrice: data.lowPrice,
                     closePrice: data.price,
-                    totalCash: cash.toFixed(2),
-                    stocksHeld: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0),
+                    totalCash: (selectedModel === 'modelD' ? modelDCash : cash).toFixed(2),
+                    stocksHeld: (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2),
                     passiveShares: passiveShares,
-                    totalShares: activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares,
+                    totalShares: ((selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)) + passiveShares).toFixed(2),
                     totalInvestments: totalInvestments.toFixed(2),
                     leveragedHolding: leveragedHoldings.toFixed(2),
                     LeveragedHoldingPercentage: LeveragedHoldingPercentage,
@@ -1584,13 +1618,12 @@
                 });
             });
 
-            const finalPortfolioValue = selectedModel === 'modelD' ? modelDPortfolioValue : totalPortfolioValues[totalPortfolioValues.length - 1].y;
+            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
             buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
-            finalTotalValueDisplay.textContent = finalPortfolioValue.toFixed(2);
+            finalTotalValueDisplay.textContent = totalValue.toFixed(2);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
             stocksLeftDisplay.textContent = (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2);
             availableMoneyDisplay.textContent = (selectedModel === 'modelD' ? modelDCash : cash).toFixed(2);
-
 
             // Calculate yields for result tab (Final values)
             const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
@@ -1732,6 +1765,7 @@
                     x: totalPortfolioValues.map(data => data.x),
                     y: totalPortfolioValues.map(data => data.y),
                     name: 'Total Portfolio Value',
+                    type: 'scatter',
                     mode: 'lines',
                 },
                 {
@@ -1773,11 +1807,7 @@
                     y: resetPoints.map(point => point.y),
                     mode: 'markers',
                     name: 'Reset Points',
-                    marker: {
-                        color: resetPoints.map(point => point.marker.color),
-                        symbol: resetPoints.map(point => point.marker.symbol),
-                        size: resetPoints.map(point => point.marker.size)
-                    },
+                    marker: resetPoints.map(point => point.marker),
                     hoverinfo: 'text',
                     text: resetPoints.map(point => point.hovertext)
                 },
@@ -1831,7 +1861,7 @@
                 'Date', 'Action', 'Shares Bought', 'Shares Sold', 'Buy Price', 'Sell Price', 'Open Price', 'High Price', 
                 'Low Price', 'Close Price', 'Total Cash', 'Stocks Held', 'Passive Shares', 'Total Shares', 
                 'Total Investment', 'Leveraged Holding', 'Leveraged Holding Percentage', 'Cash Ratio', 'Highest Peak', 
-                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', 'Model D Portfolio Value', // Add this line
+                'Passive Profit', 'Active Profit', 'Active Cash Invested', 'Total Value', // 'Model D Portfolio Value',
                 'Value Passive', 'Drop % From Highest Peak', 'NDX Open', 'NDX Close', 'NDX Passive Investment', 
                 'NDX Yield', 'Model Yield', 'QLD Yield'
             ];
@@ -1862,7 +1892,7 @@
                     log.activeProfit,
                     log.activeCashInvested,
                     log.totalValue,
-                    log.modelDPortfolioValue, // Add this line
+                    // log.modelDPortfolioValue,
                     log.valuePassive,
                     log.downPercentageFromPeak,
                     log.ndxOpen,
