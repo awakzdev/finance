@@ -20,14 +20,26 @@ symbols = ['QLD', '^NDX']
 for symbol in symbols:
     # Step 2: Fetch historical data for the symbol
     data = yf.download(symbol, start='2006-06-21', end=today_date)
-    # Was previously - 2019-07-26
 
     # Convert the index (dates) to the desired format (day/month/year)
     data.index = data.index.strftime('%d/%m/%Y')
 
+    # Rename the columns to match your desired output format
+    data.rename(columns={
+        'Open': 'Open', 
+        'High': 'High', 
+        'Low': 'Low', 
+        'Close': 'Close', 
+        'Adj Close': 'Adj Close', 
+        'Volume': 'Volume'
+    }, inplace=True)
+
+    # Reorder the columns to match the desired output
+    data = data[['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]
+
     # Step 3: Save the data to a CSV file with the symbol as a prefix
     csv_filename = f'{symbol.lower()}_stock_data.csv'
-    data.to_csv(csv_filename)
+    data.to_csv(csv_filename, index_label='Date')
     file_path_in_repo = csv_filename  # Use the same name for GitHub
 
     # Step 4: Get the current file's SHA (needed to update a file in the repository)
