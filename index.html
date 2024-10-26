@@ -709,7 +709,7 @@
                 </div>
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-chart-line results-icon"></i> Stocks Left:</span>
-                    <span class="result-value"><span id="stocksLeft">Calculating...</span> ($<span id="stocksValue">Calculating...</span>)</span>
+                    <span class="result-value"><span id="stocksLeft">Calculating...</span></span>
                 </div>
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-percentage results-icon"></i> Model Yield (%):</span>
@@ -1299,7 +1299,6 @@
             let buyAmountPercent = 0;
             // Variables specific to Model D
             let modelDPortfolioValue = totalPortfolioValue;
-            let modelDCash = initialCash;
             let modelDInvestments = [{
                 buyPrice: filteredStockData[0].openPrice,
                 shares: (totalPortfolioValue - initialCash) / filteredStockData[0].openPrice
@@ -1314,15 +1313,19 @@
             });
 
             let qldPassiveShares = totalPortfolioValue / filteredStockData[0].openPrice;
-            let initialQLDInvestment = qldPassiveShares * filteredStockData[0].openPrice; // This should equal totalPortfolioValue
+            // Ensure initial QLD investment is set to $100,000
+            let initialQLDInvestment = 100000; // Set to $100,000
+
+            // Calculate QLD yield values as percentages starting from 100%
             let qldYieldValues = filteredStockData.map(data => {
                 const currentValue = qldPassiveShares * data.price;
-                const yieldPercentage = ((currentValue / initialQLDInvestment) - 1) * 100;
+                const yieldPercentage = (currentValue / initialQLDInvestment) * 100; // Starts at 100%
                 return {
                     x: data.dateObj,
                     y: yieldPercentage
                 };
             });
+
 
             const totalPortfolioValues = [];
             const activeProfits = [];
@@ -1378,7 +1381,7 @@
                     const upperBound = totalPortfolioValue * (1 + resetThreshold);
 
                     // Calculate current Model D portfolio value
-                    modelDPortfolioValue = modelDCash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                    modelDPortfolioValue = cash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
 
                     // Check if the Model D portfolio should be reset
                     if (modelDPortfolioValue <= lowerBound || modelDPortfolioValue >= upperBound) {
@@ -1391,26 +1394,26 @@
                         // Calculate the adjustment needed to reset the portfolio value to initial value
                         const adjustment = totalPortfolioValue - modelDPortfolioValue;
 
-                        // Adjust modelDCash to reflect the injection or withdrawal of funds
-                        modelDCash += adjustment;
+                        // Adjust cash to reflect the injection or withdrawal of funds
+                        cash += adjustment;
 
                         // Sell all investments
                         const saleProceeds = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
-                        modelDCash += saleProceeds;
+                        cash += saleProceeds;
                         modelDInvestments = [];
 
                         // Calculate investment amount based on cashPercent
-                        const investmentAmount = modelDCash * (1 - cashPercent);
+                        const investmentAmount = cash * (1 - cashPercent);
 
-                        // Deduct investment amount from modelDCash
-                        modelDCash -= investmentAmount;
+                        // Deduct investment amount from cash
+                        cash -= investmentAmount;
 
                         // Buy new investments
                         const sharesToBuy = investmentAmount / data.price;
                         modelDInvestments.push({ buyPrice: data.price, shares: sharesToBuy });
 
                         // Recalculate portfolio value
-                        modelDPortfolioValue = modelDCash + sharesToBuy * data.price;
+                        modelDPortfolioValue = cash + sharesToBuy * data.price;
 
                         // Set marker properties based on whether reset is due to drop or rise
                         const markerProperties = resetDueToDrop
@@ -1422,7 +1425,7 @@
                             x: dataDate,
                             y: modelDPortfolioValue,
                             marker: markerProperties,
-                            hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${modelDCash.toFixed(2)}`
+                            hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${cash.toFixed(2)}`
                         });
 
                         action = 'Reset';
@@ -1439,7 +1442,7 @@
                 totalValue = (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares) * data.price + cash;
 
                 // Buy logic
-                if (selectedModel !== 'modelC') {
+                if (selectedModel === 'modelA' || selectedModel === 'modelB') {
                     buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
                     let initialBuyAmount = initialCash * buyAmountPercent;
 
@@ -1641,8 +1644,8 @@
 
                 if (selectedModel === 'modelD') {
                     const modelDInvestmentValue = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
-                    totalValue = modelDCash + modelDInvestmentValue;
-                    totalCashValues.push({ x: dataDate, y: modelDCash });
+                    totalValue = cash + modelDInvestmentValue;
+                    totalCashValues.push({ x: dataDate, y: cash });
                 } else {
                     // Do not redeclare variables; just assign values
                     activeInvestmentValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
@@ -1665,7 +1668,7 @@
                     highPrice: data.highPrice,
                     lowPrice: data.lowPrice,
                     closePrice: data.price,
-                    totalCash: (selectedModel === 'modelD' ? modelDCash : cash).toFixed(2),
+                    totalCash: cash.toFixed(2),
                     stocksHeld: (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2),
                     passiveShares: passiveShares,
                     totalShares: ((selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)) + passiveShares).toFixed(2),
@@ -1697,7 +1700,7 @@
             finalTotalValueDisplay.textContent = totalValue.toFixed(2);
             stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
             stocksLeftDisplay.textContent = (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2);
-            availableMoneyDisplay.textContent = (selectedModel === 'modelD' ? modelDCash : cash).toFixed(2);
+            availableMoneyDisplay.textContent = (selectedModel === 'modelD' ? cash : cash).toFixed(2);
 
             // Calculate yields for result tab (Final values)
             const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
@@ -1924,7 +1927,7 @@
                 },
                 margin: {
                     l: 50,
-                    r: 50,
+                    r: 60,
                     t: 70,
                     b: 50,
                 },
