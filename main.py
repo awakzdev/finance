@@ -11,7 +11,7 @@ github_token = os.getenv('TOKEN')
 repo = 'awakzdev/finance'
 branch = 'main'
 
-# Step 1: Fetch today's date in the format day/month/year
+# Step 1: Fetch today's date in the format YYYY-MM-DD
 today_date = datetime.now().strftime('%Y-%m-%d')
 
 # Symbols to process
@@ -21,20 +21,19 @@ for symbol in symbols:
     # Step 2: Fetch historical data for the symbol
     data = yf.download(symbol, start='2006-06-21', end=today_date)
 
+    # Check if data is empty
+    if data.empty:
+        print(f"No data found for {symbol}, skipping.")
+        continue
+
     # Convert the index (dates) to the desired format (day/month/year)
     data.index = data.index.strftime('%d/%m/%Y')
+    data.index.name = 'Date'  # Ensure the index has the correct name
 
-    # Rename the columns to match your desired output format
-    data.rename(columns={
-        'Open': 'Open', 
-        'High': 'High', 
-        'Low': 'Low', 
-        'Close': 'Close', 
-        'Adj Close': 'Adj Close', 
-        'Volume': 'Volume'
-    }, inplace=True)
+    # Remove the column name to prevent extra header rows in CSV
+    data.columns.name = None
 
-    # Reorder the columns to match the desired output
+    # Reorder the columns to match the desired output (if necessary)
     data = data[['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]
 
     # Step 3: Save the data to a CSV file with the symbol as a prefix
@@ -74,7 +73,7 @@ for symbol in symbols:
 
     # Step 6: Create the payload for the GitHub API request
     commit_message = f'Update {symbol} stock data'
-    data = {
+    payload = {
         'message': commit_message,
         'content': content_base64,
         'branch': branch
@@ -82,10 +81,10 @@ for symbol in symbols:
 
     # Include the SHA if the file exists (for updating)
     if sha:
-        data['sha'] = sha
+        payload['sha'] = sha
 
     # Step 7: Push the file to the repository
-    response = requests.put(url, headers=headers, json=data)
+    response = requests.put(url, headers=headers, json=payload)
 
     # Check if the file was updated/created successfully
     if response.status_code in [200, 201]:
