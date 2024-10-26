@@ -612,6 +612,19 @@
                         </button>
                     </div>
                 </div>
+                
+                <!-- Always Use Highest Peak Option (Only for Model B) -->
+                <div class="input-group" id="alwaysUseHighestPeakOption" style="display: none;">
+                    <label>Always Use Highest Peak:</label>
+                    <div class="icon-toggle">
+                        <button type="button" id="alwaysUseHighestPeakYes" class="icon-btn">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button type="button" id="alwaysUseHighestPeakNo" class="icon-btn active">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Sliders -->
                 <div id="defaultSliders">
@@ -731,6 +744,7 @@
         let ndxStockData = [];
         let datasetsLoaded = 0;
         let allowNegativeBalance = false;
+        let alwaysUseHighestPeak = false;
         let selectedModel = 'modelB';
         let qldCumulativeYields = [];
         let ndxCumulativeYields = [];
@@ -757,7 +771,9 @@
         const resetThresholdSlider = document.getElementById('resetThreshold');
         const resetThresholdValueDisplay = document.getElementById('resetThresholdValue');
         const holdingRatioResult = document.getElementById('holdingRatioResult');
-
+        const alwaysUseHighestPeakOption = document.getElementById('alwaysUseHighestPeakOption');
+        const alwaysUseHighestPeakYesBtn = document.getElementById('alwaysUseHighestPeakYes');
+        const alwaysUseHighestPeakNoBtn = document.getElementById('alwaysUseHighestPeakNo');
         // Debounce function to limit the rate of function calls
         function debounce(func, delay) {
             let debounceTimer;
@@ -842,6 +858,22 @@
                 debouncedCalculateResults();
             });
 
+            // Add event listeners to always buy from highest peak on model B
+            [alwaysUseHighestPeakYesBtn, alwaysUseHighestPeakNoBtn].forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Remove 'active' class from both buttons
+                    alwaysUseHighestPeakYesBtn.classList.remove('active');
+                    alwaysUseHighestPeakNoBtn.classList.remove('active');
+                    // Add 'active' class to the clicked button
+                    this.classList.add('active');
+                    // Update the variable based on the button clicked
+                    alwaysUseHighestPeak = this.id === 'alwaysUseHighestPeakYes';
+                    console.log('Always Use Highest Peak:', alwaysUseHighestPeak);
+                    // Recalculate results
+                    debouncedCalculateResults();
+                });
+            });
+
             // Event listener for "Allow Negative Balance" buttons
             const negativeBalanceAllowBtn = document.getElementById('negativeBalanceAllow');
             const negativeBalanceDisallowBtn = document.getElementById('negativeBalanceDisallow');
@@ -877,12 +909,13 @@
                 document.getElementById(model).classList.add('active');
 
                 if (model === 'modelDIcon') {
+                    // Existing code for Model D
                     document.getElementById('defaultSliders').classList.add('hidden');
                     document.getElementById('modelCParameters').style.display = 'none';
                     document.getElementById('Title_model_c').style.display = 'none';
                     document.getElementById('div_buyThresholdValue').style.display = 'none';
                     document.getElementById('div_buyAmountPercent').style.display = 'none';
-                           document.querySelector('.result-item:nth-child(2)').style.display = 'none'; // Hide Buy Amount on Each Purchase
+                    document.querySelector('.result-item:nth-child(2)').style.display = 'none'; // Hide Buy Amount on Each Purchase
                     document.querySelector('.result-item:nth-child(3)').style.display = 'none'; // Hide Available Investment Cash
                     buyThresholdSlider.parentElement.style.display = 'none';
                     // Show Reset Threshold Slider
@@ -891,6 +924,12 @@
                     document.querySelector('.result-item:nth-child(2)').style.display = 'none';
                     // Show Holding Ratio in Results
                     holdingRatioResult.style.display = 'flex';
+                    // Hide 'Always Use Highest Peak' option
+                    alwaysUseHighestPeakOption.style.display = 'none';
+                    // Reset the variable and UI state
+                    alwaysUseHighestPeak = false;
+                    alwaysUseHighestPeakYesBtn.classList.remove('active');
+                    alwaysUseHighestPeakNoBtn.classList.add('active');
                 } else if (model === 'modelCIcon') {
                     // Existing code for Model C
                     document.getElementById('defaultSliders').classList.add('hidden');
@@ -904,8 +943,14 @@
                     // Hide Holding Ratio in Results
                     holdingRatioResult.style.display = 'none';
                     // Hide Reset Threshold Slider
-                    document.getElementById('div_resetThresholdValue').style.display = 'none'; // Add this line
-                } else {
+                    document.getElementById('div_resetThresholdValue').style.display = 'none';
+                    // Hide 'Always Use Highest Peak' option
+                    alwaysUseHighestPeakOption.style.display = 'none';
+                    // Reset the variable and UI state
+                    alwaysUseHighestPeak = false;
+                    alwaysUseHighestPeakYesBtn.classList.remove('active');
+                    alwaysUseHighestPeakNoBtn.classList.add('active');
+                } else if (model === 'modelBIcon') {
                     // Existing code for Models A and B
                     document.getElementById('defaultSliders').classList.remove('hidden');
                     document.getElementById('modelCParameters').style.display = 'none';
@@ -919,12 +964,35 @@
                     holdingRatioResult.style.display = 'none';
                     // Hide Reset Threshold Slider
                     document.getElementById('div_resetThresholdValue').style.display = 'none';
+                    // Show 'Always Use Highest Peak' option for Model B
+                    alwaysUseHighestPeakOption.style.display = 'block';
+                } else {
+                    // For Model A
+                    document.getElementById('defaultSliders').classList.remove('hidden');
+                    document.getElementById('modelCParameters').style.display = 'none';
+                    document.getElementById('Title_model_c').style.display = 'none';
+                    document.getElementById('div_buyThresholdValue').style.display = 'block';
+                    document.getElementById('div_buyAmountPercent').style.display = 'block';
+                    buyThresholdSlider.parentElement.style.display = 'block';
+                    // Show Buy Amount on Each Purchase
+                    document.querySelector('.result-item:nth-child(2)').style.display = 'flex';
+                    // Hide Holding Ratio in Results
+                    holdingRatioResult.style.display = 'none';
+                    // Hide Reset Threshold Slider
+                    document.getElementById('div_resetThresholdValue').style.display = 'none';
+                    // Hide 'Always Use Highest Peak' option
+                    alwaysUseHighestPeakOption.style.display = 'none';
+                    // Reset the variable and UI state
+                    alwaysUseHighestPeak = false;
+                    alwaysUseHighestPeakYesBtn.classList.remove('active');
+                    alwaysUseHighestPeakNoBtn.classList.add('active');
                 }
 
                 selectedModel = model.replace('Icon', '');
                 console.log('Selected strategy:', selectedModel);
                 debouncedCalculateResults();
             }
+
 
 
             [modelAIcon, modelBIcon, modelCIcon, modelDIcon].forEach(function (button) {
@@ -1287,7 +1355,13 @@
                 let buy_price = null;
                 let sellPrice = null;
                 let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
-                let peakToUse = fullySold ? highestPeak : firstPurchasePeak;
+                let peakToUse;
+
+                if (alwaysUseHighestPeak && selectedModel === 'modelB') {
+                    peakToUse = highestPeak;
+                } else {
+                    peakToUse = fullySold ? highestPeak : firstPurchasePeak;
+                }
 
                 // Adjust currentPeak based on the selected model
                 if (selectedModel === 'modelA') {
