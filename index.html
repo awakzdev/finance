@@ -498,9 +498,9 @@
         margin-bottom: 5px;
     }
 
-    /* Hide the default sliders when Model C is selected */
-    #defaultSliders.hidden {
-        display: none;
+    /* Hide the default sliders */
+    .hidden {
+        display: none !important;
     }
 
     /* Styles for Reset Threshold Slider */
@@ -627,21 +627,18 @@
                 </div>
 
                 <!-- Sliders -->
+                <!-- Investment vs. Cash Split Slider -->
+                <div class="input-group" id="investmentCashSplit">
+                    <label for="split" class="slider-label">Investment vs. Cash Split (%):</label>
+                    <div class="slider-container">
+                        <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
+                        <span class="slider-value" id="splitValue">50%</span>
+                    </div>
+                </div>
+
+                <!-- Default Sliders -->
                 <div id="defaultSliders">
-                    <div class="input-group">
-                        <label for="split" class="slider-label">Investment vs. Cash Split (%):</label>
-                        <div class="slider-container">
-                            <input type="range" id="split" class="slider" min="0" max="100" value="50" step="1">
-                            <span class="slider-value" id="splitValue">50%</span>
-                        </div>
-                    </div>
-                    <div class="input-group" id="div_buyThresholdValue">
-                        <label for="buyThreshold" class="slider-label">Buy Threshold (% drop):</label>
-                        <div class="slider-container">
-                            <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
-                            <span class="slider-value" id="buyThresholdValue">5%</span>
-                        </div>
-                    </div>
+                    <!-- Sell Threshold Slider -->
                     <div class="input-group" id="div_sellThresholdValue">
                         <label for="sellThreshold" class="slider-label">Sell Threshold (% increase):</label>
                         <div class="slider-container">
@@ -650,6 +647,16 @@
                         </div>
                     </div>
 
+                    <!-- Buy Threshold Slider -->
+                    <div class="input-group" id="div_buyThresholdValue">
+                        <label for="buyThreshold" class="slider-label">Buy Threshold (% drop):</label>
+                        <div class="slider-container">
+                            <input type="range" id="buyThreshold" class="slider" min="1" max="20" value="5" step="1">
+                            <span class="slider-value" id="buyThresholdValue">5%</span>
+                        </div>
+                    </div>
+
+                    <!-- Buy Percentage from Cash Slider -->
                     <div class="input-group" id="div_buyAmountPercent">
                         <label for="buyAmountPercent" class="slider-label">Buy Percentage from Cash (%):</label>
                         <div class="slider-container">
@@ -798,7 +805,7 @@
                 console.error("Error fetching QLD CSV file:", error);
             });
 
-            fetch('https://raw.githubusercontent.com/awakzdev/finance/main/^ndx_stock_data.csv')
+            fetch('https://raw.githubusercontent.com/awakzdev/finance/main/ndx_stock_data.csv')
             .then(response => response.text())
             .then(csvText => {
                 parseCSVData(csvText, 'NDX');
@@ -908,92 +915,55 @@
                 // Add 'active' class to the selected model button
                 document.getElementById(model).classList.add('active');
 
+                // Hide all elements initially
+                document.getElementById('investmentCashSplit').classList.add('hidden');
+                document.getElementById('defaultSliders').classList.add('hidden');
+                document.getElementById('modelCParameters').style.display = 'none';
+                document.getElementById('Title_model_c').style.display = 'none';
+                document.getElementById('div_resetThresholdValue').style.display = 'none';
+                document.getElementById('alwaysUseHighestPeakOption').style.display = 'none';
+                holdingRatioResult.style.display = 'none';
+                // Hide Buy Amount on Each Purchase and Available Investment Cash in results
+                document.querySelector('.result-item:nth-child(2)').style.display = 'none';
+                document.querySelector('.result-item:nth-child(3)').style.display = 'none';
+
+                // Reset variables and UI states
+                alwaysUseHighestPeak = false;
+                alwaysUseHighestPeakYesBtn.classList.remove('active');
+                alwaysUseHighestPeakNoBtn.classList.add('active');
+
                 if (model === 'modelDIcon') {
-                    // Existing code for Model D
-                    document.getElementById('defaultSliders').classList.add('hidden');
-                    document.getElementById('modelCParameters').style.display = 'none';
-                    document.getElementById('Title_model_c').style.display = 'none';
-                    document.getElementById('div_buyThresholdValue').style.display = 'none';
-                    document.getElementById('div_buyAmountPercent').style.display = 'none';
-                    document.querySelector('.result-item:nth-child(2)').style.display = 'none'; // Hide Buy Amount on Each Purchase
-                    document.querySelector('.result-item:nth-child(3)').style.display = 'none'; // Hide Available Investment Cash
-                    buyThresholdSlider.parentElement.style.display = 'none';
-                    // Show Reset Threshold Slider
+                    // **Model D**: Show only the Reset Threshold slider
                     document.getElementById('div_resetThresholdValue').style.display = 'block';
-                    // Hide Buy Amount on Each Purchase
-                    document.querySelector('.result-item:nth-child(2)').style.display = 'none';
                     // Show Holding Ratio in Results
                     holdingRatioResult.style.display = 'flex';
-                    // Hide 'Always Use Highest Peak' option
-                    alwaysUseHighestPeakOption.style.display = 'none';
-                    // Reset the variable and UI state
-                    alwaysUseHighestPeak = false;
-                    alwaysUseHighestPeakYesBtn.classList.remove('active');
-                    alwaysUseHighestPeakNoBtn.classList.add('active');
                 } else if (model === 'modelCIcon') {
-                    // Existing code for Model C
-                    document.getElementById('defaultSliders').classList.add('hidden');
+                    // **Model C**: Show only the Investment vs. Cash Split slider
+                    document.getElementById('investmentCashSplit').classList.remove('hidden');
+                    // Show Model C Customization (if applicable)
                     document.getElementById('modelCParameters').style.display = 'block';
                     document.getElementById('Title_model_c').style.display = 'block';
-                    document.getElementById('div_buyThresholdValue').style.display = 'none';
-                    document.getElementById('div_buyAmountPercent').style.display = 'none';
-                    buyThresholdSlider.parentElement.style.display = 'none';
-                    // Hide Buy Amount on Each Purchase
-                    document.querySelector('.result-item:nth-child(2)').style.display = 'none';
-                    // Hide Holding Ratio in Results
-                    holdingRatioResult.style.display = 'none';
-                    // Hide Reset Threshold Slider
-                    document.getElementById('div_resetThresholdValue').style.display = 'none';
-                    // Hide 'Always Use Highest Peak' option
-                    alwaysUseHighestPeakOption.style.display = 'none';
-                    // Reset the variable and UI state
-                    alwaysUseHighestPeak = false;
-                    alwaysUseHighestPeakYesBtn.classList.remove('active');
-                    alwaysUseHighestPeakNoBtn.classList.add('active');
                 } else if (model === 'modelBIcon') {
-                    // Existing code for Models A and B
+                    // **Model B**: Show default sliders and 'Always Use Highest Peak' option
+                    document.getElementById('investmentCashSplit').classList.remove('hidden');
                     document.getElementById('defaultSliders').classList.remove('hidden');
-                    document.getElementById('modelCParameters').style.display = 'none';
-                    document.getElementById('Title_model_c').style.display = 'none';
-                    document.getElementById('div_buyThresholdValue').style.display = 'block';
-                    document.getElementById('div_buyAmountPercent').style.display = 'block';
-                    buyThresholdSlider.parentElement.style.display = 'block';
-                    // Show Buy Amount on Each Purchase
+                    document.getElementById('alwaysUseHighestPeakOption').style.display = 'block';
+                    // Show Buy Amount on Each Purchase and Available Investment Cash in results
                     document.querySelector('.result-item:nth-child(2)').style.display = 'flex';
-                    // Hide Holding Ratio in Results
-                    holdingRatioResult.style.display = 'none';
-                    // Hide Reset Threshold Slider
-                    document.getElementById('div_resetThresholdValue').style.display = 'none';
-                    // Show 'Always Use Highest Peak' option for Model B
-                    alwaysUseHighestPeakOption.style.display = 'block';
+                    document.querySelector('.result-item:nth-child(3)').style.display = 'flex';
                 } else {
-                    // For Model A
+                    document.getElementById('investmentCashSplit').classList.remove('hidden');
+                    // **Model A**: Show default sliders
                     document.getElementById('defaultSliders').classList.remove('hidden');
-                    document.getElementById('modelCParameters').style.display = 'none';
-                    document.getElementById('Title_model_c').style.display = 'none';
-                    document.getElementById('div_buyThresholdValue').style.display = 'block';
-                    document.getElementById('div_buyAmountPercent').style.display = 'block';
-                    buyThresholdSlider.parentElement.style.display = 'block';
-                    // Show Buy Amount on Each Purchase
+                    // Show Buy Amount on Each Purchase and Available Investment Cash in results
                     document.querySelector('.result-item:nth-child(2)').style.display = 'flex';
-                    // Hide Holding Ratio in Results
-                    holdingRatioResult.style.display = 'none';
-                    // Hide Reset Threshold Slider
-                    document.getElementById('div_resetThresholdValue').style.display = 'none';
-                    // Hide 'Always Use Highest Peak' option
-                    alwaysUseHighestPeakOption.style.display = 'none';
-                    // Reset the variable and UI state
-                    alwaysUseHighestPeak = false;
-                    alwaysUseHighestPeakYesBtn.classList.remove('active');
-                    alwaysUseHighestPeakNoBtn.classList.add('active');
+                    document.querySelector('.result-item:nth-child(3)').style.display = 'flex';
                 }
 
                 selectedModel = model.replace('Icon', '');
                 console.log('Selected strategy:', selectedModel);
                 debouncedCalculateResults();
             }
-
-
 
             [modelAIcon, modelBIcon, modelCIcon, modelDIcon].forEach(function (button) {
                 button.addEventListener('click', function () {
@@ -1644,6 +1614,7 @@
 
                 if (selectedModel === 'modelD') {
                     const modelDInvestmentValue = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                    console.log('Cash', {cash}, 'modelDinvestmentvalue', {modelDInvestmentValue}, "date", {data})
                     totalValue = cash + modelDInvestmentValue;
                     totalCashValues.push({ x: dataDate, y: cash });
                 } else {
