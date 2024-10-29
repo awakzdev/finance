@@ -412,30 +412,13 @@
         outline: none;
     }
 
-    /* Styles that may cause unexpected positioning */
-    #customRangeSelector {
-        top: 10px;
-        left: 10px;
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 5px;
-        border-radius: 5px;
-        z-index: 10;
+    /* Custom styles for Plotly range selector buttons */
+    .custom-range-selector {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
     }
 
-    #chartContainer {
-        position: relative;
-    }
-
-    #customRangeSelector {
-        top: 10px;
-        left: 10px;
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 5px;
-        border-radius: 5px;
-        z-index: 10;
-    }
-
-    /* Conflicting styles for buttons */
     .custom-range-selector button {
         background-color: #f0f0f0;
         border: none;
@@ -450,11 +433,17 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .custom-range-selector {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
+    .custom-range-selector button:hover {
+        background-color: #e0e0e0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
+
+    .custom-range-selector button.active {
+        background-color: #007BFF;
+        color: #fff;
+    }
+
+    /**/
 
     /* Model C Customization Styles */
     #modelCContainer {
@@ -841,6 +830,47 @@
         const alwaysUseHighestPeakOption = document.getElementById('alwaysUseHighestPeakOption');
         const alwaysUseHighestPeakYesBtn = document.getElementById('alwaysUseHighestPeakYes');
         const alwaysUseHighestPeakNoBtn = document.getElementById('alwaysUseHighestPeakNo');
+
+        function getFilteredStockData(dataArray, startDateObj, endDateObj) {
+            // Helper function for binary search
+            function binarySearch(array, targetDate, findStart) {
+                let low = 0;
+                let high = array.length - 1;
+                let result = -1;
+                while (low <= high) {
+                    const mid = Math.floor((low + high) / 2);
+                    const midDate = array[mid].dateObj;
+                    if (midDate < targetDate) {
+                        low = mid + 1;
+                    } else if (midDate > targetDate) {
+                        high = mid - 1;
+                    } else {
+                        result = mid;
+                        if (findStart) {
+                            high = mid - 1;
+                        } else {
+                            low = mid + 1;
+                        }
+                    }
+                }
+                // If exact date is not found, return the closest index
+                return findStart ? low : high;
+            }
+
+            // Ensure the data is sorted by dateObj
+            dataArray.sort((a, b) => a.dateObj - b.dateObj);
+
+            const startIndex = binarySearch(dataArray, startDateObj, true);
+            const endIndex = binarySearch(dataArray, endDateObj, false);
+
+            // Handle cases where dates are out of range
+            if (startIndex > endIndex || startIndex >= dataArray.length || endIndex < 0) {
+                return [];
+            }
+
+            return dataArray.slice(startIndex, endIndex + 1);
+        }
+
         // Debounce function to limit the rate of function calls
         function debounce(func, delay) {
             let debounceTimer;
@@ -1315,13 +1345,8 @@
             const startDateObj = parseDate(selectedStartDate);
             const endDateObj = parseDate(selectedClosingDate);
 
-            const filteredStockData = stockData.filter(data => {
-                return data.dateObj >= startDateObj && data.dateObj <= endDateObj;
-            });
-
-            const filteredNDXStockData = ndxStockData.filter(data => {
-                return data.dateObj >= startDateObj && data.dateObj <= endDateObj;
-            });
+            const filteredStockData = getFilteredStockData(stockData, startDateObj, endDateObj);
+            const filteredNDXStockData = getFilteredStockData(ndxStockData, startDateObj, endDateObj);
 
             if (!filteredStockData.length || !filteredNDXStockData.length) {
                 console.error("No stock data available for the selected date range.");
@@ -1851,9 +1876,9 @@
         }
 
         function setupChart() {
-            const layout = {
-                title: 'Portfolio Values Over Time',
-            };
+            // const layout = {
+            //     title: 'Portfolio Values Over Time',
+            // };
 
             const config = {
                 displaylogo: false,
