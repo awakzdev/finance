@@ -412,6 +412,50 @@
         outline: none;
     }
 
+    /* Styles that may cause unexpected positioning */
+    #customRangeSelector {
+        top: 10px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 5px;
+        border-radius: 5px;
+        z-index: 10;
+    }
+
+    #chartContainer {
+        position: relative;
+    }
+
+    #customRangeSelector {
+        top: 10px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 5px;
+        border-radius: 5px;
+        z-index: 10;
+    }
+
+    /* Conflicting styles for buttons */
+    .custom-range-selector button {
+        background-color: #f0f0f0;
+        border: none;
+        color: #333;
+        padding: 8px 12px;
+        margin: 0 4px;
+        font-size: 14px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .custom-range-selector {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
     /* Model C Customization Styles */
     #modelCContainer {
         margin-top: 20px;
@@ -740,6 +784,20 @@
 
         <!-- Right Section: Graph -->
         <div class="right-section">
+            <div id="customRangeSelector" class="custom-range-selector">
+                <button data-range="1y">1Y</button>
+                <button data-range="2y">2Y</button>
+                <button data-range="3y">3Y</button>
+                <button data-range="4y">4Y</button>
+                <button data-range="5y">5Y</button>
+                <button data-range="6y">6Y</button>
+                <button data-range="7y">7Y</button>
+                <button data-range="8y">8Y</button>
+                <button data-range="9y">9Y</button>
+                <button data-range="10y">10Y</button>
+            </div>
+            
+
             <div id="totalPortfolioChart"></div>
         </div>
     </div>
@@ -757,6 +815,8 @@
         let ndxCumulativeYields = [];
         let qldYieldValues = [];
         let holdingRatios = [];
+        let minXValue;
+        let maxXValue;
 
         const totalInvestmentInput = document.getElementById('totalInvestment');
         const splitSlider = document.getElementById('split');
@@ -864,6 +924,9 @@
                 resetThresholdValueDisplay.textContent = resetThresholdSlider.value + '%';
                 debouncedCalculateResults();
             });
+
+            // Calls event listener function for date selection
+            setupCustomRangeSelector();
 
             // Add event listeners to always buy from highest peak on model B
             [alwaysUseHighestPeakYesBtn, alwaysUseHighestPeakNoBtn].forEach(function(button) {
@@ -974,6 +1037,38 @@
             // Initialize the UI with the default model (Model B)
             selectModel('modelBIcon');
         };
+
+        function setupCustomRangeSelector() {
+            const buttons = document.querySelectorAll('#customRangeSelector button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove 'active' class from all buttons
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    // Add 'active' class to the clicked button
+                    this.classList.add('active');
+
+                    // Determine the new date range
+                    const range = this.getAttribute('data-range');
+                    let newStartDate;
+                    const endDate = new Date(maxXValue); // Use the globally scoped maxXValue
+
+                    if (range === 'max') {
+                        newStartDate = new Date(minXValue);
+                    } else {
+                        const yearsBack = parseInt(range.replace('y', ''));
+                        newStartDate = new Date(Date.UTC(endDate.getUTCFullYear() - yearsBack, endDate.getUTCMonth(), endDate.getUTCDate()));
+                    }
+
+                    // Update the chart's x-axis range
+                    Plotly.relayout('totalPortfolioChart', {
+                        'xaxis.range': [newStartDate, endDate]
+                    });
+
+                    // Update the date inputs or recalculate results
+                    updateDateDropdowns(newStartDate, endDate);
+                });
+            });
+        }
 
         // Function to add a new row to the Model C table
         function addRow() {
@@ -1758,70 +1853,6 @@
         function setupChart() {
             const layout = {
                 title: 'Portfolio Values Over Time',
-                xaxis: {
-                    title: 'Date',
-                    type: 'date',
-                    tickformat: '%Y-%m-%d',
-                    rangeselector: {
-                        x: 0, // Position on the x-axis (0 to 1)
-                        y: 1.2, // Position above the plotting area
-                        xanchor: 'left',
-                        yanchor: 'bottom',
-                        buttons: [
-                            {
-                                count: 1,
-                                label: '1D',
-                                step: 'day',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 7,
-                                label: '1W',
-                                step: 'day',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 1,
-                                label: '1M',
-                                step: 'month',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 6,
-                                label: '6M',
-                                step: 'month',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 1,
-                                label: '1Y',
-                                step: 'year',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 5,
-                                label: '5Y',
-                                step: 'year',
-                                stepmode: 'backward'
-                            },
-                            {
-                                step: 'all',
-                                label: 'MAX'
-                            }
-        ,
-                        ]
-                    },
-                    rangeslider: { visible: false },
-                },
-                yaxis: {
-                    title: 'Value ($)',
-                },
-                margin: {
-                    l: 50,
-                    r: 50,
-                    t: 50, // Increased to make space for the buttons
-                    b: 50,
-                }
             };
 
             const config = {
@@ -1829,7 +1860,59 @@
                 displayModeBar: true,
             };
 
-            Plotly.newPlot('totalPortfolioChart', [], layout, config);
+            // Create the chart and get the chart element
+            const chartElement = document.getElementById('totalPortfolioChart');
+            Plotly.newPlot(chartElement, [], layout, config);
+
+            // Add event listener for relayout events
+            chartElement.on('plotly_relayout', function(eventData) {
+                if (eventData['xaxis.range[0]'] && eventData['xaxis.range[1]']) {
+                    const newStartDate = new Date(eventData['xaxis.range[0]']);
+                    const newEndDate = new Date(eventData['xaxis.range[1]']);
+
+                    // Update the date dropdowns
+                    updateDateDropdowns(newStartDate, newEndDate);
+                }
+            });
+        }
+
+        function updateDateDropdowns(newStartDate, newEndDate) {
+            // Format dates to match the format used in the dropdowns
+            const formattedStartDate = formatDate(newStartDate);
+            const formattedEndDate = formatDate(newEndDate);
+
+            // Find the closest matching dates in the dropdown options
+            const startDateOption = findClosestDateOption(dateRangeDropdown, formattedStartDate);
+            const endDateOption = findClosestDateOption(closingDateDropdown, formattedEndDate);
+
+            // Update the dropdowns if the values have changed
+            if (dateRangeDropdown.value !== startDateOption.value) {
+                dateRangeDropdown.value = startDateOption.value;
+            }
+            if (closingDateDropdown.value !== endDateOption.value) {
+                closingDateDropdown.value = endDateOption.value;
+            }
+
+            // Trigger recalculation if dates have changed
+            calculateResults();
+        }
+
+        function findClosestDateOption(dropdown, targetDateStr) {
+            let closestOption = dropdown.options[0];
+            let minDiff = Math.abs(parseDate(dropdown.options[0].value) - parseDate(targetDateStr));
+
+            for (let i = 1; i < dropdown.options.length; i++) {
+                const option = dropdown.options[i];
+                const optionDate = parseDate(option.value);
+                const diff = Math.abs(optionDate - parseDate(targetDateStr));
+
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestOption = option;
+                }
+            }
+
+            return closestOption;
         }
 
         function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues, resetPoints) {
@@ -1848,9 +1931,9 @@
                 ...ndxCumulativeYields.map(data => data.x)
             ];
 
-            const minXValue = Math.min(...allXValues);
-            const maxXValue = Math.max(...allXValues);
-
+            minXValue = Math.min(...allXValues);
+            maxXValue = Math.max(...allXValues);
+            
             const updatedData = [
                 {
                     x: totalPortfolioValues.map(data => data.x),
@@ -1927,74 +2010,9 @@
             const layout = {
                 title: 'Portfolio Values Over Time',
                 xaxis: {
-                    
                     title: 'Date',
                     type: 'date',
-                    // range: [minXValue, maxXValue],
-                    rangeselector: {
-                        buttons: [
-                            {
-                                count: 1,
-                                label: '1D',
-                                step: 'day',
-                                stepmode: 'backward',
-                                stepname: '1D',
-                            },
-                            {
-                                count: 7,
-                                label: '1W',
-                                step: 'day',
-                                stepmode: 'backward',
-                                stepname: '1W',
-                            },
-                            {
-                                count: 1,
-                                label: '1M',
-                                step: 'month',
-                                stepmode: 'backward',
-                                stepname: '1M',
-                            },
-                            {
-                                count: 6,
-                                label: '6M',
-                                step: 'month',
-                                stepmode: 'backward',
-                                stepname: '6M',
-                            },
-                            {
-                                count: 1,
-                                label: '1Y',
-                                step: 'year',
-                                stepmode: 'backward',
-                                stepname: '1Y',
-                            },
-                            {
-                                count: 5,
-                                label: '5Y',
-                                step: 'year',
-                                stepmode: 'backward',
-                                stepname: '5Y',
-                            },
-                            {
-                                step: 'all',
-                                label: 'MAX',
-                                stepname: 'MAX',
-                            },
-                        ],
-                        bgcolor: '#ffffff',
-                        activecolor: '#4CAF50',
-                        bordercolor: '#ccc',
-                        borderwidth: 1,
-                        font: {
-                            family: 'Arial, sans-serif',
-                            size: 12,
-                            color: '#2c3e50'
-                        },
-                        x: 0,
-                        y: 1.15,
-                        xanchor: 'left',
-                        yanchor: 'bottom',
-                    },
+                    range: [minXValue, maxXValue],
                     rangeslider: { visible: false },
                 },
                 yaxis: {
