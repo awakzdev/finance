@@ -1762,13 +1762,56 @@
                     title: 'Date',
                     type: 'date',
                     tickformat: '%Y-%m-%d',
-                    tickmode: 'auto',
-                    tickformatstops: [
-                        {
-                            dtickrange: [null, null],
-                            value: '%Y-%m-%d',
-                        },
-                    ],
+                    rangeselector: {
+                        x: 0, // Position on the x-axis (0 to 1)
+                        y: 1.2, // Position above the plotting area
+                        xanchor: 'left',
+                        yanchor: 'bottom',
+                        buttons: [
+                            {
+                                count: 1,
+                                label: '1D',
+                                step: 'day',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 7,
+                                label: '1W',
+                                step: 'day',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 1,
+                                label: '1M',
+                                step: 'month',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 6,
+                                label: '6M',
+                                step: 'month',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 1,
+                                label: '1Y',
+                                step: 'year',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 5,
+                                label: '5Y',
+                                step: 'year',
+                                stepmode: 'backward'
+                            },
+                            {
+                                step: 'all',
+                                label: 'MAX'
+                            }
+        ,
+                        ]
+                    },
+                    rangeslider: { visible: false },
                 },
                 yaxis: {
                     title: 'Value ($)',
@@ -1776,7 +1819,7 @@
                 margin: {
                     l: 50,
                     r: 50,
-                    t: 20,
+                    t: 50, // Increased to make space for the buttons
                     b: 50,
                 }
             };
@@ -1815,6 +1858,8 @@
                     name: 'Total Portfolio Value',
                     type: 'scatter',
                     mode: 'lines',
+                    line: { color: '#1f77b4', width: 2 },
+                    hovertemplate: 'Date: %{x}<br>Total Value: $%{y:.2f}<extra></extra>',
                 },
                 {
                     x: ndxPortfolioValues.map(data => data.x),
@@ -1835,7 +1880,8 @@
                     y: totalCashValues.map(data => data.y),
                     name: 'Total Cash',
                     mode: 'lines',
-                    line: { dash: 'dot', color: 'rgba(255, 165, 0, 1)' }
+                    line: { dash: 'dot', color: 'rgba(255, 165, 0, 1)' },
+                    hovertemplate: 'Date: %{x}<br>Total Cash: $%{y:.2f}<extra></extra>',
                 },
                 {
                     x: buyPoints.map(point => point.x),
@@ -1881,27 +1927,98 @@
             const layout = {
                 title: 'Portfolio Values Over Time',
                 xaxis: {
+                    
                     title: 'Date',
                     type: 'date',
-                    range: [minXValue, maxXValue],
+                    // range: [minXValue, maxXValue],
+                    rangeselector: {
+                        buttons: [
+                            {
+                                count: 1,
+                                label: '1D',
+                                step: 'day',
+                                stepmode: 'backward',
+                                stepname: '1D',
+                            },
+                            {
+                                count: 7,
+                                label: '1W',
+                                step: 'day',
+                                stepmode: 'backward',
+                                stepname: '1W',
+                            },
+                            {
+                                count: 1,
+                                label: '1M',
+                                step: 'month',
+                                stepmode: 'backward',
+                                stepname: '1M',
+                            },
+                            {
+                                count: 6,
+                                label: '6M',
+                                step: 'month',
+                                stepmode: 'backward',
+                                stepname: '6M',
+                            },
+                            {
+                                count: 1,
+                                label: '1Y',
+                                step: 'year',
+                                stepmode: 'backward',
+                                stepname: '1Y',
+                            },
+                            {
+                                count: 5,
+                                label: '5Y',
+                                step: 'year',
+                                stepmode: 'backward',
+                                stepname: '5Y',
+                            },
+                            {
+                                step: 'all',
+                                label: 'MAX',
+                                stepname: 'MAX',
+                            },
+                        ],
+                        bgcolor: '#ffffff',
+                        activecolor: '#4CAF50',
+                        bordercolor: '#ccc',
+                        borderwidth: 1,
+                        font: {
+                            family: 'Arial, sans-serif',
+                            size: 12,
+                            color: '#2c3e50'
+                        },
+                        x: 0,
+                        y: 1.15,
+                        xanchor: 'left',
+                        yanchor: 'bottom',
+                    },
+                    rangeslider: { visible: false },
                 },
                 yaxis: {
                     title: 'Value ($) / Yield (%)',
+                    
                 },
                 hovermode: 'closest',
                 legend: {
                     orientation: 'h',
                     x: 0.5,
-                    y: 1.0,
+                    y: 1.15,
                     xanchor: 'center',
                     yanchor: 'bottom',
+                    font: {
+                        size: 12,
+                    },
                 },
                 margin: {
                     l: 50,
                     r: 60,
-                    t: 70,
+                    t: 150, // Increased to accommodate the buttons
                     b: 50,
                 },
+                
             };
 
             Plotly.react('totalPortfolioChart', updatedData, layout);
