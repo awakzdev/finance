@@ -1,0 +1,28 @@
+2024-10-30 10:29:36,978 - INFO - Processing symbol: QLD
+2024-10-30 10:29:36,978 - INFO - Fetching data for QLD from yfinance.
+2024-10-30 10:29:38,852 - INFO - Writing data to CSV file: qld_stock_data.csv
+2024-10-30 10:29:39,445 - INFO - Updating existing file 'qld_stock_data.csv' in the repository.
+2024-10-30 10:29:40,763 - INFO - File 'qld_stock_data.csv' updated successfully in the repository.
+2024-10-30 10:29:40,763 - INFO - Processing symbol: ^NDX
+2024-10-30 10:29:40,763 - INFO - Fetching data for ^NDX from yfinance.
+2024-10-30 10:29:41,303 - INFO - Writing data to CSV file: ndx_stock_data.csv
+2024-10-30 10:29:41,834 - INFO - Updating existing file 'ndx_stock_data.csv' in the repository.
+2024-10-30 10:29:43,163 - INFO - File 'ndx_stock_data.csv' updated successfully in the repository.
+2024-10-30 10:35:01,216 - INFO - Processing symbol: QLD
+2024-10-30 10:35:01,216 - INFO - Fetching data for QLD from yfinance.
+2024-10-30 10:35:01,854 - INFO - Writing data to CSV file: qld_stock_data.csv
+2024-10-30 10:35:01,871 - INFO - Cleaning CSV file: qld_stock_data.csv
+2024-10-30 10:35:01,884 - INFO - No corrupted rows found in 'qld_stock_data.csv'.
+2024-10-30 10:35:01,884 - INFO - Validating CSV file: qld_stock_data.csv
+2024-10-30 10:35:02,410 - INFO - Updating existing file 'qld_stock_data.csv' in the repository.
+2024-10-30 10:35:02,412 - INFO - Uploading 'qld_stock_data.csv' to GitHub.
+2024-10-30 10:35:04,753 - INFO - File 'qld_stock_data.csv' updated successfully in the repository.
+2024-10-30 10:35:04,753 - INFO - Processing symbol: ^NDX
+2024-10-30 10:35:04,753 - INFO - Fetching data for ^NDX from yfinance.
+2024-10-30 10:35:05,344 - INFO - Writing data to CSV file: ndx_stock_data.csv
+2024-10-30 10:35:05,360 - INFO - Cleaning CSV file: ndx_stock_data.csv
+2024-10-30 10:35:05,368 - INFO - No corrupted rows found in 'ndx_stock_data.csv'.
+2024-10-30 10:35:05,368 - INFO - Validating CSV file: ndx_stock_data.csv
+2024-10-30 10:35:05,834 - INFO - Updating existing file 'ndx_stock_data.csv' in the repository.
+2024-10-30 10:35:05,836 - INFO - Uploading 'ndx_stock_data.csv' to GitHub.
+2024-10-30 10:35:07,008 - INFO - File 'ndx_stock_data.csv' updated successfully in the repository.
