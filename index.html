@@ -1402,25 +1402,25 @@
                 };
             });
 
-            let qldPassiveShares = totalPortfolioValue / filteredStockData[0].openPrice;
             // Ensure initial QLD investment is set to $100,000
-            let initialQLDInvestment = 100000; // Set to $100,000
+            let initialQLDInvestment = totalPortfolioValue; // Set to $100,000
+            let qldPassiveShares = initialQLDInvestment / filteredStockData[0].openPrice;
 
             // Calculate QLD yield values as percentages starting from 100%
             let qldYieldValues = filteredStockData.map(data => {
-                const currentValue = qldPassiveShares * data.price;
-                const yieldPercentage = (currentValue / initialQLDInvestment) * 100; // Starts at 100%
+                const currentValue = (qldPassiveShares * data.price);
+                const yieldPercentage = ((currentValue / initialQLDInvestment) - 1) * 100; // Starts at 0%
+                
                 return {
                     x: data.dateObj,
                     y: yieldPercentage
                 };
             });
 
-
             const totalPortfolioValues = [];
             const activeProfits = [];
             const transactionLog = [];
-
+            
             // Iterate over filtered stock data for calculations
             filteredStockData.forEach((data, index) => {
                 const dataDate = data.dateObj;
@@ -1715,10 +1715,6 @@
                     return investment;
                 }).filter(investment => investment.shares > 0);
 
-                // **Rest of the calculateResults function remains the same**
-                // Calculate portfolio values after buy/sell logic
-                // activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-
                 const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
                 const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
                 const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item]));
@@ -1786,6 +1782,21 @@
                 });
             });
 
+            // Find the max and min values of the primary y-axis data
+            const portfolioValues = totalPortfolioValues.map(data => data.y);
+            const primaryYMin = Math.min(...portfolioValues);
+            const primaryYMax = Math.max(...portfolioValues);
+
+            // Scale QLD Yield to the primary y-axis range
+            const qldYieldScaledValues = qldYieldValues.map(data => {
+                const scaledY = ((data.y / 100) * (primaryYMax - primaryYMin)) + primaryYMin;
+                return {
+                    x: data.x,
+                    y: scaledY,
+                    originalYield: data.y, // Keep the original yield for hover info
+                };
+            });
+
             const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
             buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
             finalTotalValueDisplay.textContent = totalValue.toFixed(2);
@@ -1817,7 +1828,16 @@
                 };
             });
 
-            updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues, resetPoints); // qldCumulativeYields, ndxCumulativeYields);
+            updateChart(
+                totalPortfolioValues,
+                activeProfits,
+                ndxPortfolioValues,
+                qldYieldScaledValues,
+                buyPoints,
+                sellPoints,
+                totalCashValues,
+                resetPoints
+            );        
             window.transactionLog = transactionLog;
         }
 
@@ -1876,9 +1896,42 @@
         }
 
         function setupChart() {
-            // const layout = {
-            //     title: 'Portfolio Values Over Time',
-            // };
+            const layout = {
+                title: 'Portfolio Values Over Time',
+                xaxis: {
+                    title: 'Date',
+                    type: 'date',
+                },
+                yaxis: {
+                    title: 'Portfolio Value ($)',
+                    showline: true,
+                    zeroline: false,
+                },
+                yaxis2: {
+                    title: 'QLD Yield (%)',
+                    overlaying: 'y',
+                    side: 'right',
+                    showline: true,
+                    zeroline: false,
+                },
+                hovermode: 'closest',
+                legend: {
+                    orientation: 'h',
+                    x: 0.5,
+                    y: 1.15,
+                    xanchor: 'center',
+                    yanchor: 'bottom',
+                    font: {
+                        size: 12,
+                    },
+                },
+                margin: {
+                    l: 60,
+                    r: 80, // Ensure sufficient right margin
+                    t: 150,
+                    b: 50,
+                },
+            };
 
             const config = {
                 displaylogo: false,
@@ -1900,6 +1953,7 @@
                 }
             });
         }
+
 
         function updateDateDropdowns(newStartDate, newEndDate) {
             // Format dates to match the format used in the dropdowns
@@ -1940,14 +1994,14 @@
             return closestOption;
         }
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues, resetPoints) {
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldScaledValues, buyPoints, sellPoints, totalCashValues, resetPoints) {
             qldCumulativeYields = qldCumulativeYields || [];
             ndxCumulativeYields = ndxCumulativeYields || [];
 
             const allXValues = [
                 ...totalPortfolioValues.map(data => data.x),
                 ...ndxPortfolioValues.map(data => data.x),
-                ...qldYieldValues.map(data => data.x),
+                ...qldYieldScaledValues.map(data => data.x),
                 ...buyPoints.map(point => point.x),
                 ...sellPoints.map(point => point.x),
                 ...resetPoints.map(point => point.x), // Include resetPoints in the x-values calculation
@@ -1976,12 +2030,13 @@
                     mode: 'lines',
                 },
                 {
-                    x: qldYieldValues.map(data => data.x),
-                    y: qldYieldValues.map(data => data.y),
+                    x: qldYieldScaledValues.map(data => data.x),
+                    y: qldYieldScaledValues.map(data => data.y),
                     name: 'QLD Yield (%)',
                     mode: 'lines',
                     line: { dash: 'dot', color: 'rgba(0, 128, 128, 1)' },
-                    hovertemplate: 'Date: %{x}<br>QLD Yield: %{y:.2f}%',
+                    hovertemplate: 'Date: %{x}<br>QLD Yield: %{customdata:.2f}%',
+                    customdata: qldYieldScaledValues.map(data => data.originalYield),
                 },
                 {
                     x: totalCashValues.map(data => data.x),
