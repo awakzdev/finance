@@ -869,13 +869,17 @@
         let datasetsLoaded = 0;
         let allowNegativeBalance = false;
         let alwaysUseHighestPeak = false;
+        let isRangeSelectorInitialized = false;
         let selectedModel = 'modelB';
         let qldCumulativeYields = [];
         let ndxCumulativeYields = [];
         let qldYieldValues = [];
         let holdingRatios = [];
-        let minXValue;
-        let maxXValue;
+        let overallMinXValue;      // Absolute earliest date across datasets
+        let overallMaxXValue;      // Absolute latest date across datasets
+        let minXValue;             // Current minimum date based on filtered data
+        let maxXValue;             // Current maximum date based on filtered data
+
 
         const totalInvestmentInput = document.getElementById('totalInvestment');
         const splitSlider = document.getElementById('split');
@@ -902,13 +906,11 @@
         const alwaysUseHighestPeakNoBtn = document.getElementById('alwaysUseHighestPeakNo');
 
         function showLoadingOverlay() {
-            console.log("Showing loading overlay...");
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.classList.add('show');
         }
 
         function hideLoadingOverlay() {
-            console.log("Hiding loading overlay...");
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.classList.remove('show');
         }
@@ -929,8 +931,6 @@
         }
 
         window.onload = function() {
-            console.log("Fetching CSV files...");
-
             // Fetch CSV files
             fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
             .then(response => response.text())
@@ -1011,9 +1011,6 @@
                 resetThresholdValueDisplay.textContent = resetThresholdSlider.value + '%';
                 debouncedCalculateResults();
             });
-
-            // Calls event listener function for date selection
-            setupCustomRangeSelector();
 
             // Add event listeners to always buy from highest peak on model B
             [alwaysUseHighestPeakYesBtn, alwaysUseHighestPeakNoBtn].forEach(function(button) {
@@ -1122,7 +1119,6 @@
                 }
 
                 selectedModel = model.replace('Icon', '');
-                console.log('Selected strategy:', selectedModel);
                 debouncedCalculateResults();
             }
 
@@ -1138,6 +1134,12 @@
 
         // Function to setup the custom range selector buttons
         function setupCustomRangeSelector() {
+            if (isRangeSelectorInitialized) {
+                console.warn("setupCustomRangeSelector: Already initialized.");
+                return;
+            }
+            isRangeSelectorInitialized = true;
+
             const buttons = document.querySelectorAll('#customRangeSelector button');
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -1149,18 +1151,33 @@
                     // Determine the new date range
                     const range = this.getAttribute('data-range');
                     let newStartDate;
-                    const endDate = new Date(maxXValue); // Use the globally scoped maxXValue
+                    const endDate = new Date(overallMaxXValue); // Use overallMaxXValue
+
+                    console.log(`Button clicked: ${range}`);
+                    console.log(`End Date (overallMaxXValue): ${endDate}`);
 
                     if (range === 'max') {
-                        newStartDate = new Date(minXValue);
+                        newStartDate = new Date(overallMinXValue);
+                        console.log(`Range is 'max'. Setting Start Date to overallMinXValue: ${newStartDate}`);
                     } else {
                         const yearsBack = parseInt(range.replace('y', ''));
+                        console.log(`Years Back: ${yearsBack}`);
                         newStartDate = new Date(Date.UTC(endDate.getUTCFullYear() - yearsBack, endDate.getUTCMonth(), endDate.getUTCDate()));
+                        console.log(`Calculated Start Date before min check: ${newStartDate}`);
+                        
+                        // Handle cases where the calculated start date is before the available data
+                        if (newStartDate < overallMinXValue) {
+                            console.log(`Calculated Start Date (${newStartDate}) is before overallMinXValue (${overallMinXValue}). Setting Start Date to overallMinXValue.`);
+                            newStartDate = new Date(overallMinXValue);
+                        }
                     }
 
                     // Format dates to match dropdown format "DD/MM/YYYY"
                     const formattedStartDate = formatDate(newStartDate);
                     const formattedEndDate = formatDate(endDate);
+
+                    console.log(`Formatted Start Date: ${formattedStartDate}`);
+                    console.log(`Formatted End Date: ${formattedEndDate}`);
 
                     // Find the closest matching dates in the dropdown options
                     const startDateOption = findClosestDateOption(dateRangeDropdown, formattedStartDate);
@@ -1169,20 +1186,24 @@
                     // Set the Opening Date Dropdown to the new start date
                     if (startDateOption) {
                         dateRangeDropdown.value = startDateOption.value;
+                        console.log(`Opening Date set to: ${startDateOption.value}`);
                     } else {
-                        console.warn(`No matching opening date found for ${formattedStartDate}.`);
-                        // Optionally, set to the first available date
-                        dateRangeDropdown.selectedIndex = 0;
+                        console.warn(`No matching opening date found for ${formattedStartDate}. Setting to earliest available date.`);
+                        dateRangeDropdown.selectedIndex = 0; // Set to earliest date if exact match not found
                     }
 
                     // Set the Closing Date Dropdown to the latest date
                     if (endDateOption) {
                         closingDateDropdown.value = endDateOption.value;
+                        console.log(`Closing Date set to: ${endDateOption.value}`);
                     } else {
-                        console.warn(`No matching closing date found for ${formattedEndDate}.`);
-                        // Optionally, set to the last available date
-                        closingDateDropdown.selectedIndex = closingDateDropdown.options.length - 1;
+                        console.warn(`No matching closing date found for ${formattedEndDate}. Setting to latest available date.`);
+                        closingDateDropdown.selectedIndex = closingDateDropdown.options.length - 1; // Set to latest date
                     }
+
+                    // **Trigger 'change' event on Opening Date Dropdown to synchronize Closing Date Dropdown**
+                    const changeEvent = new Event('change');
+                    dateRangeDropdown.dispatchEvent(changeEvent);
 
                     // Trigger recalculation
                     calculateResults();
@@ -1324,7 +1345,6 @@
                 header: true,
                 dynamicTyping: true,
                 complete: function(results) {
-                    console.log(`CSV data parsed successfully for ${type}.`);
 
                     const parsedData = results.data
                         .filter(row => {
@@ -1335,7 +1355,6 @@
                             const lowPrice = row['Low'];
 
                             if (!dateStr || isNaN(price) || isNaN(openPrice)) {
-                                console.warn(`Skipping invalid row in ${type} data:`, row);
                                 return false;
                             }
                             return true;
@@ -1360,17 +1379,24 @@
                     if (parsedData.length > 0) {
                         if (type === 'QLD') {
                             stockData = parsedData;
-                            console.log("QLD stock data loaded. Total entries:", stockData.length);
                         } else if (type === 'NDX') {
                             ndxStockData = parsedData;
-                            console.log("NDX stock data loaded. Total entries:", ndxStockData.length);
                         }
 
                         datasetsLoaded++;
                         if (datasetsLoaded === 2) {
+                            // Compute minXValue and maxXValue
+                            const allDates = [
+                                ...stockData.map(data => data.dateObj.getTime()),
+                                ...ndxStockData.map(data => data.dateObj.getTime())
+                            ];
+                            overallMinXValue = new Date(Math.min(...allDates));
+                            overallMaxXValue = new Date(Math.max(...allDates));
+
                             populateDateDropdown();
                             setupChart();
-                            calculateResults();
+                            setupCustomRangeSelector(); // Now that min/max are set
+                            calculateResults(); // Initial calculation
                         }
                     } else {
                         console.error(`Invalid data: No valid stock data found for ${type}.`);
@@ -1430,12 +1456,25 @@
             calculateResults();
         }
 
+        // Function to synchronize end date dropdown options based on opening date
         function synchronizeEndDateOptions() {
             const selectedStartDate = parseDate(dateRangeDropdown.value);
+            if (!selectedStartDate) {
+                console.error("synchronizeEndDateOptions: Invalid Opening Date.");
+                return;
+            }
+
             const allEndOptions = Array.from(closingDateDropdown.options);
 
             allEndOptions.forEach(option => {
                 const optionDate = parseDate(option.value);
+                if (!optionDate) {
+                    console.error(`synchronizeEndDateOptions: Invalid option date: ${option.value}`);
+                    option.disabled = true;
+                    option.style.display = 'none';
+                    return;
+                }
+
                 if (optionDate >= selectedStartDate) {
                     option.disabled = false;
                     option.style.display = ''; // Ensure it's visible
@@ -1445,10 +1484,10 @@
                 }
             });
 
-            // If the currently selected end date is now invalid, reset it to the start date
+            // If the currently selected end date is now invalid, set it to the latest available date
             const selectedEndDate = parseDate(closingDateDropdown.value);
             if (selectedEndDate < selectedStartDate) {
-                closingDateDropdown.value = dateRangeDropdown.value;
+                closingDateDropdown.value = formatDate(overallMaxXValue); // Use overallMaxXValue
             }
         }
 
@@ -1456,8 +1495,6 @@
             try {
             showLoadingOverlay(); // Show the loading overlay
             await new Promise(resolve => setTimeout(resolve, 0)); // Yield to the browser to render the overlay
-
-            console.log("Starting calculations...");
 
             collectData(); // Ensure we have the latest data for modeL c
 
@@ -1972,7 +2009,6 @@
             window.transactionLog = transactionLog;
 
             hideLoadingOverlay(); // Hide the overlay once calculations are complete
-                console.log("Calculations completed and overlay hidden.");
             } catch (error) {
                 console.error("Error during calculations:", error);
                 hideLoadingOverlay(); // Ensure the overlay is hidden even if there's an error
@@ -2136,20 +2172,21 @@
             ndxCumulativeYields = ndxCumulativeYields || [];
 
             const allXValues = [
-                ...totalPortfolioValues.map(data => data.x),
-                ...ndxPortfolioValues.map(data => data.x),
-                ...qldYieldScaledValues.map(data => data.x),
-                ...buyPoints.map(point => point.x),
-                ...sellPoints.map(point => point.x),
-                ...resetPoints.map(point => point.x), // Include resetPoints in the x-values calculation
-                ...totalCashValues.map(data => data.x),
-                ...qldCumulativeYields.map(data => data.x),
-                ...ndxCumulativeYields.map(data => data.x)
+                ...totalPortfolioValues.map(data => data.x.getTime()), // Convert Date to timestamp
+                ...ndxPortfolioValues.map(data => data.x.getTime()),
+                ...qldYieldScaledValues.map(data => data.x.getTime()),
+                ...buyPoints.map(point => point.x.getTime()),
+                ...sellPoints.map(point => point.x.getTime()),
+                ...resetPoints.map(point => point.x.getTime()),
+                ...totalCashValues.map(data => data.x.getTime()),
+                ...qldCumulativeYields.map(data => data.x.getTime()),
+                ...ndxCumulativeYields.map(data => data.x.getTime())
             ];
 
-            minXValue = Math.min(...allXValues);
-            maxXValue = Math.max(...allXValues);
-            
+            // Set minXValue and maxXValue as Date objects
+            minXValue = new Date(Math.min(...allXValues));
+            maxXValue = new Date(Math.max(...allXValues));
+
             const updatedData = [
                 {
                     x: totalPortfolioValues.map(data => data.x),
@@ -2234,7 +2271,6 @@
                 },
                 yaxis: {
                     title: 'Value ($) / Yield (%)',
-                    
                 },
                 hovermode: 'closest',
                 legend: {
@@ -2253,7 +2289,6 @@
                     t: 150, // Increased to accommodate the buttons
                     b: 50,
                 },
-                
             };
 
             Plotly.react('totalPortfolioChart', updatedData, layout);
