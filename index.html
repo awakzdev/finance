@@ -1045,6 +1045,8 @@
                     document.querySelector('.result-item:nth-child(2)').style.display = 'flex';
                     document.querySelector('.result-item:nth-child(3)').style.display = 'flex';
                 } else {
+                    document.getElementById('alwaysUseHighestPeakOption').style.display = 'block';
+
                     document.getElementById('investmentCashSplit').classList.remove('hidden');
                     // **Model A**: Show default sliders
                     document.getElementById('defaultSliders').classList.remove('hidden');
@@ -1457,12 +1459,14 @@
                 }
 
                 // Adjust currentPeak based on the selected model
-                if (selectedModel === 'modelA') {
-                    if (fullySold) {
-                        currentPeak = highestPeak;
-                    }
-                } else if (selectedModel === 'modelB') {
-                    currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length;
+                if (alwaysUseHighestPeak && selectedModel === 'modelA') {
+                    currentPeak = highestPeak; // Always use the highest peak for Model A if the option is enabled
+                } else if (fullySold) {
+                    currentPeak = highestPeak; // Use the highest peak if all investments have been sold
+                }
+
+                if (selectedModel === 'modelB') {
+                    currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length; // Model B logic
                 }
 
                 if (selectedModel === 'modelD') {
@@ -1953,7 +1957,6 @@
                 }
             });
         }
-
 
         function updateDateDropdowns(newStartDate, newEndDate) {
             // Format dates to match the format used in the dropdowns
