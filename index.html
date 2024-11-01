@@ -1028,14 +1028,21 @@
                 document.getElementById('div_resetThresholdValue').style.display = 'none';
                 document.getElementById('alwaysUseHighestPeakOption').style.display = 'none';
                 holdingRatioResult.style.display = 'none';
-                // Hide Buy Amount on Each Purchase and Available Investment Cash in results
-                document.querySelector('.result-item:nth-child(2)').style.display = 'none';
-                document.querySelector('.result-item:nth-child(3)').style.display = 'none';
 
                 // Reset variables and UI states
                 alwaysUseHighestPeak = false;
                 alwaysUseHighestPeakYesBtn.classList.remove('active');
                 alwaysUseHighestPeakNoBtn.classList.add('active');
+
+                // **Reset sliders to default values**
+                splitSlider.value = 50; // Default value for Investment vs. Cash Split
+                splitValue.textContent = "50%";
+                buyThresholdSlider.value = 5; // Default value for Buy Threshold
+                buyThresholdValue.textContent = "5%";
+                sellThresholdSlider.value = 10; // Default value for Sell Threshold
+                sellThresholdValue.textContent = "10%";
+                buyAmountPercentSlider.value = 10; // Default value for Buy Percentage from Cash
+                buyAmountPercentValue.textContent = "10%";
 
                 if (model === 'modelDIcon') {
                     // **Model D**: Show only the Reset Threshold slider
@@ -1058,7 +1065,6 @@
                     document.querySelector('.result-item:nth-child(3)').style.display = 'flex';
                 } else {
                     document.getElementById('alwaysUseHighestPeakOption').style.display = 'block';
-
                     document.getElementById('investmentCashSplit').classList.remove('hidden');
                     // **Model A**: Show default sliders
                     document.getElementById('defaultSliders').classList.remove('hidden');
