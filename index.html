@@ -1136,6 +1136,7 @@
             selectModel('modelBIcon');
         };
 
+        // Function to setup the custom range selector buttons
         function setupCustomRangeSelector() {
             const buttons = document.querySelectorAll('#customRangeSelector button');
             buttons.forEach(button => {
@@ -1157,16 +1158,38 @@
                         newStartDate = new Date(Date.UTC(endDate.getUTCFullYear() - yearsBack, endDate.getUTCMonth(), endDate.getUTCDate()));
                     }
 
-                    // Update the chart's x-axis range
-                    Plotly.relayout('totalPortfolioChart', {
-                        'xaxis.range': [newStartDate, endDate]
-                    });
+                    // Format dates to match dropdown format "DD/MM/YYYY"
+                    const formattedStartDate = formatDate(newStartDate);
+                    const formattedEndDate = formatDate(endDate);
 
-                    // Update the date inputs or recalculate results
-                    updateDateDropdowns(newStartDate, endDate);
+                    // Find the closest matching dates in the dropdown options
+                    const startDateOption = findClosestDateOption(dateRangeDropdown, formattedStartDate);
+                    const endDateOption = findClosestDateOption(closingDateDropdown, formattedEndDate);
+
+                    // Set the Opening Date Dropdown to the new start date
+                    if (startDateOption) {
+                        dateRangeDropdown.value = startDateOption.value;
+                    } else {
+                        console.warn(`No matching opening date found for ${formattedStartDate}.`);
+                        // Optionally, set to the first available date
+                        dateRangeDropdown.selectedIndex = 0;
+                    }
+
+                    // Set the Closing Date Dropdown to the latest date
+                    if (endDateOption) {
+                        closingDateDropdown.value = endDateOption.value;
+                    } else {
+                        console.warn(`No matching closing date found for ${formattedEndDate}.`);
+                        // Optionally, set to the last available date
+                        closingDateDropdown.selectedIndex = closingDateDropdown.options.length - 1;
+                    }
+
+                    // Trigger recalculation
+                    calculateResults();
                 });
             });
         }
+
 
         // Function to add a new row to the Model C table
         function addRow() {
