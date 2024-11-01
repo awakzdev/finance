@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <!-- ajax-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Include this in your <head> to import from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Montserrat&family=Lato&display=swap">
 
     <style>
     /* CSS styles remain mostly the same */
@@ -415,35 +417,44 @@
     /* Custom styles for Plotly range selector buttons */
     .custom-range-selector {
         display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
+        justify-content: left;
     }
 
-    .custom-range-selector button {
-        background-color: #f0f0f0;
-        border: none;
-        color: #333;
-        padding: 8px 12px;
-        margin: 0 4px;
+    #customRangeSelector {
+        display: flex;
+        align-items: center;
+    }
+
+    #customRangeSelector button {
+        background-color: #f8f9fa; /* Light gray background */
+        border: 1px solid #d1d5da; /* Subtle border for definition */
+        color: #212529; /* Dark text color for contrast */
+        padding: 6px 12px; /* Adjust the padding for a neat look */
+        margin: 0 2px;
         font-size: 14px;
-        font-family: 'Segoe UI', Arial, sans-serif;
+        font-family: 'Montserrat', 'Bebas Neue', sans-serif;
         border-radius: 4px;
         cursor: pointer;
-        transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+        transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .custom-range-selector button:hover {
-        background-color: #e0e0e0;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    #customRangeSelector .date-icon {
+        font-size: 18px;  /* Icon size */
+        color: #000000;   /* Icon color (slightly muted) */
+        margin-left: 10px; /* Space between the buttons and the icon */
+        margin-top: 3px;
     }
 
-    .custom-range-selector button.active {
-        background-color: #007BFF;
-        color: #fff;
+    #customRangeSelector button:hover {
+        background-color: #e2e6ea; /* Slightly darker background on hover */
+        border-color: #b3b6bc; /* Darken the border on hover */
     }
 
-    /**/
+    #customRangeSelector button.active {
+        color: #1f98c8; /* White text for active button */
+        border-color: #000000;
+    }
 
     /* Model C Customization Styles */
     #modelCContainer {
@@ -773,6 +784,8 @@
 
         <!-- Right Section: Graph -->
         <div class="right-section">
+            <div id="totalPortfolioChart"></div>
+            
             <div id="customRangeSelector" class="custom-range-selector">
                 <button data-range="1y">1Y</button>
                 <button data-range="2y">2Y</button>
@@ -784,10 +797,9 @@
                 <button data-range="8y">8Y</button>
                 <button data-range="9y">9Y</button>
                 <button data-range="10y">10Y</button>
+                <i class="fas fa-calendar-alt date-icon"></i> <!-- Single icon to the right -->
             </div>
             
-
-            <div id="totalPortfolioChart"></div>
         </div>
     </div>
 
