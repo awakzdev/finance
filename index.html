@@ -983,8 +983,19 @@
                 debouncedCalculateResults();
             });
 
-            closingDateDropdown.addEventListener('change', debouncedCalculateResults);
-            dateRangeDropdown.addEventListener('change', debouncedCalculateResults);
+            closingDateDropdown.addEventListener('change', function() {
+                const selectedStartDate = parseDate(dateRangeDropdown.value);
+                const selectedEndDate = parseDate(this.value);
+                if (selectedEndDate < selectedStartDate) {
+                    alert("End date cannot be before start date.");
+                    this.value = dateRangeDropdown.value;
+                }
+                debouncedCalculateResults();
+            });
+            dateRangeDropdown.addEventListener('change', function() {
+                synchronizeEndDateOptions();
+                debouncedCalculateResults();
+            });
 
             document.getElementById('addRowButton').addEventListener('click', () => {
                 addRow();
@@ -1347,16 +1358,19 @@
         }
 
         function populateDateDropdown() {
-            // Date dropdown population remains the same
+            // Combine and extract unique date objects from both datasets
             const combinedDates = [...stockData, ...ndxStockData].map(data => data.dateObj.getTime());
             const uniqueDatesSet = new Set(combinedDates);
             const uniqueDates = Array.from(uniqueDatesSet).map(time => new Date(time));
 
+            // Sort the dates in ascending order
             uniqueDates.sort((a, b) => a - b);
 
+            // Clear existing options
             dateRangeDropdown.innerHTML = '';
             closingDateDropdown.innerHTML = '';
 
+            // Populate both dropdowns with sorted dates
             uniqueDates.forEach(dateObj => {
                 const dateStr = formatDate(dateObj);
 
@@ -1371,17 +1385,45 @@
                 closingDateDropdown.appendChild(option2);
             });
 
-            const defaultDate = '26/07/2019';
-            const defaultDateExists = Array.from(dateRangeDropdown.options).some(option => option.value === defaultDate);
+            // Set default start and end dates
+            const defaultStartDate = '26/07/2019';
+            const defaultStartExists = Array.from(dateRangeDropdown.options).some(option => option.value === defaultStartDate);
 
-            if (defaultDateExists) {
-                dateRangeDropdown.value = defaultDate;
+            if (defaultStartExists) {
+                dateRangeDropdown.value = defaultStartDate;
             } else {
                 dateRangeDropdown.value = formatDate(uniqueDates[0]);
             }
 
+            // Set default end date to the latest available date
             closingDateDropdown.value = formatDate(uniqueDates[uniqueDates.length - 1]);
+
+            // Initialize the end date options based on the default start date
+            synchronizeEndDateOptions();
+
             calculateResults();
+        }
+
+        function synchronizeEndDateOptions() {
+            const selectedStartDate = parseDate(dateRangeDropdown.value);
+            const allEndOptions = Array.from(closingDateDropdown.options);
+
+            allEndOptions.forEach(option => {
+                const optionDate = parseDate(option.value);
+                if (optionDate >= selectedStartDate) {
+                    option.disabled = false;
+                    option.style.display = ''; // Ensure it's visible
+                } else {
+                    option.disabled = true;
+                    option.style.display = 'none'; // Hide invalid options
+                }
+            });
+
+            // If the currently selected end date is now invalid, reset it to the start date
+            const selectedEndDate = parseDate(closingDateDropdown.value);
+            if (selectedEndDate < selectedStartDate) {
+                closingDateDropdown.value = dateRangeDropdown.value;
+            }
         }
 
         async function calculateResults() {
