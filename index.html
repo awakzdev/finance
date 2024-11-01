@@ -1075,7 +1075,10 @@
                 holdingRatioResult.style.display = 'none';
 
                 // Reset variables and UI states
+                allowNegativeBalance = false;
                 alwaysUseHighestPeak = false;
+                negativeBalanceAllowBtn.classList.remove('active');
+                negativeBalanceDisallowBtn.classList.add('active');
                 alwaysUseHighestPeakYesBtn.classList.remove('active');
                 alwaysUseHighestPeakNoBtn.classList.add('active');
 
