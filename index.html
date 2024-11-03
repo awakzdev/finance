@@ -132,7 +132,7 @@
         width: 20%;
     }
     .dropdown:focus, .input-box:focus {
-        border-color: #4CAF50;
+        border-color: #000000;
         outline: none;
     }
 
@@ -214,7 +214,7 @@
     .icon-btn.active {
         background-color: #4CAF50;
         color: #fff;
-        border-color: #4CAF50;
+        border-color: #000000;
     }
 
     .icon-btn:hover {
@@ -273,7 +273,7 @@
     }
 
     .slider::-webkit-slider-thumb:hover {
-        background-color: #45a049;
+        background-color: #45a049; 
     }
 
     .slider::-moz-range-thumb {
@@ -336,7 +336,7 @@
 
     .results-icon {
         margin-right: 8px;
-        color: #4CAF50;
+        color: #4CAF50; 
     }
 
     .bold-label {
@@ -506,11 +506,6 @@
         border-radius: 4px;
     }
 
-    #modelCTable input[type="number"]:focus {
-        border-color: #4CAF50;
-        outline: none;
-    }
-
     /* Style for Add and Remove Row Buttons */
     #modelCButtons {
         margin-top: 10px;
@@ -526,10 +521,6 @@
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s;
-    }
-
-    #modelCButtons button:hover {
-        background-color: #45a049;
     }
 
     /* Adjust input group styles for Model C */
@@ -644,6 +635,15 @@
         margin: 0;
     }
 
+    #saveSettings {
+        margin-left: 10px;
+        background-color: #000000; /* Blue color 2196F3 */ 
+    }
+
+    #saveSettings:hover {
+        background-color: #0b7dda;
+    }
+
     </style>
 </head>
 <body>
@@ -651,6 +651,7 @@
     <div class="header">
         <h1>Investment Strategy Comparison</h1>
         <button id="downloadCSV" class="download-btn" onclick="downloadCSV()">Download CSV</button>
+        <button id="saveSettings" class="download-btn" onclick="saveSettings()">Save Settings</button>
     </div>
 
     <!-- Main Content Area -->
@@ -1130,7 +1131,157 @@
 
             // Initialize the UI with the default model (Model B)
             selectModel('modelBIcon');
+
+            // Load saved settings after a short delay to ensure all elements are initialized
+            setTimeout(loadSettings, 1000); // Adjust the delay as needed based on data fetching time
+
         };
+
+        function saveSettings() {
+            console.log('Settings being saved:', settings);
+
+            const settings = {
+                // Date Selections
+                openingDate: dateRangeDropdown.value,
+                closingDate: closingDateDropdown.value,
+                
+                // Investment Settings
+                totalInvestment: totalInvestmentInput.value,
+                investmentCashSplit: splitSlider.value,
+                
+                // Strategy Options
+                selectedModel: selectedModel, // e.g., 'modelA', 'modelB', etc.
+                allowNegativeBalance: allowNegativeBalance,
+                alwaysUseHighestPeak: alwaysUseHighestPeak,
+                
+                // Sliders
+                buyThreshold: buyThresholdSlider.value,
+                sellThreshold: sellThresholdSlider.value,
+                buyAmountPercent: buyAmountPercentSlider.value,
+                resetThreshold: resetThresholdSlider.value, // Only relevant for Model D
+                
+                // Model C Parameters
+                modelCParameters: {
+                    buyPercentages: buyPercentages,
+                    sellPercentages: sellPercentages,
+                    dropPercentages: dropPercentages
+                }
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('investmentStrategySettings', JSON.stringify(settings));
+            
+            // Provide user feedback
+            alert('Settings have been saved successfully!');
+            console.log('Settings saved:', settings);
+        }
+
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('investmentStrategySettings');
+            if (!savedSettings) {
+                console.log('No saved settings found.');
+                return; // No settings to load
+            }
+            
+            let settings;
+            try {
+                settings = JSON.parse(savedSettings);
+            } catch (error) {
+                console.error('Error parsing saved settings:', error);
+                return; // Abort loading settings
+            }
+            
+            console.log('Loaded settings:', settings); // Now 'settings' is defined
+            
+            // Apply Date Selections
+            if (settings.openingDate) {
+                console.log(`Opening Date set to: ${settings.openingDate}`);
+                dateRangeDropdown.value = settings.openingDate;
+            }
+            if (settings.closingDate) {
+                console.log(`Closing Date set to: ${settings.closingDate}`);
+                closingDateDropdown.value = settings.closingDate;
+            }
+            
+            // Apply Investment Settings
+            if (settings.totalInvestment) {
+                console.log(`totalInvestment set to: ${settings.totalInvestment}`);
+                totalInvestmentInput.value = settings.totalInvestment;
+                document.getElementById('totalValueDisplay').textContent = settings.totalInvestment;
+            }
+            if (settings.investmentCashSplit) {
+                console.log(`investmentCashSplit set to: ${settings.investmentCashSplit}`);
+
+                splitSlider.value = settings.investmentCashSplit;
+                document.getElementById('splitValue').textContent = `${settings.investmentCashSplit}%`;
+            }
+            
+            // Apply Strategy Options
+            if (settings.selectedModel) {
+                selectModel(`${settings.selectedModel}Icon`); // Assuming model buttons have IDs like 'modelAIcon'
+            }
+            if (typeof settings.allowNegativeBalance === 'boolean') {
+                if (settings.allowNegativeBalance) {
+                    document.getElementById('negativeBalanceAllow').classList.add('active');
+                    document.getElementById('negativeBalanceDisallow').classList.remove('active');
+                    allowNegativeBalance = true;
+                } else {
+                    document.getElementById('negativeBalanceAllow').classList.remove('active');
+                    document.getElementById('negativeBalanceDisallow').classList.add('active');
+                    allowNegativeBalance = false;
+                }
+            }
+            if (typeof settings.alwaysUseHighestPeak === 'boolean') {
+                if (settings.alwaysUseHighestPeak) {
+                    document.getElementById('alwaysUseHighestPeakYes').classList.add('active');
+                    document.getElementById('alwaysUseHighestPeakNo').classList.remove('active');
+                    alwaysUseHighestPeak = true;
+                } else {
+                    document.getElementById('alwaysUseHighestPeakYes').classList.remove('active');
+                    document.getElementById('alwaysUseHighestPeakNo').classList.add('active');
+                    alwaysUseHighestPeak = false;
+                }
+            }
+            
+            // Apply Sliders
+            if (settings.buyThreshold) {
+                buyThresholdSlider.value = settings.buyThreshold;
+                buyThresholdValue.textContent = `${settings.buyThreshold}%`;
+            }
+            if (settings.sellThreshold) {
+                sellThresholdSlider.value = settings.sellThreshold;
+                sellThresholdValue.textContent = `${settings.sellThreshold}%`;
+            }
+            if (settings.buyAmountPercent) {
+                buyAmountPercentSlider.value = settings.buyAmountPercent;
+                buyAmountPercentValue.textContent = `${settings.buyAmountPercent}%`;
+            }
+            if (settings.resetThreshold && selectedModel === 'modelDIcon') {
+                resetThresholdSlider.value = settings.resetThreshold;
+                resetThresholdValueDisplay.textContent = `${settings.resetThreshold}%`;
+            }
+            
+            // Apply Model C Parameters
+            if (settings.modelCParameters && selectedModel === 'modelCIcon') {
+                // Clear existing rows
+                const tableBody = document.querySelector('#modelCTable tbody');
+                tableBody.innerHTML = '';
+                
+                // Populate rows based on saved parameters
+                settings.modelCParameters.buyPercentages.forEach((buyPct, index) => {
+                    addRow(); // This function adds a new row
+                    const currentRow = tableBody.rows[index];
+                    if (currentRow) {
+                        currentRow.cells[0].querySelector('input').value = settings.modelCParameters.dropPercentages[index] * 100;
+                        currentRow.cells[1].querySelector('input').value = settings.modelCParameters.buyPercentages[index] * 100;
+                        currentRow.cells[2].querySelector('input').value = settings.modelCParameters.sellPercentages[index] * 100;
+                    }
+                });
+            }
+            
+            // After applying all settings, trigger recalculation
+            calculateResults();
+        }
 
         // Function to setup the custom range selector buttons
         function setupCustomRangeSelector() {
@@ -1397,14 +1548,19 @@
                             setupChart();
                             setupCustomRangeSelector(); // Now that min/max are set
                             calculateResults(); // Initial calculation
+
+                            // Load settings after initial calculation and UI setup
+                            loadSettings();
                         }
                     } else {
                         console.error(`Invalid data: No valid stock data found for ${type}.`);
                         finalTotalValueDisplay.textContent = 'Invalid data';
+                        hideLoadingOverlay(); // Hide the overlay if data is invalid
                     }
                 },
                 error: function(error) {
                     console.error(`Error parsing CSV data for ${type}:`, error);
+                    hideLoadingOverlay(); // Hide the overlay if parsing fails
                 }
             });
         }
