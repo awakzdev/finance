@@ -931,6 +931,9 @@
             };
         }
 
+        // Apply debounce to calculateResults
+        const debouncedCalculateResults = debounce(calculateResults, 300); // 300ms delay
+
         window.onload = function() {
             // Fetch CSV files
             fetch('https://raw.githubusercontent.com/awakzdev/finance/main/qld_stock_data.csv')
@@ -1377,6 +1380,19 @@
             dropPercentageInput.max = '100';
             dropPercentageInput.step = '1';
             dropPercentageInput.style.width = '100%';
+            dropPercentageInput.min = '1'; // Set a default min value
+            dropPercentageInput.value = '5'; // Set a default value
+            dropPercentageInput.classList.add('modelC_input-box'); // Add a class for styling
+
+            // Avoid attaching multiple event listeners
+            dropPercentageInput.addEventListener('input', debounce(() => {
+                collectData();
+                debouncedCalculateResults();
+            }, 300));
+
+            cellDropPercentage.appendChild(dropPercentageInput);
+            cellDropPercentage.style.border = '1px solid #ddd';
+            cellDropPercentage.style.padding = '8px';
 
             // Set default value based on the previous row's drop percentage
             let previousDropPercentage = 0;
@@ -1454,9 +1470,10 @@
             if (tableBody.rows.length > 0) {
                 tableBody.deleteRow(-1);
                 collectData();
-                debounce(calculateResults, 300)();
+                debouncedCalculateResults();
             }
         }
+
 
         // Function to collect data from the Model C table
         function collectData() {
@@ -1466,27 +1483,28 @@
 
             const tableBody = document.querySelector('#modelCTable tbody');
             let previousDropPercentage = 0;
-            
-            // Get all rows in the tbody
             const rows = tableBody.rows;
-            for (let row of tableBody.rows) {
-                const dropPercentageInput = row.cells[0].querySelector('input');
+
+            for (let row of rows) {
+                const dropInput = row.cells[0].querySelector('input');
                 const buyInput = row.cells[1].querySelector('input');
                 const sellInput = row.cells[2].querySelector('input');
 
-                const dropPercentage = parseFloat(dropPercentageInput.value);
+                const dropPercentage = parseFloat(dropInput.value);
+                const buyPercentage = parseFloat(buyInput.value);
+                const sellPercentage = parseFloat(sellInput.value);
 
                 if (isNaN(dropPercentage) || dropPercentage <= previousDropPercentage) {
-                    dropPercentageInput.style.borderColor = 'red';
-                    return; // Skip this row but continue processing others
+                    dropInput.style.borderColor = 'red';
+                    continue; // Skip invalid rows
                 } else {
-                    dropPercentageInput.style.borderColor = '';
+                    dropInput.style.borderColor = '';
                     previousDropPercentage = dropPercentage;
                 }
 
                 dropPercentages.push(dropPercentage / 100);
-                buyPercentages.push(parseFloat(buyInput.value) / 100);
-                sellPercentages.push(parseFloat(sellInput.value) / 100);
+                buyPercentages.push(buyPercentage / 100);
+                sellPercentages.push(sellPercentage / 100);
             }
         }
 
@@ -1648,10 +1666,15 @@
         }
 
         async function calculateResults() {
-            try {
-            showLoadingOverlay(); // Show the loading overlay
-            await new Promise(resolve => setTimeout(resolve, 0)); // Yield to the browser to render the overlay
+            let showSpinner = false;
+            const spinnerDelay = 100; // milliseconds
 
+            const spinnerTimeout = setTimeout(() => {
+                showSpinner = true;
+                showLoadingOverlay();
+            }, spinnerDelay);
+
+            try {
             collectData(); // Ensure we have the latest data for modeL c
 
             const buyPoints = [];
@@ -1673,7 +1696,6 @@
                 console.error("No stock data available for the selected date range.");
                 finalTotalValueDisplay.textContent = 'No data';
                 updateChart([], [], [], [], []);
-                hideLoadingOverlay(); // Hide the overlay if no data is found
                 return;
             }
 
@@ -2163,13 +2185,15 @@
                 resetPoints
             );
             window.transactionLog = transactionLog;
-
-            hideLoadingOverlay(); // Hide the overlay once calculations are complete
-            } catch (error) {
-                console.error("Error during calculations:", error);
-                hideLoadingOverlay(); // Ensure the overlay is hidden even if there's an error
+            clearTimeout(spinnerTimeout); // Prevent spinner from showing if calculations are quick
+            if (showSpinner) {
+                hideLoadingOverlay();
             }
+        } catch (error) {
+            console.error("Error during calculations:", error);
+            hideLoadingOverlay(); // Ensure the overlay is hidden even if there's an error
         }
+    }
 
         function parseDate(dateStr) {
             const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
