@@ -651,7 +651,7 @@
     <div class="header">
         <h1>Investment Strategy Comparison</h1>
         <button id="downloadCSV" class="download-btn" onclick="downloadCSV()">Download CSV</button>
-        <button id="saveSettings" class="download-btn" onclick="saveSettings()">Save Settings</button>
+        <!-- <button id="saveSettings" class="download-btn" onclick="saveSettings()">Save Settings</button> -->
     </div>
 
     <!-- Main Content Area -->
@@ -1084,14 +1084,24 @@
                 alwaysUseHighestPeakNoBtn.classList.add('active');
 
                 // **Reset sliders to default values**
-                splitSlider.value = 50; // Default value for Investment vs. Cash Split
-                splitValue.textContent = "50%";
-                buyThresholdSlider.value = 5; // Default value for Buy Threshold
-                buyThresholdValue.textContent = "5%";
-                sellThresholdSlider.value = 10; // Default value for Sell Threshold
-                sellThresholdValue.textContent = "10%";
-                buyAmountPercentSlider.value = 10; // Default value for Buy Percentage from Cash
-                buyAmountPercentValue.textContent = "10%";
+                // Check if we have saved settings loaded
+                let savedSettings = JSON.parse(localStorage.getItem('investmentStrategySettings'));
+                let skipDefaults = savedSettings && savedSettings.selectedModel;
+
+                // Only reset variables and UI states if we don't have saved settings
+                if (!skipDefaults) {
+                    allowNegativeBalance = false;
+                    alwaysUseHighestPeak = false;
+                    // reset sliders to default values
+                    splitSlider.value = 50;
+                    splitValue.textContent = "50%";
+                    buyThresholdSlider.value = 5;
+                    buyThresholdValue.textContent = "5%";
+                    sellThresholdSlider.value = 10;
+                    sellThresholdValue.textContent = "10%";
+                    buyAmountPercentSlider.value = 10;
+                    buyAmountPercentValue.textContent = "10%";
+                }
 
                 if (model === 'modelDIcon') {
                     // **Model D**: Show only the Reset Threshold slider
@@ -1132,12 +1142,17 @@
                 });
             });
 
-            // Initialize the UI with the default model (Model B)
-            selectModel('modelBIcon');
+            setTimeout(() => {
+                loadSettings();
 
-            // Load saved settings after a short delay to ensure all elements are initialized
-            setTimeout(loadSettings, 1000); // Adjust the delay as needed based on data fetching time
-
+                // If after loading settings we don't have a saved model, default to model B
+                let savedSettings = JSON.parse(localStorage.getItem('investmentStrategySettings'));
+                if (!savedSettings || !savedSettings.selectedModel) {
+                    selectModel('modelBIcon');
+                } else {
+                    selectModel(`${savedSettings.selectedModel}Icon`);
+                }
+            }, 1000);
         };
 
         function saveSettings() {
@@ -1175,8 +1190,8 @@
             localStorage.setItem('investmentStrategySettings', JSON.stringify(settings));
             
             // Provide user feedback
-            alert('Settings have been saved successfully!');
-            console.log('Settings saved:', settings);
+            // alert('Settings have been saved successfully!');
+            // console.log('Settings saved:', settings);
         }
 
         function loadSettings() {
@@ -1219,10 +1234,6 @@
                 document.getElementById('splitValue').textContent = `${settings.investmentCashSplit}%`;
             }
             
-            // Apply Strategy Options
-            if (settings.selectedModel) {
-                selectModel(`${settings.selectedModel}Icon`); // Assuming model buttons have IDs like 'modelAIcon'
-            }
             if (typeof settings.allowNegativeBalance === 'boolean') {
                 if (settings.allowNegativeBalance) {
                     document.getElementById('negativeBalanceAllow').classList.add('active');
@@ -1665,6 +1676,29 @@
             }
         }
 
+        function saveSettings() {
+            const settings = {
+                openingDate: dateRangeDropdown.value,
+                closingDate: closingDateDropdown.value,
+                totalInvestment: totalInvestmentInput.value,
+                investmentCashSplit: splitSlider.value,
+                selectedModel: selectedModel,
+                allowNegativeBalance: allowNegativeBalance,
+                alwaysUseHighestPeak: alwaysUseHighestPeak,
+                buyThreshold: buyThresholdSlider.value,
+                sellThreshold: sellThresholdSlider.value,
+                buyAmountPercent: buyAmountPercentSlider.value,
+                resetThreshold: resetThresholdSlider.value,
+                modelCParameters: {
+                    buyPercentages: buyPercentages,
+                    sellPercentages: sellPercentages,
+                    dropPercentages: dropPercentages
+                }
+            };
+            console.log('Settings being saved:', settings); // Moved after definition
+            localStorage.setItem('investmentStrategySettings', JSON.stringify(settings));
+        }
+
         async function calculateResults() {
             let showSpinner = false;
             const spinnerDelay = 100; // milliseconds
@@ -1675,525 +1709,525 @@
             }, spinnerDelay);
 
             try {
-            collectData(); // Ensure we have the latest data for modeL c
+                collectData(); // Ensure we have the latest data for modeL c
 
-            const buyPoints = [];
-            const sellPoints = [];
-            const totalCashValues = [];
-            const resetPoints = [];
-            const buyCountsPerDate = {};
-            const sellCountsPerDate = {};
-            const OFFSET_INCREMENT = 500 * 60 * 1000;
-            const selectedStartDate = dateRangeDropdown.value;
-            const selectedClosingDate = closingDateDropdown.value;
-            const startDateObj = parseDate(selectedStartDate);
-            const endDateObj = parseDate(selectedClosingDate);
+                const buyPoints = [];
+                const sellPoints = [];
+                const totalCashValues = [];
+                const resetPoints = [];
+                const buyCountsPerDate = {};
+                const sellCountsPerDate = {};
+                const OFFSET_INCREMENT = 500 * 60 * 1000;
+                const selectedStartDate = dateRangeDropdown.value;
+                const selectedClosingDate = closingDateDropdown.value;
+                const startDateObj = parseDate(selectedStartDate);
+                const endDateObj = parseDate(selectedClosingDate);
 
-            const filteredStockData = getFilteredStockData(stockData, startDateObj, endDateObj);
-            const filteredNDXStockData = getFilteredStockData(ndxStockData, startDateObj, endDateObj);
+                const filteredStockData = getFilteredStockData(stockData, startDateObj, endDateObj);
+                const filteredNDXStockData = getFilteredStockData(ndxStockData, startDateObj, endDateObj);
 
-            if (!filteredStockData.length || !filteredNDXStockData.length) {
-                console.error("No stock data available for the selected date range.");
-                finalTotalValueDisplay.textContent = 'No data';
-                updateChart([], [], [], [], []);
-                return;
-            }
+                if (!filteredStockData.length || !filteredNDXStockData.length) {
+                    console.error("No stock data available for the selected date range.");
+                    finalTotalValueDisplay.textContent = 'No data';
+                    updateChart([], [], [], [], []);
+                    return;
+                }
 
-            let totalPortfolioValue = parseInt(totalInvestmentInput.value);
-            let cashPercent = parseInt(splitSlider.value) / 100;
-            let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
-            let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
-            let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
-            let initialCash = totalPortfolioValue * cashPercent;
-            let cash = initialCash;
-            let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent);
-            let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
-            let passiveInvestmentPrice = filteredStockData[0].openPrice;
-            let activeInvestments = [];
-            let highestPeak = filteredStockData[0].price;
-            let lastBuyPrice = filteredStockData[0].highPrice;
-            let currentPeak = highestPeak;
-            let purchaseCount = 0;
-            let activeCashInvested = 0;
-            let activeInvestmentValue = 0;
-            let passivePortfolioValue = 0;
-            let totalValue = 0;
-            let dropFromHighestPeak = 0;
-            let gainPercentage = 0;
-            let currentPurchaseCount = 0;
-            let dropPercentage = 0;
-            let cumulativeDropPercentage = 0;
-            let sharesToBuy = 0;
-            let purchaseOnDayCount = 0;
-            let sellOnDayCount = 0;
-            let totalProfit = 0;
-            let firstPurchasePeak = null;
-            let fullySold = true;
-            let bought = false;
-            let buyAmountPercent = 0;
-            // Variables specific to Model D
-            let modelDPortfolioValue = totalPortfolioValue;
-            let modelDInvestments = [{
-                buyPrice: filteredStockData[0].openPrice,
-                shares: (totalPortfolioValue - initialCash) / filteredStockData[0].openPrice
-            }];        
+                let totalPortfolioValue = parseInt(totalInvestmentInput.value);
+                let cashPercent = parseInt(splitSlider.value) / 100;
+                let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
+                let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
+                let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
+                let initialCash = totalPortfolioValue * cashPercent;
+                let cash = initialCash;
+                let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent);
+                let passiveShares = initialPassiveInvestment / filteredStockData[0].openPrice;
+                let passiveInvestmentPrice = filteredStockData[0].openPrice;
+                let activeInvestments = [];
+                let highestPeak = filteredStockData[0].price;
+                let lastBuyPrice = filteredStockData[0].highPrice;
+                let currentPeak = highestPeak;
+                let purchaseCount = 0;
+                let activeCashInvested = 0;
+                let activeInvestmentValue = 0;
+                let passivePortfolioValue = 0;
+                let totalValue = 0;
+                let dropFromHighestPeak = 0;
+                let gainPercentage = 0;
+                let currentPurchaseCount = 0;
+                let dropPercentage = 0;
+                let cumulativeDropPercentage = 0;
+                let sharesToBuy = 0;
+                let purchaseOnDayCount = 0;
+                let sellOnDayCount = 0;
+                let totalProfit = 0;
+                let firstPurchasePeak = null;
+                let fullySold = true;
+                let bought = false;
+                let buyAmountPercent = 0;
+                // Variables specific to Model D
+                let modelDPortfolioValue = totalPortfolioValue;
+                let modelDInvestments = [{
+                    buyPrice: filteredStockData[0].openPrice,
+                    shares: (totalPortfolioValue - initialCash) / filteredStockData[0].openPrice
+                }];        
 
-            let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
-            let ndxPortfolioValues = filteredNDXStockData.map(data => {
-                return {
-                    x: data.dateObj,
-                    y: ndxPassiveShares * data.price
-                };
-            });
+                let ndxPassiveShares = ndxInitialInvestment / filteredNDXStockData[0].openPrice;
+                let ndxPortfolioValues = filteredNDXStockData.map(data => {
+                    return {
+                        x: data.dateObj,
+                        y: ndxPassiveShares * data.price
+                    };
+                });
 
-            // Ensure initial QLD investment is set to $100,000
-            let initialQLDInvestment = totalPortfolioValue; // Set to $100,000
-            let qldPassiveShares = initialQLDInvestment / filteredStockData[0].openPrice;
+                // Ensure initial QLD investment is set to $100,000
+                let initialQLDInvestment = totalPortfolioValue; // Set to $100,000
+                let qldPassiveShares = initialQLDInvestment / filteredStockData[0].openPrice;
 
-            // Calculate QLD yield values as percentages starting from 100%
-            let qldYieldValues = filteredStockData.map(data => {
-                const currentValue = (qldPassiveShares * data.price);
-                const yieldPercentage = ((currentValue / initialQLDInvestment) - 1) * 100; // Starts at 0%
+                // Calculate QLD yield values as percentages starting from 100%
+                let qldYieldValues = filteredStockData.map(data => {
+                    const currentValue = (qldPassiveShares * data.price);
+                    const yieldPercentage = ((currentValue / initialQLDInvestment) - 1) * 100; // Starts at 0%
+                    
+                    return {
+                        x: data.dateObj,
+                        y: yieldPercentage
+                    };
+                });
+
+                const totalPortfolioValues = [];
+                const activeProfits = [];
+                const transactionLog = [];
                 
-                return {
-                    x: data.dateObj,
-                    y: yieldPercentage
-                };
-            });
+                // Iterate over filtered stock data for calculations
+                filteredStockData.forEach((data, index) => {
+                    const dataDate = data.dateObj;
+                    let price = data.price;
+                    let action = 'Hold';
+                    let sharesBought = 0;
+                    let sharesSold = 0;
+                    let didBuy = false;
+                    let didSell = false;
+                    let dailyBuyShares = 0;
+                    let dailyBuyPrices = [];
+                    fullySold = (activeInvestments.length === 0);
 
-            const totalPortfolioValues = [];
-            const activeProfits = [];
-            const transactionLog = [];
-            
-            // Iterate over filtered stock data for calculations
-            filteredStockData.forEach((data, index) => {
-                const dataDate = data.dateObj;
-                let price = data.price;
-                let action = 'Hold';
-                let sharesBought = 0;
-                let sharesSold = 0;
-                let didBuy = false;
-                let didSell = false;
-                let dailyBuyShares = 0;
-                let dailyBuyPrices = [];
-                fullySold = (activeInvestments.length === 0);
-
-                // Update the highest peak (always check if price exceeds the highestPeak)
-                if (data.price > highestPeak) {
-                    highestPeak = data.price;
-                }
-
-                // If fully sold, reset the first purchase peak and purchase count
-                if (fullySold) {
-                    firstPurchasePeak = highestPeak;
-                    purchaseCount = 0; // Reset purchase count
-                }
-
-                let buy_price = null;
-                let sellPrice = null;
-                let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
-                let peakToUse;
-
-                if (alwaysUseHighestPeak && selectedModel === 'modelB') {
-                    peakToUse = highestPeak;
-                } else {
-                    peakToUse = fullySold ? highestPeak : firstPurchasePeak;
-                }
-
-                // Adjust currentPeak based on the selected model
-                if (alwaysUseHighestPeak && selectedModel === 'modelA') {
-                    currentPeak = highestPeak; // Always use the highest peak for Model A if the option is enabled
-                } else if (fullySold) {
-                    currentPeak = highestPeak; // Use the highest peak if all investments have been sold
-                }
-
-                if (selectedModel === 'modelB') {
-                    currentPeak = highestPeak - highestPeak * buyThreshold * activeInvestments.length; // Model B logic
-                }
-
-                if (selectedModel === 'modelD') {
-                    const resetThreshold = parseFloat(resetThresholdSlider.value) / 100;
-                    const lowerBound = totalPortfolioValue * (1 - resetThreshold);
-                    const upperBound = totalPortfolioValue * (1 + resetThreshold);
-
-                    // Calculate current Model D portfolio value
-                    modelDPortfolioValue = cash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
-
-                    // Check if the Model D portfolio should be reset
-                    if (modelDPortfolioValue <= lowerBound || modelDPortfolioValue >= upperBound) {
-                        // Store the previous portfolio value before reset
-                        const previousPortfolioValue = modelDPortfolioValue;
-
-                        // Determine if the reset is due to a drop or a rise
-                        const resetDueToDrop = modelDPortfolioValue <= lowerBound;
-
-                        // Calculate the adjustment needed to reset the portfolio value to initial value
-                        const adjustment = totalPortfolioValue - modelDPortfolioValue;
-
-                        // Adjust cash to reflect the injection or withdrawal of funds
-                        cash += adjustment;
-
-                        // Sell all investments
-                        const saleProceeds = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
-                        cash += saleProceeds;
-                        modelDInvestments = [];
-
-                        // Calculate investment amount based on cashPercent
-                        const investmentAmount = cash * (1 - cashPercent);
-
-                        // Deduct investment amount from cash
-                        cash -= investmentAmount;
-
-                        // Buy new investments
-                        const sharesToBuy = investmentAmount / data.price;
-                        modelDInvestments.push({ buyPrice: data.price, shares: sharesToBuy });
-
-                        // Recalculate portfolio value
-                        modelDPortfolioValue = cash + sharesToBuy * data.price;
-
-                        // Set marker properties based on whether reset is due to drop or rise
-                        const markerProperties = resetDueToDrop
-                            ? { color: 'red', symbol: 'triangle-down', size: 15 }
-                            : { color: 'green', symbol: 'triangle-up', size: 15 };
-
-                        // Push the reset point with the updated marker properties
-                        resetPoints.push({
-                            x: dataDate,
-                            y: modelDPortfolioValue,
-                            marker: markerProperties,
-                            hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${cash.toFixed(2)}`
-                        });
-
-                        action = 'Reset';
+                    // Update the highest peak (always check if price exceeds the highestPeak)
+                    if (data.price > highestPeak) {
+                        highestPeak = data.price;
                     }
-                }
 
-                // Calculate drop from current peak
-                const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
-                dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+                    // If fully sold, reset the first purchase peak and purchase count
+                    if (fullySold) {
+                        firstPurchasePeak = highestPeak;
+                        purchaseCount = 0; // Reset purchase count
+                    }
 
-                // **Calculate portfolio values before buy/sell logic**
-                activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                passivePortfolioValue = passiveShares * price;
-                totalValue = (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares) * data.price + cash;
+                    let buy_price = null;
+                    let sellPrice = null;
+                    let buyPricesLog = ''; // Initialize a variable to store buy prices for the day
+                    let peakToUse;
 
-                // Buy logic
-                if (selectedModel === 'modelA' || selectedModel === 'modelB') {
-                    buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
-                    let initialBuyAmount = initialCash * buyAmountPercent;
+                    if (selectedModel === 'modelB') {
+                        if (alwaysUseHighestPeak) {
+                            peakToUse = highestPeak;
+                        } else {
+                            peakToUse = fullySold ? highestPeak : firstPurchasePeak;
+                        }
+                        currentPeak = peakToUse; // For Model B, set currentPeak based on peakToUse
+                    } else if (selectedModel === 'modelA') {
+                        if (alwaysUseHighestPeak) {
+                            currentPeak = highestPeak; // For Model A, set currentPeak to highestPeak if enabled
+                        } else {
+                            currentPeak = fullySold ? highestPeak : firstPurchasePeak;
+                        }
+                    }
 
-                    if (dropFromCurrentPeak >= buyThreshold * 100) {
-                        // Loop to check for multiple purchases on the same day
-                        while (dropFromCurrentPeak >= buyThreshold * 100) {
-                            currentPurchaseCount = activeInvestments.length + 1; // Increment based on the number of purchases made
-                            dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
-                            cumulativeDropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the cumulative drop percentage
+                    if (selectedModel === 'modelD') {
+                        const resetThreshold = parseFloat(resetThresholdSlider.value) / 100;
+                        const lowerBound = totalPortfolioValue * (1 - resetThreshold);
+                        const upperBound = totalPortfolioValue * (1 + resetThreshold);
 
-                            // Calculate the new buy price based on the selected model
-                            if (selectedModel === 'modelA') {
-                                buy_price = fullySold ? currentPeak * (1 - buyThreshold) : activeInvestments[activeInvestments.length - 1]['buyPrice'] * (1 - buyThreshold);
-                            } else if (selectedModel === 'modelB') {
-                                buy_price = peakToUse - peakToUse * buyThreshold * currentPurchaseCount;
-                            }
+                        // Calculate current Model D portfolio value
+                        modelDPortfolioValue = cash + modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
 
-                            // Shares to buy calculation
-                            sharesToBuy = initialBuyAmount / buy_price;
+                        // Check if the Model D portfolio should be reset
+                        if (modelDPortfolioValue <= lowerBound || modelDPortfolioValue >= upperBound) {
+                            // Store the previous portfolio value before reset
+                            const previousPortfolioValue = modelDPortfolioValue;
 
-                            // **Calculate drop from the highest peak using the buy price** (Used in conjunction with modelA)
-                            dropFromHighestPeak = ((highestPeak - buy_price) / highestPeak) * 100;
-                            // Determine marker properties based on the cumulative drop percentage
-                            let markerProperties = getMarkerProperties('buy', cumulativeDropPercentage);
+                            // Determine if the reset is due to a drop or a rise
+                            const resetDueToDrop = modelDPortfolioValue <= lowerBound;
 
-                            // **Additional check: Ensure the low price of the day is below or equal to the buy price**
-                            if (data.lowPrice < buy_price && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
-                                // Check if there is enough cash to buy the shares
-                                cash -= sharesToBuy * buy_price;
-                                // Store the color with the investment
-                                activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
-                                // Increment if multiple buys are made
-                                sharesBought += sharesToBuy;
-                                activeCashInvested += sharesToBuy * buy_price;
-                                // increment purchase count on a single day
-                                purchaseOnDayCount++;
-                                // Append the buy price to the log string
-                                buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
-                                action = 'Buy';
-                                didBuy = true;
-                                // Update currentPeak for subsequent buys
-                                currentPeak = buy_price;
+                            // Calculate the adjustment needed to reset the portfolio value to initial value
+                            const adjustment = totalPortfolioValue - modelDPortfolioValue;
 
-                                // Increment buy count
-                                const dateKey = dataDate.toISOString().split('T')[0];
-                                buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
-                                const buyCount = buyCountsPerDate[dateKey];
-                                // Calculate xOffset
-                                const xOffset = buyCount * OFFSET_INCREMENT;
+                            // Adjust cash to reflect the injection or withdrawal of funds
+                            cash += adjustment;
 
-                                // Determine the hover text based on the selected model
-                                let hoverText = '';
+                            // Sell all investments
+                            const saleProceeds = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                            cash += saleProceeds;
+                            modelDInvestments = [];
+
+                            // Calculate investment amount based on cashPercent
+                            const investmentAmount = cash * (1 - cashPercent);
+
+                            // Deduct investment amount from cash
+                            cash -= investmentAmount;
+
+                            // Buy new investments
+                            const sharesToBuy = investmentAmount / data.price;
+                            modelDInvestments.push({ buyPrice: data.price, shares: sharesToBuy });
+
+                            // Recalculate portfolio value
+                            modelDPortfolioValue = cash + sharesToBuy * data.price;
+
+                            // Set marker properties based on whether reset is due to drop or rise
+                            const markerProperties = resetDueToDrop
+                                ? { color: 'red', symbol: 'triangle-down', size: 15 }
+                                : { color: 'green', symbol: 'triangle-up', size: 15 };
+
+                            // Push the reset point with the updated marker properties
+                            resetPoints.push({
+                                x: dataDate,
+                                y: modelDPortfolioValue,
+                                marker: markerProperties,
+                                hovertext: `Reset on ${data.date}:<br>Portfolio Value Before Reset: $${previousPortfolioValue.toFixed(2)}<br>Adjusted Portfolio Value: $${modelDPortfolioValue.toFixed(2)}<br>Remaining Cash: $${cash.toFixed(2)}`
+                            });
+
+                            action = 'Reset';
+                        }
+                    }
+
+                    // Calculate drop from current peak
+                    const dropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
+                    dropFromHighestPeak = ((highestPeak - data.lowPrice) / highestPeak) * 100;
+
+                    // **Calculate portfolio values before buy/sell logic**
+                    activeInvestmentValue = cash + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                    passivePortfolioValue = passiveShares * price;
+                    totalValue = (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares) * data.price + cash;
+
+                    // Buy logic
+                    if (selectedModel === 'modelA' || selectedModel === 'modelB') {
+                        buyAmountPercent = parseFloat(buyAmountPercentSlider.value) / 100;
+                        let initialBuyAmount = initialCash * buyAmountPercent;
+
+                        if (dropFromCurrentPeak >= buyThreshold * 100) {
+                            // Loop to check for multiple purchases on the same day
+                            while (dropFromCurrentPeak >= buyThreshold * 100) {
+                                currentPurchaseCount = activeInvestments.length + 1; // Increment based on the number of purchases made
+                                dropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the specific drop percentage
+                                cumulativeDropPercentage = buyThreshold * currentPurchaseCount * 100; // Calculate the cumulative drop percentage
+
+                                // Calculate the new buy price based on the selected model
                                 if (selectedModel === 'modelA') {
-                                    hoverText = `Buy (Model A): ${data.date}, Drop from Highest Peak: ${dropFromHighestPeak.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`;
+                                    buy_price = fullySold ? currentPeak * (1 - buyThreshold) : activeInvestments[activeInvestments.length - 1]['buyPrice'] * (1 - buyThreshold);
                                 } else if (selectedModel === 'modelB') {
-                                    hoverText = `Buy (Model B): ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`;
+                                    buy_price = peakToUse - peakToUse * buyThreshold * currentPurchaseCount;
                                 }
 
-                                // Add buy point with adjusted x-value
-                                buyPoints.push({
-                                    x: new Date(dataDate.getTime() + xOffset),
-                                    y: totalValue,
-                                    marker: {
-                                        color: markerProperties.color,
-                                        symbol: 'circle',
-                                        size: 8,
-                                        line: { width: 1 }
-                                    },
-                                    hovertext: hoverText
-                                });
-                            } else {
-                                break; // Break the loop if the low price is not suitable for a buy
-                            }
-                            // Recalculate drop from current peak after the purchase
-                            const newDropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
-                            if (newDropFromCurrentPeak < buyThreshold * 100) {
-                                break; // Break the loop if no further purchases can be made
-                            }
-                        }
-                    }
-                } else {
-                    // Model C Buy Logic
-                    // For each drop level, check if we should buy
-                    // Sort dropPercentages and corresponding buy and sell percentages
-                    const sortedLevels = dropPercentages.map((drop, index) => ({
-                        drop: drop,
-                        buyPercentage: buyPercentages[index],
-                        sellThreshold: sellPercentages[index]
-                    })).sort((a, b) => a.drop - b.drop);
+                                // Shares to buy calculation
+                                sharesToBuy = initialBuyAmount / buy_price;
 
-                    for (let i = 0; i < sortedLevels.length; i++) {
-                        const level = sortedLevels[i];
-                        cumulativeDropPercentage = level.drop;
-                        if (dropFromHighestPeak >= cumulativeDropPercentage * 100 && !activeInvestments.some(inv => inv.dropLevel === i)) {
-                            // Calculate buy price
-                            buy_price = highestPeak * (1 - cumulativeDropPercentage);
-                            let buyPercentageFromCash = level.buyPercentage;
-                            let amountToInvest = initialCash * buyPercentageFromCash;
+                                // **Calculate drop from the highest peak using the buy price** (Used in conjunction with modelA)
+                                dropFromHighestPeak = ((highestPeak - buy_price) / highestPeak) * 100;
+                                // Determine marker properties based on the cumulative drop percentage
+                                let markerProperties = getMarkerProperties('buy', cumulativeDropPercentage);
 
-                            sharesToBuy = amountToInvest / buy_price;
+                                // **Additional check: Ensure the low price of the day is below or equal to the buy price**
+                                if (data.lowPrice < buy_price && (cash >= sharesToBuy * buy_price || (allowNegativeBalance && cash < sharesToBuy * buy_price))) {
+                                    // Check if there is enough cash to buy the shares
+                                    cash -= sharesToBuy * buy_price;
+                                    // Store the color with the investment
+                                    activeInvestments.push({ buyPrice: buy_price, shares: sharesToBuy, color: markerProperties.color });
+                                    // Increment if multiple buys are made
+                                    sharesBought += sharesToBuy;
+                                    activeCashInvested += sharesToBuy * buy_price;
+                                    // increment purchase count on a single day
+                                    purchaseOnDayCount++;
+                                    // Append the buy price to the log string
+                                    buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
+                                    action = 'Buy';
+                                    didBuy = true;
+                                    // Update currentPeak for subsequent buys
+                                    currentPeak = buy_price;
 
-                            // Ensure we have enough cash
-                            if (cash >= amountToInvest || (allowNegativeBalance && cash < amountToInvest)) {
-                                cash -= amountToInvest;
-                                activeInvestments.push({
-                                    buyPrice: buy_price,
-                                    shares: sharesToBuy,
-                                    color: getMarkerProperties('buy', cumulativeDropPercentage * 100).color,
-                                    dropLevel: i,
-                                    sellThreshold: level.sellThreshold
-                                });
-                                sharesBought += sharesToBuy;
-                                activeCashInvested += sharesToBuy * buy_price;
-                                purchaseOnDayCount++;
-                                buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
-                                action = 'Buy';
-                                didBuy = true;
+                                    // Increment buy count
+                                    const dateKey = dataDate.toISOString().split('T')[0];
+                                    buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
+                                    const buyCount = buyCountsPerDate[dateKey];
+                                    // Calculate xOffset
+                                    const xOffset = buyCount * OFFSET_INCREMENT;
 
-                                // Log the buy point
-                                const dateKey = dataDate.toISOString().split('T')[0];
-                                buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
-                                const buyCount = buyCountsPerDate[dateKey];
-                                const xOffset = buyCount * OFFSET_INCREMENT;
+                                    // Determine the hover text based on the selected model
+                                    let hoverText = '';
+                                    if (selectedModel === 'modelA') {
+                                        hoverText = `Buy (Model A): ${data.date}, Drop from Highest Peak: ${dropFromHighestPeak.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`;
+                                    } else if (selectedModel === 'modelB') {
+                                        hoverText = `Buy (Model B): ${data.date}, Drop: ${cumulativeDropPercentage.toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`;
+                                    }
 
-                                buyPoints.push({
-                                    x: new Date(dataDate.getTime() + xOffset),
-                                    y: totalValue,
-                                    marker: {
-                                        color: getMarkerProperties('buy', cumulativeDropPercentage * 100).color,
-                                        symbol: 'circle',
-                                        size: 8,
-                                        line: { width: 1 }
-                                    },
-                                    hovertext: `Buy (Model C): ${data.date}, Drop: ${(cumulativeDropPercentage * 100).toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
-                                });
+                                    // Add buy point with adjusted x-value
+                                    buyPoints.push({
+                                        x: new Date(dataDate.getTime() + xOffset),
+                                        y: totalValue,
+                                        marker: {
+                                            color: markerProperties.color,
+                                            symbol: 'circle',
+                                            size: 8,
+                                            line: { width: 1 }
+                                        },
+                                        hovertext: hoverText
+                                    });
+                                } else {
+                                    break; // Break the loop if the low price is not suitable for a buy
+                                }
+                                // Recalculate drop from current peak after the purchase
+                                const newDropFromCurrentPeak = ((currentPeak - price) / currentPeak) * 100;
+                                if (newDropFromCurrentPeak < buyThreshold * 100) {
+                                    break; // Break the loop if no further purchases can be made
+                                }
                             }
                         }
-                    }
-                }
-
-                // Sell logic
-                activeInvestments = activeInvestments.map(investment => {
-                    let targetSellPrice;
-                    if (selectedModel === 'modelC') {
-                        targetSellPrice = investment.buyPrice * (1 + investment.sellThreshold);
                     } else {
-                        targetSellPrice = investment.buyPrice * (1 + sellThreshold);
+                        // Model C Buy Logic
+                        // For each drop level, check if we should buy
+                        // Sort dropPercentages and corresponding buy and sell percentages
+                        const sortedLevels = dropPercentages.map((drop, index) => ({
+                            drop: drop,
+                            buyPercentage: buyPercentages[index],
+                            sellThreshold: sellPercentages[index]
+                        })).sort((a, b) => a.drop - b.drop);
+
+                        for (let i = 0; i < sortedLevels.length; i++) {
+                            const level = sortedLevels[i];
+                            cumulativeDropPercentage = level.drop;
+                            if (dropFromHighestPeak >= cumulativeDropPercentage * 100 && !activeInvestments.some(inv => inv.dropLevel === i)) {
+                                // Calculate buy price
+                                buy_price = highestPeak * (1 - cumulativeDropPercentage);
+                                let buyPercentageFromCash = level.buyPercentage;
+                                let amountToInvest = initialCash * buyPercentageFromCash;
+
+                                sharesToBuy = amountToInvest / buy_price;
+
+                                // Ensure we have enough cash
+                                if (cash >= amountToInvest || (allowNegativeBalance && cash < amountToInvest)) {
+                                    cash -= amountToInvest;
+                                    activeInvestments.push({
+                                        buyPrice: buy_price,
+                                        shares: sharesToBuy,
+                                        color: getMarkerProperties('buy', cumulativeDropPercentage * 100).color,
+                                        dropLevel: i,
+                                        sellThreshold: level.sellThreshold
+                                    });
+                                    sharesBought += sharesToBuy;
+                                    activeCashInvested += sharesToBuy * buy_price;
+                                    purchaseOnDayCount++;
+                                    buyPricesLog = buyPricesLog === '' ? buy_price.toFixed(4) : `${buyPricesLog}; ${buy_price.toFixed(4)}`;
+                                    action = 'Buy';
+                                    didBuy = true;
+
+                                    // Log the buy point
+                                    const dateKey = dataDate.toISOString().split('T')[0];
+                                    buyCountsPerDate[dateKey] = (buyCountsPerDate[dateKey] || 0) + 1;
+                                    const buyCount = buyCountsPerDate[dateKey];
+                                    const xOffset = buyCount * OFFSET_INCREMENT;
+
+                                    buyPoints.push({
+                                        x: new Date(dataDate.getTime() + xOffset),
+                                        y: totalValue,
+                                        marker: {
+                                            color: getMarkerProperties('buy', cumulativeDropPercentage * 100).color,
+                                            symbol: 'circle',
+                                            size: 8,
+                                            line: { width: 1 }
+                                        },
+                                        hovertext: `Buy (Model C): ${data.date}, Drop: ${(cumulativeDropPercentage * 100).toFixed(2)}%, Price: $${buy_price.toFixed(2)}, Bought: ${sharesToBuy.toFixed(2)} shares`
+                                    });
+                                }
+                            }
+                        }
                     }
-                    if (data.highPrice >= targetSellPrice) {
-                        let saleProceeds = investment.shares * targetSellPrice;
-                        totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
-                        cash += saleProceeds;
-                        sharesSold += investment.shares;
-                        action = 'Sell';
-                        didSell = true;
-                        sellPrice = targetSellPrice;
-                        sellOnDayCount++;
-                        gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
 
-                        // Increment sell count
-                        const dateKey = dataDate.toISOString().split('T')[0];
-                        sellCountsPerDate[dateKey] = (sellCountsPerDate[dateKey] || 0) + 1;
-                        const sellCount = sellCountsPerDate[dateKey];
-                        const xOffset = sellCount * OFFSET_INCREMENT;
+                    // Sell logic
+                    activeInvestments = activeInvestments.map(investment => {
+                        let targetSellPrice;
+                        if (selectedModel === 'modelC') {
+                            targetSellPrice = investment.buyPrice * (1 + investment.sellThreshold);
+                        } else {
+                            targetSellPrice = investment.buyPrice * (1 + sellThreshold);
+                        }
+                        if (data.highPrice >= targetSellPrice) {
+                            let saleProceeds = investment.shares * targetSellPrice;
+                            totalProfit += (saleProceeds - (investment.shares * investment.buyPrice));
+                            cash += saleProceeds;
+                            sharesSold += investment.shares;
+                            action = 'Sell';
+                            didSell = true;
+                            sellPrice = targetSellPrice;
+                            sellOnDayCount++;
+                            gainPercentage = ((targetSellPrice - investment.buyPrice) / investment.buyPrice) * 100;
 
-                        // Log the sell point
-                        sellPoints.push({
-                            x: new Date(dataDate.getTime() + xOffset),
-                            y: totalValue,
-                            marker: {
-                                color: investment.color,
-                                symbol: 'star',
-                                size: 8
-                            },
-                            hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}, Sold: ${investment.shares.toFixed(2)} shares`
-                        });
+                            // Increment sell count
+                            const dateKey = dataDate.toISOString().split('T')[0];
+                            sellCountsPerDate[dateKey] = (sellCountsPerDate[dateKey] || 0) + 1;
+                            const sellCount = sellCountsPerDate[dateKey];
+                            const xOffset = sellCount * OFFSET_INCREMENT;
 
-                        return { ...investment, shares: 0 };
+                            // Log the sell point
+                            sellPoints.push({
+                                x: new Date(dataDate.getTime() + xOffset),
+                                y: totalValue,
+                                marker: {
+                                    color: investment.color,
+                                    symbol: 'star',
+                                    size: 8
+                                },
+                                hovertext: `Sell: ${data.date}, Gain: ${gainPercentage.toFixed(2)}%, Price: $${sellPrice.toFixed(2)}, Sold: ${investment.shares.toFixed(2)} shares`
+                            });
+
+                            return { ...investment, shares: 0 };
+                        }
+                        return investment;
+                    }).filter(investment => investment.shares > 0);
+
+                    const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
+                    const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
+                    const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item]));
+                    const ndxData = ndxDataMap.get(data.date);
+                    const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A';
+                    const modelYield = ((totalValue  / totalPortfolioValue) - 1) * 100; // Corrected Yield Calculation
+                    const ndxPassiveValue = ndxPortfolioValues[index].y;
+                    const qldYield = ((data.price / filteredStockData[0].openPrice) - 1) * 100;
+                    const totalInvestments = data.price * (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares)
+                    const leveragedHoldings = totalInvestments * 2
+                    const LeveragedHoldingPercentage = (leveragedHoldings / totalValue) * 100
+                    const cashRatio = totalPortfolioValue / totalValue
+
+                    if (selectedModel === 'modelD') {
+                        const modelDInvestmentValue = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                        console.log('Cash', {cash}, 'modelDinvestmentvalue', {modelDInvestmentValue}, "date", {data})
+                        totalValue = cash + modelDInvestmentValue;
+                        totalCashValues.push({ x: dataDate, y: cash });
+                    } else {
+                        // Do not redeclare variables; just assign values
+                        activeInvestmentValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
+                        passiveInvestmentValue = passiveShares * data.price;
+                        totalValue = activeInvestmentValue + passiveInvestmentValue + cash;
+                        totalCashValues.push({ x: dataDate, y: cash });
                     }
-                    return investment;
-                }).filter(investment => investment.shares > 0);
 
-                const passiveProfit = (price - passiveInvestmentPrice) * passiveShares;
-                const activeProfit = totalProfit + activeInvestments.reduce((sum, inv) => sum + inv.shares * price, 0);
-                const ndxDataMap = new Map(filteredNDXStockData.map(item => [item.date, item]));
-                const ndxData = ndxDataMap.get(data.date);
-                const ndxYield = ndxData ? ((ndxData.price / filteredNDXStockData[0].openPrice) - 1) * 100 : 'N/A';
-                const modelYield = ((totalValue  / totalPortfolioValue) - 1) * 100; // Corrected Yield Calculation
-                const ndxPassiveValue = ndxPortfolioValues[index].y;
-                const qldYield = ((data.price / filteredStockData[0].openPrice) - 1) * 100;
-                const totalInvestments = data.price * (activeInvestments.reduce((sum, inv) => sum + inv.shares, 0) + passiveShares)
-                const leveragedHoldings = totalInvestments * 2
-                const LeveragedHoldingPercentage = (leveragedHoldings / totalValue) * 100
-                const cashRatio = totalPortfolioValue / totalValue
+                    totalPortfolioValues.push({ x: dataDate, y: totalValue });
 
-                if (selectedModel === 'modelD') {
-                    const modelDInvestmentValue = modelDInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
-                    console.log('Cash', {cash}, 'modelDinvestmentvalue', {modelDInvestmentValue}, "date", {data})
-                    totalValue = cash + modelDInvestmentValue;
-                    totalCashValues.push({ x: dataDate, y: cash });
-                } else {
-                    // Do not redeclare variables; just assign values
-                    activeInvestmentValue = activeInvestments.reduce((sum, inv) => sum + inv.shares * data.price, 0);
-                    passiveInvestmentValue = passiveShares * data.price;
-                    totalValue = activeInvestmentValue + passiveInvestmentValue + cash;
-                    totalCashValues.push({ x: dataDate, y: cash });
-                }
-
-                totalPortfolioValues.push({ x: dataDate, y: totalValue });
-
-                // Modify the transaction log to store the new price fields
-                transactionLog.push({
-                    date: data.date,
-                    action: action,
-                    sharesBought: sharesBought,
-                    sharesSold: sharesSold,
-                    openPrice: data.openPrice,
-                    lastBuy: buyPricesLog, // Log multiple buy prices
-                    sellPrice: sellPrice,
-                    highPrice: data.highPrice,
-                    lowPrice: data.lowPrice,
-                    closePrice: data.price,
-                    totalCash: cash.toFixed(2),
-                    stocksHeld: (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2),
-                    passiveShares: passiveShares,
-                    totalShares: ((selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)) + passiveShares).toFixed(2),
-                    totalInvestments: totalInvestments.toFixed(2),
-                    leveragedHolding: leveragedHoldings.toFixed(2),
-                    LeveragedHoldingPercentage: LeveragedHoldingPercentage,
-                    cashRatio: cashRatio,
-                    highestPeak: highestPeak,
-                    downPercentageFromPeak: dropFromHighestPeak.toFixed(2),
-                    passiveInvestmentPrice: passiveInvestmentPrice,
-                    passiveProfit: passiveProfit.toFixed(2),
-                    activeProfit: activeProfit.toFixed(2),
-                    activeCashInvested: activeCashInvested.toFixed(2),
-                    totalValue: totalValue.toFixed(2),
-                    totalAmount: (cash + passivePortfolioValue).toFixed(2),
-                    modelDPortfolioValue: modelDPortfolioValue.toFixed(2),
-                    valuePassive: (passiveShares * data.price).toFixed(2),
-                    ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
-                    ndxClosePrice: ndxData ? ndxData.price : 'N/A',
-                    ndxPassive: ndxPassiveValue.toFixed(2),
-                    ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A',
-                    modelYield: modelYield.toFixed(2),
-                    qldYield: qldYield.toFixed(2),
+                    // Modify the transaction log to store the new price fields
+                    transactionLog.push({
+                        date: data.date,
+                        action: action,
+                        sharesBought: sharesBought,
+                        sharesSold: sharesSold,
+                        openPrice: data.openPrice,
+                        lastBuy: buyPricesLog, // Log multiple buy prices
+                        sellPrice: sellPrice,
+                        highPrice: data.highPrice,
+                        lowPrice: data.lowPrice,
+                        closePrice: data.price,
+                        totalCash: cash.toFixed(2),
+                        stocksHeld: (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2),
+                        passiveShares: passiveShares,
+                        totalShares: ((selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)) + passiveShares).toFixed(2),
+                        totalInvestments: totalInvestments.toFixed(2),
+                        leveragedHolding: leveragedHoldings.toFixed(2),
+                        LeveragedHoldingPercentage: LeveragedHoldingPercentage,
+                        cashRatio: cashRatio,
+                        highestPeak: highestPeak,
+                        downPercentageFromPeak: dropFromHighestPeak.toFixed(2),
+                        passiveInvestmentPrice: passiveInvestmentPrice,
+                        passiveProfit: passiveProfit.toFixed(2),
+                        activeProfit: activeProfit.toFixed(2),
+                        activeCashInvested: activeCashInvested.toFixed(2),
+                        totalValue: totalValue.toFixed(2),
+                        totalAmount: (cash + passivePortfolioValue).toFixed(2),
+                        modelDPortfolioValue: modelDPortfolioValue.toFixed(2),
+                        valuePassive: (passiveShares * data.price).toFixed(2),
+                        ndxOpen: ndxData ? ndxData.openPrice : 'N/A',
+                        ndxClosePrice: ndxData ? ndxData.price : 'N/A',
+                        ndxPassive: ndxPassiveValue.toFixed(2),
+                        ndxYield: ndxData ? ndxYield.toFixed(2) : 'N/A',
+                        modelYield: modelYield.toFixed(2),
+                        qldYield: qldYield.toFixed(2),
+                    });
                 });
-            });
 
-            // Find the max and min values of the primary y-axis data
-            const portfolioValues = totalPortfolioValues.map(data => data.y);
-            const primaryYMin = Math.min(...portfolioValues);
-            const primaryYMax = Math.max(...portfolioValues);
+                // Find the max and min values of the primary y-axis data
+                const portfolioValues = totalPortfolioValues.map(data => data.y);
+                const primaryYMin = Math.min(...portfolioValues);
+                const primaryYMax = Math.max(...portfolioValues);
 
-            // Scale QLD Yield to the primary y-axis range
-            const qldYieldScaledValues = qldYieldValues.map(data => {
-                const scaledY = ((data.y / 100) * (primaryYMax - primaryYMin)) + primaryYMin;
-                return {
-                    x: data.x,
-                    y: scaledY,
-                    originalYield: data.y, // Keep the original yield for hover info
-                };
-            });
+                // Scale QLD Yield to the primary y-axis range
+                const qldYieldScaledValues = qldYieldValues.map(data => {
+                    const scaledY = ((data.y / 100) * (primaryYMax - primaryYMin)) + primaryYMin;
+                    return {
+                        x: data.x,
+                        y: scaledY,
+                        originalYield: data.y, // Keep the original yield for hover info
+                    };
+                });
 
-            const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
-            buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
-            finalTotalValueDisplay.textContent = totalValue.toFixed(2);
-            stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
-            stocksLeftDisplay.textContent = (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2);
-            availableMoneyDisplay.textContent = (selectedModel === 'modelD' ? cash : cash).toFixed(2);
+                const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
+                buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
+                finalTotalValueDisplay.textContent = totalValue.toFixed(2);
+                stocksLeftDisplay.textContent = activeInvestments.reduce((sum, inv) => sum + inv.shares, 0).toFixed(2);
+                stocksLeftDisplay.textContent = (selectedModel === 'modelD' ? modelDInvestments.reduce((sum, inv) => sum + inv.shares, 0) : activeInvestments.reduce((sum, inv) => sum + inv.shares, 0)).toFixed(2);
+                availableMoneyDisplay.textContent = (selectedModel === 'modelD' ? cash : cash).toFixed(2);
 
-            // Calculate yields for result tab (Final values)
-            const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
-            const modelYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
-            const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
+                // Calculate yields for result tab (Final values)
+                const finalNDXValue = ndxPortfolioValues[ndxPortfolioValues.length - 1].y;
+                const modelYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
+                const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
 
-            // Display yields in results
-            document.getElementById('modelYield').textContent = modelYield.toFixed(2);
-            document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
+                // Display yields in results
+                document.getElementById('modelYield').textContent = modelYield.toFixed(2);
+                document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
 
-            // Daily cumulative yield calculation for both QLD and NDX
-            const qldCumulativeYields = totalPortfolioValues.map(data => {
-                return {
-                    x: data.x,
-                    y: ((data.y / totalPortfolioValue) - 1) * 100
-                };
-            });
+                // Daily cumulative yield calculation for both QLD and NDX
+                const qldCumulativeYields = totalPortfolioValues.map(data => {
+                    return {
+                        x: data.x,
+                        y: ((data.y / totalPortfolioValue) - 1) * 100
+                    };
+                });
 
-            const ndxCumulativeYields = ndxPortfolioValues.map(data => {
-                return {
-                    x: data.x,
-                    y: ((data.y / ndxInitialInvestment) - 1) * 100
-                };
-            });
+                const ndxCumulativeYields = ndxPortfolioValues.map(data => {
+                    return {
+                        x: data.x,
+                        y: ((data.y / ndxInitialInvestment) - 1) * 100
+                    };
+                });
 
-            updateChart(
-                totalPortfolioValues,
-                activeProfits,
-                ndxPortfolioValues,
-                qldYieldScaledValues,
-                buyPoints,
-                sellPoints,
-                totalCashValues,
-                resetPoints
-            );
-            window.transactionLog = transactionLog;
-            clearTimeout(spinnerTimeout); // Prevent spinner from showing if calculations are quick
-            if (showSpinner) {
-                hideLoadingOverlay();
+                updateChart(
+                    totalPortfolioValues,
+                    activeProfits,
+                    ndxPortfolioValues,
+                    qldYieldScaledValues,
+                    buyPoints,
+                    sellPoints,
+                    totalCashValues,
+                    resetPoints
+                );
+                window.transactionLog = transactionLog;
+
+            } catch (error) {
+                console.error("Error during calculations:", error);
+            } finally {
+                clearTimeout(spinnerTimeout); // Ensure the spinner timeout is cleared
+                if (showSpinner) {
+                    hideLoadingOverlay(); // Hide the spinner if it was shown
+                }
+                saveSettings();
             }
-        } catch (error) {
-            console.error("Error during calculations:", error);
-            hideLoadingOverlay(); // Ensure the overlay is hidden even if there's an error
         }
-    }
 
         function parseDate(dateStr) {
             const [dayStr, monthStr, yearStr] = dateStr.trim().split('/');
@@ -2296,16 +2330,30 @@
             const chartElement = document.getElementById('totalPortfolioChart');
             Plotly.newPlot(chartElement, [], layout, config);
 
-            // Add event listener for relayout events
-            chartElement.on('plotly_relayout', function(eventData) {
-                if (eventData['xaxis.range[0]'] && eventData['xaxis.range[1]']) {
-                    const newStartDate = new Date(eventData['xaxis.range[0]']);
-                    const newEndDate = new Date(eventData['xaxis.range[1]']);
-
-                    // Update the date dropdowns
-                    updateDateDropdowns(newStartDate, newEndDate);
-                }
+            // Add event listeners to save visibility when user toggles traces
+            chartElement.on('plotly_legendclick', function() {
+                saveTraceVisibility();
             });
+
+            chartElement.on('plotly_restyle', function() {
+                saveTraceVisibility();
+            });
+        }
+
+        function saveTraceVisibility() {
+            const chartElement = document.getElementById('totalPortfolioChart');
+            const currentData = chartElement.data;
+
+            // Extract exact visibility: if a trace is hidden, it's 'legendonly'; if visible, it's true
+            const traceVisibility = currentData.map(trace => {
+                if (trace.visible === 'legendonly') return 'legendonly';
+                // If `visible` is not defined or `true`, treat as true
+                return true;
+            });
+
+            let settings = JSON.parse(localStorage.getItem('investmentStrategySettings')) || {};
+            settings.traceVisibility = traceVisibility;
+            localStorage.setItem('investmentStrategySettings', JSON.stringify(settings));
         }
 
         function updateDateDropdowns(newStartDate, newEndDate) {
@@ -2472,6 +2520,19 @@
             };
 
             Plotly.react('totalPortfolioChart', updatedData, layout);
+
+            // After updating the chart, restore the visibility states if saved
+            let savedSettings = JSON.parse(localStorage.getItem('investmentStrategySettings')) || {};
+            if (savedSettings.traceVisibility && savedSettings.traceVisibility.length === updatedData.length) {
+                savedSettings.traceVisibility.forEach((visibilityState, index) => {
+                    // If the state is 'legendonly', set it accordingly; if true, set it visible
+                    if (visibilityState === 'legendonly') {
+                        Plotly.restyle('totalPortfolioChart', { visible: 'legendonly' }, [index]);
+                    } else {
+                        Plotly.restyle('totalPortfolioChart', { visible: true }, [index]);
+                    }
+                });
+            }
         }
 
         function downloadCSV() {
