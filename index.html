@@ -19,19 +19,41 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Montserrat&family=Lato&display=swap">
 
     <style>
-    /* CSS styles remain mostly the same */
-    /* Additional styles for new elements */
+    :root {
+            --primary-color: #38424e;
+            --secondary-color: #007bff;
+            --text-color: white;
+            --background-color: #f8f9fa;
+            --header-padding: 10px 20px;
+            --header-margin-bottom: 20px;
+            --font-size: 16px;
+            --line-height: 1.5;
+            --spacing: 10px;
+        }
+
     body {
         font-family: Arial, sans-serif;
         padding: 20px;
         display: flex;
+        background-color: #f8f9fa;
+        color: #333;
         flex-direction: column;
         direction: ltr;
         text-align: left;
+        font-size: var(--font-size);
+        line-height: var(--line-height);
+        background-color: var(--background-color);
+        min-height: 100vh; /* Ensure the body takes up the full height of the viewport */
+
     }
 
     /* Header */
     .header {
+        /* background-color: var(--primary-color); */
+        /* color: var(--text-color); */
+        padding: var(--header-padding);
+        margin-bottom: var(--header-margin-bottom); 
+
         display: flex;
         justify-content: flex-start;
         align-items: center;
@@ -46,11 +68,29 @@
         font-weight: bold;
     }
 
+    .header nav {
+        display: flex;
+        gap: 15px;
+    }
+
+    .header nav a {
+        color: var(--text-color);
+        text-decoration: none;
+        font-size: 1em;
+        transition: color 0.3s;
+    }
+
+    .header nav a:hover {
+        color: var(--secondary-color);
+    }
+
     button {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
         margin-left: auto;
         padding: 10px 20px;
         font-size: 16px;
-        background-color: #4CAF50;
+        background-color: #007bff;
         color: white;
         border: none;
         border-radius: 5px;
@@ -59,7 +99,7 @@
     }
 
     button:hover {
-        background-color: #45a049;
+        background-color: #0056b3;
     }
 
     /* Main Content Area */
@@ -644,6 +684,64 @@
         background-color: #0b7dda;
     }
 
+    /* Form styles */
+    form {
+        margin-bottom: 20px;
+    }
+
+    form input, form select {
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    /* Chart container */
+    #totalPortfolioChart {
+        width: 100%;
+        height: 500px;
+        background-color: #f8f9fa; /* Match the background color */
+        background-color: var(--background-color); /* Match the background color */
+
+    }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
+        .container {
+            padding: 10px;
+        }
+
+        table, th, td {
+            font-size: 14px;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 8px 16px;
+        }
+
+        form input, form select {
+            padding: 8px;
+        }
+    }
+    
+    /* Normalize spacing and text sizes */
+    .left-column {
+        padding: var(--spacing);
+        font-size: var(--font-size);
+    }
+
+    .left-column h2 {
+        font-size: 1.25em;
+        margin-bottom: var(--spacing);
+    }
+
+    .left-column p {
+        margin-bottom: var(--spacing);
+    }
+
     </style>
 </head>
 <body>
@@ -821,6 +919,10 @@
                     <span class="result-label"><i class="fas fa-percentage results-icon"></i> NDX Yield (%):</span>
                     <span class="result-value"><span id="ndxYield">Calculating...</span>%</span>
                 </div>
+                <!-- <div class="result-item">
+                    <span class="result-label"><i class="fas fa-percentage results-icon"></i> QLD Yield (%):</span>
+                    <span class="result-value"><span id="qldYield">Calculating...</span>%</span>
+                </div> -->
                 <div class="result-item">
                     <span class="result-label"><i class="fas fa-piggy-bank results-icon"></i> Final Portfolio Value (Active + Passive):</span>
                     <span class="result-value">$<span id="finalTotalValue">Calculating...</span></span>
@@ -1738,6 +1840,7 @@
                 let buyThreshold = parseFloat(buyThresholdSlider.value) / 100;
                 let sellThreshold = parseFloat(sellThresholdSlider.value) / 100;
                 let ndxInitialInvestment = parseInt(totalInvestmentInput.value);
+                let initialQLDInvestment = parseInt(totalInvestmentInput.value);
                 let initialCash = totalPortfolioValue * cashPercent;
                 let cash = initialCash;
                 let initialPassiveInvestment = totalPortfolioValue * (1 - cashPercent);
@@ -1780,18 +1883,15 @@
                     };
                 });
 
-                // Ensure initial QLD investment is set to $100,000
-                let initialQLDInvestment = totalPortfolioValue; // Set to $100,000
+                // Ensure initial QLD investment is set to $100,000                
                 let qldPassiveShares = initialQLDInvestment / filteredStockData[0].openPrice;
 
                 // Calculate QLD yield values as percentages starting from 100%
                 let qldYieldValues = filteredStockData.map(data => {
-                    const currentValue = (qldPassiveShares * data.price);
-                    const yieldPercentage = ((currentValue / initialQLDInvestment) - 1) * 100; // Starts at 0%
-                    
+                    const currentValue = qldPassiveShares * data.price; // Current value based on closing price
                     return {
                         x: data.dateObj,
-                        y: yieldPercentage
+                        y: qldPassiveShares * data.price // Numerical percentage for plotting
                     };
                 });
 
@@ -2165,15 +2265,15 @@
                 const primaryYMin = Math.min(...portfolioValues);
                 const primaryYMax = Math.max(...portfolioValues);
 
-                // Scale QLD Yield to the primary y-axis range
-                const qldYieldScaledValues = qldYieldValues.map(data => {
-                    const scaledY = ((data.y / 100) * (primaryYMax - primaryYMin)) + primaryYMin;
-                    return {
-                        x: data.x,
-                        y: scaledY,
-                        originalYield: data.y, // Keep the original yield for hover info
-                    };
-                });
+                // // Scale QLD Yield to the primary y-axis range
+                // const qldYieldScaledValues = qldYieldValues.map(data => {
+                //     const scaledY = ((data.y / 100) * (primaryYMax - primaryYMin)) + primaryYMin;
+                //     return {
+                //         x: data.x,
+                //         y: scaledY,
+                //         originalYield: data.y, // Keep the original yield for hover info
+                //     };
+                // });
 
                 const finalPortfolioValue = totalPortfolioValues[totalPortfolioValues.length - 1].y;
                 buyAmountDisplay.textContent = selectedModel !== 'modelC' ? Math.floor(initialCash * buyAmountPercent).toFixed(0) : 'Dynamic';
@@ -2187,9 +2287,15 @@
                 const modelYield = ((finalPortfolioValue / totalPortfolioValue) - 1) * 100;
                 const ndxYield = ((finalNDXValue / ndxInitialInvestment) - 1) * 100;
 
+                // Calculate QLD Yield (%) based on initial investment and final QLD value
+                const finalQLDValue = qldYieldValues[qldYieldValues.length - 1].y;
+                // const qldYield = ((finalQLDValue / initialQLDInvestment) - 1) * 100;
+
                 // Display yields in results
                 document.getElementById('modelYield').textContent = modelYield.toFixed(2);
                 document.getElementById('ndxYield').textContent = ndxYield.toFixed(2);
+                // document.getElementById('qldYield').textContent = qldYield.toFixed(2); // Display QLD Yield (%)
+
 
                 // Daily cumulative yield calculation for both QLD and NDX
                 const qldCumulativeYields = totalPortfolioValues.map(data => {
@@ -2210,7 +2316,7 @@
                     totalPortfolioValues,
                     activeProfits,
                     ndxPortfolioValues,
-                    qldYieldScaledValues,
+                    qldYieldValues,
                     buyPoints,
                     sellPoints,
                     totalCashValues,
@@ -2295,12 +2401,15 @@
                     showline: true,
                     zeroline: false,
                 },
-                yaxis2: {
-                    title: 'QLD Yield (%)',
+                yaxis: {
+                    title: 'QLD Yield ($)', // Updated title to reflect dollar values
                     overlaying: 'y',
                     side: 'right',
                     showline: true,
-                    zeroline: false,
+                    zeroline: true, // Optional: Adds a zero line for clarity
+                    tickprefix: '$', // Prefix ticks with $
+                    tickformat: '.2f', // Format ticks to two decimal places
+                    range: [0, Math.max(...qldYieldValues.map(data => data.y)) * 1.1], // Starts at 0%
                 },
                 hovermode: 'closest',
                 legend: {
@@ -2310,6 +2419,8 @@
                     xanchor: 'center',
                     yanchor: 'bottom',
                     font: {
+                        color: '#e0e0e0', // Light gray
+                        family: 'Arial, sans-serif',
                         size: 12,
                     },
                 },
@@ -2395,26 +2506,23 @@
             return closestOption;
         }
 
-        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldScaledValues, buyPoints, sellPoints, totalCashValues, resetPoints) {
-            qldCumulativeYields = qldCumulativeYields || [];
-            ndxCumulativeYields = ndxCumulativeYields || [];
-
+        function updateChart(totalPortfolioValues, activeProfits, ndxPortfolioValues, qldYieldValues, buyPoints, sellPoints, totalCashValues, resetPoints) {
+            // Combine all x-values to determine the date range
             const allXValues = [
-                ...totalPortfolioValues.map(data => data.x.getTime()), // Convert Date to timestamp
+                ...totalPortfolioValues.map(data => data.x.getTime()),
                 ...ndxPortfolioValues.map(data => data.x.getTime()),
-                ...qldYieldScaledValues.map(data => data.x.getTime()),
+                ...qldYieldValues.map(data => data.x.getTime()),
                 ...buyPoints.map(point => point.x.getTime()),
                 ...sellPoints.map(point => point.x.getTime()),
                 ...resetPoints.map(point => point.x.getTime()),
-                ...totalCashValues.map(data => data.x.getTime()),
-                ...qldCumulativeYields.map(data => data.x.getTime()),
-                ...ndxCumulativeYields.map(data => data.x.getTime())
+                ...totalCashValues.map(data => data.x.getTime())
             ];
 
-            // Set minXValue and maxXValue as Date objects
-            minXValue = new Date(Math.min(...allXValues));
-            maxXValue = new Date(Math.max(...allXValues));
+            // Determine the date range
+            const minXValue = new Date(Math.min(...allXValues));
+            const maxXValue = new Date(Math.max(...allXValues));
 
+            // Define the data traces
             const updatedData = [
                 {
                     x: totalPortfolioValues.map(data => data.x),
@@ -2430,22 +2538,23 @@
                     y: ndxPortfolioValues.map(data => data.y),
                     name: 'NDX Passive Investment',
                     mode: 'lines',
+                    line: { color: '#ff7f0e', width: 2 },
+                    hovertemplate: 'Date: %{x}<br>NDX Value: $%{y:.2f}<extra></extra>',
                 },
                 {
-                    x: qldYieldScaledValues.map(data => data.x),
-                    y: qldYieldScaledValues.map(data => data.y),
-                    name: 'QLD Yield (%)',
+                    x: qldYieldValues.map(data => data.x),
+                    y: qldYieldValues.map(data => data.y),
+                    name: 'QLD Yield (USD)',
                     mode: 'lines',
-                    line: { dash: 'dot', color: 'rgba(0, 128, 128, 1)' },
-                    hovertemplate: 'Date: %{x}<br>QLD Yield: %{customdata:.2f}%',
-                    customdata: qldYieldScaledValues.map(data => data.originalYield),
+                    line: { dash: 'dot', color: '#2ca02c', width: 2 },
+                    hovertemplate: 'Date: %{x}<br>QLD Yield: $%{y:.2f}<extra></extra>',
                 },
                 {
                     x: totalCashValues.map(data => data.x),
                     y: totalCashValues.map(data => data.y),
                     name: 'Total Cash',
                     mode: 'lines',
-                    line: { dash: 'dot', color: 'rgba(255, 165, 0, 1)' },
+                    line: { dash: 'dot', color: '#9467bd', width: 2 },
                     hovertemplate: 'Date: %{x}<br>Total Cash: $%{y:.2f}<extra></extra>',
                 },
                 {
@@ -2489,7 +2598,10 @@
                 }
             ];
 
+            // Define the layout with a secondary y-axis
             const layout = {
+                paper_bgcolor: '#f8f9fa', // Background color of the chart
+                plot_bgcolor: '#f8f9fa', 
                 title: 'Portfolio Values Over Time',
                 xaxis: {
                     title: 'Date',
@@ -2498,7 +2610,11 @@
                     rangeslider: { visible: false },
                 },
                 yaxis: {
-                    title: 'Value ($) / Yield (%)',
+                    title: 'Portfolio Value ($)',
+                    showline: true,
+                    zeroline: false,
+                    tickprefix: '$',
+                    // range: [0, Math.max(...totalPortfolioValues.map(data => data.y)) * 1.1], // Dynamic range with 10% padding
                 },
                 hovermode: 'closest',
                 legend: {
@@ -2512,20 +2628,20 @@
                     },
                 },
                 margin: {
-                    l: 50,
-                    r: 60,
-                    t: 150, // Increased to accommodate the buttons
+                    l: 60,
+                    r: 80, // Ensures enough space for y2 labels
+                    t: 150,
                     b: 50,
                 },
             };
 
+            // Render the chart
             Plotly.react('totalPortfolioChart', updatedData, layout);
 
-            // After updating the chart, restore the visibility states if saved
+            // Restore trace visibility if previously saved
             let savedSettings = JSON.parse(localStorage.getItem('investmentStrategySettings')) || {};
             if (savedSettings.traceVisibility && savedSettings.traceVisibility.length === updatedData.length) {
                 savedSettings.traceVisibility.forEach((visibilityState, index) => {
-                    // If the state is 'legendonly', set it accordingly; if true, set it visible
                     if (visibilityState === 'legendonly') {
                         Plotly.restyle('totalPortfolioChart', { visible: 'legendonly' }, [index]);
                     } else {
@@ -2534,6 +2650,7 @@
                 });
             }
         }
+
 
         function downloadCSV() {
             const csvRows = [];
