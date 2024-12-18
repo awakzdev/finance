@@ -20,9 +20,9 @@
 
     <style>
     :root {
-            --primary-color: #38424e;
-            --secondary-color: #007bff;
-            --text-color: white;
+            --primary-color: #b88b8b;
+            --secondary-color: #ff0000;
+            --text-color: rgb(24, 23, 23);
             --background-color: #f8f9fa;
             --header-padding: 10px 20px;
             --header-margin-bottom: 20px;
@@ -49,8 +49,10 @@
 
     /* Header */
     .header {
-        /* background-color: var(--primary-color); */
-        /* color: var(--text-color); */
+        background: linear-gradient(to right, #000000, #0056b3);
+
+        background-color: var(--primary-color); 
+        color: var(--text-color); 
         padding: var(--header-padding);
         margin-bottom: var(--header-margin-bottom); 
 
@@ -90,16 +92,23 @@
         margin-left: auto;
         padding: 10px 20px;
         font-size: 16px;
-        background-color: #007bff;
+        background-color: #000000;
         color: white;
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     button:hover {
         background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    button:active {
+        background-color: #003f7f;
+        transform: translateY(0);
     }
 
     /* Main Content Area */
